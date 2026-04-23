@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import emailjs from '@emailjs/browser'
+
+const EMAILJS_SERVICE_ID = 'service_q55ivrp'
+const EMAILJS_TEMPLATE_ID = 'template_wgibd9k'
+const EMAILJS_PUBLIC_KEY = 'DBkP2rCi6WMgXW9kq'
+const APP_URL = 'https://yfc-budget.vercel.app'
 
 export default function Admin({ onClose }) {
   const [users, setUsers] = useState([])
+  const [sending, setSending] = useState(null)
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), snap => {
@@ -12,8 +19,25 @@ export default function Admin({ onClose }) {
     return () => unsub()
   }, [])
 
-  async function approuver(id) {
-    await updateDoc(doc(db, 'users', id), { approuve: true })
+  async function approuver(u) {
+    setSending(u.id)
+    try {
+      await updateDoc(doc(db, 'users', u.id), { approuve: true })
+
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          nom: u.nom || u.email,
+          email: u.email,
+          app_url: APP_URL
+        },
+        EMAILJS_PUBLIC_KEY
+      )
+    } catch(e) {
+      console.error('Erreur envoi email:', e)
+    }
+    setSending(null)
   }
 
   async function supprimer(id) {
@@ -63,10 +87,17 @@ export default function Admin({ onClose }) {
               <div style={{fontSize:'10px', color:'#b8afd4', marginTop:'2px'}}>{u.dateInscription}</div>
             </div>
             <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
-              <button onClick={() => approuver(u.id)} style={{padding:'6px 10px', background:'#d4f4ee', color:'#0f766e', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}>
-                Approuver
+              <button
+                onClick={() => approuver(u)}
+                disabled={sending === u.id}
+                style={{padding:'6px 10px', background:'#d4f4ee', color:'#0f766e', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit', opacity: sending === u.id ? 0.7 : 1}}
+              >
+                {sending === u.id ? '...' : 'Approuver'}
               </button>
-              <button onClick={() => supprimer(u.id)} style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}>
+              <button
+                onClick={() => supprimer(u.id)}
+                style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+              >
                 Refuser
               </button>
             </div>
@@ -86,14 +117,17 @@ export default function Admin({ onClose }) {
               <div style={{fontSize:'13px', fontWeight:'600', color:'#2d1f6e'}}>{u.nom || 'Sans nom'}</div>
               <div style={{fontSize:'11px', color:'#9b8fb5', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
             </div>
-            <button onClick={() => supprimer(u.id)} style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}>
+            <button
+              onClick={() => supprimer(u.id)}
+              style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+            >
               Supprimer
             </button>
           </div>
         ))}
 
         <div style={{marginTop:'1rem', padding:'12px', background:'#f0eef8', borderRadius:'12px', fontSize:'12px', color:'#9b8fb5', lineHeight:'1.5'}}>
-          Les utilisateurs doivent s'inscrire via le formulaire de l'appli pour apparaître ici. Les comptes créés directement dans Firebase Auth ne sont pas visibles.
+          Un email est automatiquement envoyé lors de l'approbation d'un membre.
         </div>
       </div>
     </div>
