@@ -35,9 +35,7 @@ export default function Login() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password)
       await setDoc(doc(db, 'users', cred.user.uid), {
-        nom,
-        email,
-        approuve: false,
+        nom, email, approuve: false,
         dateInscription: new Date().toISOString()
       })
       await auth.signOut()
@@ -51,52 +49,69 @@ export default function Login() {
     setLoading(false)
   }
 
+  const inp = {
+    width: '100%',
+    padding: '11px 14px',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '14px',
+    background: 'rgba(255,255,255,0.12)',
+    color: '#fff',
+    fontFamily: 'inherit',
+    outline: 'none',
+    marginBottom: '12px'
+  }
+
   return (
-    <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f5f0'}}>
-      <div style={{background:'white', border:'1px solid #e5e5e5', borderRadius:'16px', padding:'2rem', width:'360px'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'1.5rem'}}>
-          <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#dbeafe', color:'#1d4ed8', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'600', fontSize:'13px'}}>YFC</div>
-          <div>
-            <div style={{fontSize:'18px', fontWeight:'600'}}>Gestion Budget</div>
-            <div style={{fontSize:'12px', color:'#888'}}>Young For Christ</div>
+    <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
+      <div style={{width:'100%', maxWidth:'360px'}}>
+
+        <div style={{textAlign:'center', marginBottom:'2rem'}}>
+          <div style={{width:'56px', height:'56px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', color:'#1a1040', margin:'0 auto 16px'}}>YFC</div>
+          <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'8px'}}>Tanora ho an'i Kristy</div>
+          <h1 style={{fontSize:'28px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
+            Gestion<br/><span style={{color:'#5eead4'}}>Budget</span>
+          </h1>
+          <p style={{fontSize:'13px', color:'rgba(255,255,255,0.4)'}}>Finances de l'association YFC</p>
+        </div>
+
+        <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem'}}>
+          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', background:'rgba(255,255,255,0.08)', borderRadius:'12px', padding:'3px', marginBottom:'1.5rem'}}>
+            <button onClick={() => setMode('login')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: mode==='login' ? '#2d1f6e' : 'transparent', color: mode==='login' ? '#fff' : 'rgba(255,255,255,0.4)'}}>
+              Connexion
+            </button>
+            <button onClick={() => setMode('register')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: mode==='register' ? '#2d1f6e' : 'transparent', color: mode==='register' ? '#fff' : 'rgba(255,255,255,0.4)'}}>
+              Inscription
+            </button>
           </div>
+
+          {mode === 'register' && (
+            <div>
+              <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Nom complet</label>
+              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." style={inp} />
+            </div>
+          )}
+
+          <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inp} />
+
+          <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Mot de passe</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom: message ? '12px' : '0'}} />
+
+          {message && (
+            <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background: message.includes('attente') || message.includes('créé') ? 'rgba(94,234,212,0.15)' : 'rgba(251,158,160,0.15)', color: message.includes('attente') || message.includes('créé') ? '#5eead4' : '#fb9ea0'}}>
+              {message}
+            </div>
+          )}
+
+          <button
+            onClick={mode === 'login' ? handleLogin : handleRegister}
+            disabled={loading}
+            style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: loading ? 0.7 : 1, marginTop:'4px'}}
+          >
+            {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+          </button>
         </div>
-
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', border:'1px solid #e5e5e5', borderRadius:'8px', overflow:'hidden', marginBottom:'1.5rem'}}>
-          <button onClick={() => setMode('login')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'600', fontSize:'13px', background: mode==='login' ? '#dbeafe' : 'white', color: mode==='login' ? '#1d4ed8' : '#888'}}>Connexion</button>
-          <button onClick={() => setMode('register')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'600', fontSize:'13px', background: mode==='register' ? '#dbeafe' : 'white', color: mode==='register' ? '#1d4ed8' : '#888'}}>Inscription</button>
-        </div>
-
-        {mode === 'register' && (
-          <div style={{marginBottom:'12px'}}>
-            <label style={{fontSize:'12px', color:'#666', display:'block', marginBottom:'4px'}}>Nom complet</label>
-            <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." style={{width:'100%', padding:'8px 10px', border:'1px solid #e5e5e5', borderRadius:'8px', fontSize:'14px', color:'#1a1a1a'}} />
-          </div>
-        )}
-
-        <div style={{marginBottom:'12px'}}>
-          <label style={{fontSize:'12px', color:'#666', display:'block', marginBottom:'4px'}}>Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={{width:'100%', padding:'8px 10px', border:'1px solid #e5e5e5', borderRadius:'8px', fontSize:'14px', color:'#1a1a1a'}} />
-        </div>
-
-        <div style={{marginBottom:'1rem'}}>
-          <label style={{fontSize:'12px', color:'#666', display:'block', marginBottom:'4px'}}>Mot de passe</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" style={{width:'100%', padding:'8px 10px', border:'1px solid #e5e5e5', borderRadius:'8px', fontSize:'14px', color:'#1a1a1a'}} />
-        </div>
-
-        {message && (
-          <div style={{padding:'10px', borderRadius:'8px', marginBottom:'1rem', fontSize:'13px', background: message.includes('attente') ? '#dcfce7' : '#fee2e2', color: message.includes('attente') ? '#16a34a' : '#dc2626'}}>
-            {message}
-          </div>
-        )}
-
-        <button
-          onClick={mode === 'login' ? handleLogin : handleRegister}
-          disabled={loading}
-          style={{width:'100%', padding:'10px', fontWeight:'600', fontSize:'14px', cursor:'pointer', background:'#dbeafe', color:'#1d4ed8', border:'1px solid #bfdbfe', borderRadius:'8px', opacity: loading ? 0.7 : 1}}
-        >
-          {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
-        </button>
       </div>
     </div>
   )

@@ -1,86 +1,146 @@
 import * as XLSX from 'xlsx'
 
-const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+export default function TransactionList({
+  transactions,
+  months,
+  filterMonth,
+  filterType,
+  onFilterMonth,
+  onFilterType,
+  onDelete
+}) {
 
-function fmt(n) {
-  return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
-}
+  function fmt(n) {
+    return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
+  }
 
-export default function TransactionList({ transactions, months, filterMonth, filterType, onFilterMonth, onFilterType, onDelete, allTransactions }) {
+  // 🔥 EXPORT PRO
+  function exportToExcel() {
+    if (!transactions.length) return
 
-  function exportExcel() {
-    if (!allTransactions.length) { alert('Aucune transaction à exporter.'); return }
-    const rows = [...allTransactions].sort((a,b) => a.date?.localeCompare(b.date))
-    const data = rows.map(t => ({
+    const data = transactions.map(t => ({
       Date: t.date,
       Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
       Motif: t.motif,
-      'Montant (Ar)': Number(t.montant),
+      Montant: Number(t.montant),
       Note: t.note || ''
     }))
-    const entrees = rows.filter(t=>t.type==='entree').reduce((s,t)=>s+Number(t.montant||0),0)
-    const depenses = rows.filter(t=>t.type==='depense').reduce((s,t)=>s+Number(t.montant||0),0)
-    data.push(
-      {},
-      { Motif: 'TOTAL ENTRÉES', 'Montant (Ar)': entrees },
-      { Motif: 'TOTAL DÉPENSES', 'Montant (Ar)': depenses },
-      { Motif: 'SOLDE', 'Montant (Ar)': entrees - depenses }
-    )
-    const ws = XLSX.utils.json_to_sheet(data)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Budget')
-    const moisLabel = filterMonth
-      ? (() => { const [y,m] = filterMonth.split('-'); return MONTHS[parseInt(m)-1]+'-'+y })()
-      : 'complet'
-    XLSX.writeFile(wb, `YFC-budget-${moisLabel}.xlsx`)
-  }
 
-  async function handleDelete(t) {
-    if (window.confirm('Supprimer cette transaction ?')) {
-      await onDelete(t)
-    }
+    // 🔥 calculs
+    const totalEntrees = transactions
+      .filter(t => t.type === 'entree')
+      .reduce((s, t) => s + Number(t.montant || 0), 0)
+
+    const totalDepenses = transactions
+      .filter(t => t.type === 'depense')
+      .reduce((s, t) => s + Number(t.montant || 0), 0)
+
+    const solde = totalEntrees - totalDepenses
+
+    // 🔥 ajouter résumé
+    data.push({})
+    data.push({
+      Date: '',
+      Type: '',
+      Motif: 'TOTAL ENTRÉES',
+      Montant: totalEntrees,
+      Note: ''
+    })
+    data.push({
+      Date: '',
+      Type: '',
+      Motif: 'TOTAL DÉPENSES',
+      Montant: totalDepenses,
+      Note: ''
+    })
+    data.push({
+      Date: '',
+      Type: '',
+      Motif: 'SOLDE',
+      Montant: solde,
+      Note: ''
+    })
+
+    const ws = XLSX.utils.json_to_sheet(data)
+
+    // 🔥 largeur colonnes
+    ws['!cols'] = [
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 22 },
+      { wch: 15 },
+      { wch: 30 }
+    ]
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Historique')
+
+    const date = new Date().toISOString().slice(0,10)
+
+    XLSX.writeFile(wb, `historique_${date}.xlsx`)
   }
 
   return (
     <div className="card">
       <div className="card-title">Historique</div>
+
       <div className="filter-row">
-        <select value={filterMonth} onChange={e => onFilterMonth(e.target.value)}>
+        <select
+          value={filterMonth}
+          onChange={(e) => onFilterMonth(e.target.value)}
+        >
           <option value="">Tous les mois</option>
-          {months.map(m => {
-            const [y, mo] = m.split('-')
-            return <option key={m} value={m}>{MONTHS[parseInt(mo)-1]} {y}</option>
-          })}
+          {months.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
         </select>
-        <select value={filterType} onChange={e => onFilterType(e.target.value)}>
+
+        <select
+          value={filterType}
+          onChange={(e) => onFilterType(e.target.value)}
+        >
           <option value="">Tous</option>
           <option value="entree">Entrées</option>
           <option value="depense">Dépenses</option>
         </select>
-        <button className="btn-export" onClick={exportExcel}>Exporter Excel</button>
+
+        <button
+          className="btn-export"
+          onClick={exportToExcel}
+        >
+          Exporter Excel
+        </button>
       </div>
 
-      {transactions.length === 0
-        ? <div className="empty">Aucune transaction trouvée</div>
-        : transactions.map((t, i) => {
-            const rawDate = t.date ? String(t.date).slice(0, 10) : ''
-            const d = rawDate ? new Date(rawDate + 'T12:00:00') : null
-            const dateStr = d && !isNaN(d)
-              ? d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-              : rawDate
-            return (
-              <div className="tx-item" key={i}>
-                <div className={`tx-icon ${t.type}`}>{t.type === 'entree' ? '+' : '−'}</div>
-                <div className="tx-info">
-                  <div className="tx-motif">{t.motif}</div>
-                  <div className="tx-date">{dateStr}{t.note ? ' · ' + t.note : ''}</div>
-                </div>
-                <div className={`tx-amount ${t.type}`}>{t.type === 'entree' ? '+' : '−'}{fmt(t.montant)}</div>
-                <button className="btn-del" onClick={() => handleDelete(t)}>✕</button>
-              </div>
-            )
-          })
-      }
+      {transactions.length === 0 && (
+        <div className="empty">Aucune transaction</div>
+      )}
+
+      {transactions.map(tx => (
+        <div key={tx.id} className="tx-item">
+
+          <div className={`tx-icon ${tx.type}`}>
+            {tx.type === 'entree' ? '+' : '−'}
+          </div>
+
+          <div className="tx-info">
+            <div className="tx-motif">{tx.motif}</div>
+            <div className="tx-date">{tx.date}</div>
+          </div>
+
+          <div className={`tx-amount ${tx.type}`}>
+            {tx.type === 'depense' ? '−' : '+'}
+            {fmt(tx.montant)}
+          </div>
+
+          <button
+            className="btn-del"
+            onClick={() => onDelete(tx)}
+          >
+            ×
+          </button>
+        </div>
+      ))}
     </div>
   )
 }

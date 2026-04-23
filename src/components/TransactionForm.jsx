@@ -1,105 +1,214 @@
-import { useState } from 'react'
-
-const DEFAULT_MOTIFS = {
-  entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation'],
-  depense: ['Sortie prédication', 'Transport', 'Matériel', 'Impression', 'Restauration', 'Autre']
-}
+import { useState, useEffect } from 'react'
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot
+} from 'firebase/firestore'
+import { db } from '../firebase'
 
 export default function TransactionForm({ onAdd }) {
   const [type, setType] = useState('entree')
-  const [date, setDate] = useState(new Date().toISOString().slice(0,10))
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [montant, setMontant] = useState('')
+  const [motif, setMotif] = useState('')
   const [note, setNote] = useState('')
-  const [motifs, setMotifs] = useState(DEFAULT_MOTIFS)
-  const [motifSel, setMotifSel] = useState(DEFAULT_MOTIFS.entree[0])
+
+  const [motifs, setMotifs] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [newMotif, setNewMotif] = useState('')
 
-  function changeType(t) {
-    setType(t)
-    setMotifSel(motifs[t][0])
-  }
+  /* 🔥 LOAD FROM FIREBASE */
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'motifs'), (snap) => {
+      const data = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }))
+      setMotifs(data)
+    })
 
-  function handleSubmit() {
-    if (!date || !montant || isNaN(montant) || Number(montant) <= 0) {
-      alert('Veuillez remplir la date et le montant.')
-      return
-    }
-    onAdd({ date, type, motif: motifSel, montant: Number(montant), note })
+    return () => unsub()
+  }, [])
+
+  /* 🔥 FILTER PAR TYPE */
+  const filteredMotifs = motifs.filter(m => m.type === type)
+
+  /* 🔥 RESET motif quand on change type */
+  useEffect(() => {
+    setMotif('')
+  }, [type])
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (!montant || !motif) return
+
+    onAdd({
+      type,
+      date,
+      montant: Number(montant),
+      motif,
+      note
+    })
+
     setMontant('')
+    setMotif('')
     setNote('')
   }
 
-  function addMotif() {
+  /* 🔥 ADD MOTIF avec type */
+  async function addMotif() {
     if (!newMotif.trim()) return
-    const updated = { ...motifs, [type]: [...motifs[type], newMotif.trim()] }
-    setMotifs(updated)
+
+    await addDoc(collection(db, 'motifs'), {
+      name: newMotif.trim(),
+      type: type // 🔥 clé
+    })
+
     setNewMotif('')
   }
 
-  function removeMotif(t, i) {
-    const updated = { ...motifs, [t]: motifs[t].filter((_, idx) => idx !== i) }
-    setMotifs(updated)
+  /* 🔥 DELETE */
+  async function deleteMotif(m) {
+    await deleteDoc(doc(db, 'motifs', m.id))
   }
 
   return (
     <>
       <div className="card">
         <div className="card-title">Nouvelle transaction</div>
+
         <div className="type-toggle">
-          <button className={`type-btn ${type === 'entree' ? 'active-entree' : ''}`} onClick={() => changeType('entree')}>+ Entrée</button>
-          <button className={`type-btn ${type === 'depense' ? 'active-depense' : ''}`} onClick={() => changeType('depense')}>− Dépense</button>
+          <button
+            type="button"
+            className={`type-btn ${type === 'entree' ? 'active-entree' : ''}`}
+            onClick={() => setType('entree')}
+          >
+            + Entrée
+          </button>
+
+          <button
+            type="button"
+            className={`type-btn ${type === 'depense' ? 'active-depense' : ''}`}
+            onClick={() => setType('depense')}
+          >
+            − Dépense
+          </button>
         </div>
-        <div className="form-row">
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Montant (Ar)</label>
+              <input
+                type="number"
+                value={montant}
+                onChange={e => setMontant(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label>Date</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+            <label>Motif</label>
+
+            <div className="motif-row">
+              <select
+                value={motif}
+                onChange={e => setMotif(e.target.value)}
+              >
+                <option value="">Choisir...</option>
+
+                {filteredMotifs.map(m => (
+                  <option key={m.id} value={m.name}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                className="btn-motif"
+                onClick={() => setShowModal(true)}
+              >
+                + Motifs
+              </button>
+            </div>
           </div>
+
           <div className="form-group">
-            <label>Montant (Ar)</label>
-            <input type="number" value={montant} onChange={e => setMontant(e.target.value)} placeholder="0" min="0" />
+            <label>Note (optionnel)</label>
+            <input
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Détail..."
+            />
           </div>
-        </div>
-        <div className="form-group">
-          <label>Motif</label>
-          <div className="motif-row">
-            <select value={motifSel} onChange={e => setMotifSel(e.target.value)}>
-              {motifs[type].map(m => <option key={m}>{m}</option>)}
-            </select>
-            <button className="btn-secondary" onClick={() => setShowModal(true)}>+ Motifs</button>
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Note (optionnel)</label>
-          <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="Détail..." />
-        </div>
-        <button className="btn-primary" onClick={handleSubmit}>Enregistrer</button>
+
+          <button className="btn-primary">
+            Enregistrer
+          </button>
+        </form>
       </div>
 
+      {/* 🔥 MODAL */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Gérer les motifs</h3>
-            {['entree', 'depense'].map(t => (
-              <div key={t}>
-                <div style={{fontSize:'11px',color:'#999',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:'6px'}}>
-                  {t === 'entree' ? 'Entrées' : 'Dépenses'}
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>
+              Motifs {type === 'entree' ? 'Entrée' : 'Dépense'}
+            </h3>
+
+            <div className="chip-list">
+              {filteredMotifs.map(m => (
+                <div key={m.id} className="chip">
+                  <span
+                    onClick={() => {
+                      setMotif(m.name)
+                      setShowModal(false)
+                    }}
+                  >
+                    {m.name}
+                  </span>
+
+                  <button onClick={() => deleteMotif(m)}>
+                    ×
+                  </button>
                 </div>
-                <div className="chip-list">
-                  {motifs[t].map((m, i) => (
-                    <div className="chip" key={i}>
-                      <span>{m}</span>
-                      <button onClick={() => removeMotif(t, i)}>✕</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <div className="add-motif-row">
-              <input value={newMotif} onChange={e => setNewMotif(e.target.value)} placeholder={`Nouveau motif ${type === 'entree' ? 'entrée' : 'dépense'}...`} />
-              <button className="btn-secondary" onClick={addMotif}>Ajouter</button>
+              ))}
             </div>
-            <button className="btn-primary" onClick={() => setShowModal(false)}>Fermer</button>
+
+            <div className="add-motif-row">
+              <input
+                value={newMotif}
+                onChange={e => setNewMotif(e.target.value)}
+                placeholder={`Nouveau motif ${type}`}
+              />
+
+              <button
+                className="btn-secondary"
+                onClick={addMotif}
+              >
+                Ajouter
+              </button>
+            </div>
+
+            <button
+              className="btn-primary"
+              onClick={() => setShowModal(false)}
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}
