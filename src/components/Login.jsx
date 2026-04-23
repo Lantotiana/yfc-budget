@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { auth } from '../auth'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 
@@ -10,9 +10,20 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [nom, setNom] = useState('')
   const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('error')
   const [loading, setLoading] = useState(false)
   const [inscriptionReussie, setInscriptionReussie] = useState(false)
   const [nomInscrit, setNomInscrit] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+
+  function showMsg(msg, type = 'error') {
+    setMessage(msg)
+    setMessageType(type)
+  }
 
   async function handleLogin() {
     setLoading(true)
@@ -22,21 +33,21 @@ export default function Login() {
       const snap = await getDoc(doc(db, 'users', cred.user.uid))
       if (!snap.exists()) {
         await signOut(auth)
-        setMessage('Compte introuvable. Veuillez vous inscrire.')
+        showMsg('Compte introuvable. Veuillez vous inscrire.')
       } else if (snap.data().approuve !== true) {
         await signOut(auth)
-        setMessage('Votre compte est en attente d\'approbation par l\'administrateur.')
+        showMsg('Votre compte est en attente d\'approbation par l\'administrateur.')
       }
     } catch(e) {
-      setMessage('Email ou mot de passe incorrect.')
+      showMsg('Email ou mot de passe incorrect.')
     }
     setLoading(false)
   }
 
   async function handleRegister() {
-    if (!nom.trim()) { setMessage('Veuillez entrer votre nom.'); return }
-    if (!email.trim()) { setMessage('Veuillez entrer votre email.'); return }
-    if (password.length < 6) { setMessage('Mot de passe trop court (minimum 6 caractères).'); return }
+    if (!nom.trim()) { showMsg('Veuillez entrer votre nom.'); return }
+    if (!email.trim()) { showMsg('Veuillez entrer votre email.'); return }
+    if (password.length < 6) { showMsg('Mot de passe trop court (minimum 6 caractères).'); return }
     setLoading(true)
     setMessage('')
     try {
@@ -47,15 +58,28 @@ export default function Login() {
         approuve: false,
         dateInscription: new Date().toISOString().slice(0, 10)
       })
-      await signOut(auth)
       setNomInscrit(nom.trim().split(' ')[0])
+      setLoading(false)
       setInscriptionReussie(true)
+      signOut(auth)
     } catch(e) {
-      if (e.code === 'auth/email-already-in-use') setMessage('Cet email est déjà utilisé.')
-      else if (e.code === 'auth/weak-password') setMessage('Mot de passe trop court (minimum 6 caractères).')
-      else setMessage('Erreur lors de la création du compte.')
+      if (e.code === 'auth/email-already-in-use') showMsg('Cet email est déjà utilisé.')
+      else if (e.code === 'auth/weak-password') showMsg('Mot de passe trop court (minimum 6 caractères).')
+      else showMsg('Erreur lors de la création du compte.')
+      setLoading(false)
     }
-    setLoading(false)
+  }
+
+  async function handleForgotPassword() {
+    if (!forgotEmail.trim()) { showMsg('Veuillez entrer votre email.'); return }
+    setForgotLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, forgotEmail.trim())
+      setForgotSent(true)
+    } catch(e) {
+      showMsg('Email introuvable ou erreur lors de l\'envoi.')
+    }
+    setForgotLoading(false)
   }
 
   const inp = {
@@ -74,7 +98,6 @@ export default function Login() {
   if (inscriptionReussie) return (
     <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
       <div style={{width:'100%', maxWidth:'400px', textAlign:'center'}}>
-
         <div style={{marginBottom:'2rem'}}>
           <div style={{width:'80px', height:'80px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', border:'2px solid #5eead4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', fontSize:'36px'}}>
             🕊️
@@ -90,29 +113,21 @@ export default function Login() {
 
         <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem', marginBottom:'1.5rem', textAlign:'left'}}>
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>
-              ✅
-            </div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>✅</div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Compte créé avec succès</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vos informations ont bien été enregistrées dans notre système.</div>
             </div>
           </div>
-
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>
-              ⏳
-            </div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>⏳</div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>En attente d'approbation</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
             </div>
           </div>
-
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>
-              📧
-            </div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>📧</div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Notification par email</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vous recevrez un email dès que votre compte sera approuvé.</div>
@@ -133,6 +148,72 @@ export default function Login() {
         >
           Retour à la connexion
         </button>
+      </div>
+    </div>
+  )
+
+  if (showForgot) return (
+    <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
+      <div style={{width:'100%', maxWidth:'360px'}}>
+
+        <div style={{textAlign:'center', marginBottom:'2rem'}}>
+          <div style={{width:'56px', height:'56px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', color:'#1a1040', margin:'0 auto 16px'}}>
+            YFC
+          </div>
+          <h1 style={{fontSize:'22px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
+            Mot de passe<br/><span style={{color:'#5eead4'}}>oublié ?</span>
+          </h1>
+          <p style={{fontSize:'13px', color:'rgba(255,255,255,0.4)'}}>
+            On va vous envoyer un lien de réinitialisation
+          </p>
+        </div>
+
+        <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem'}}>
+          {forgotSent ? (
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:'36px', marginBottom:'16px'}}>📧</div>
+              <div style={{fontSize:'15px', fontWeight:'700', color:'#5eead4', marginBottom:'8px'}}>Email envoyé !</div>
+              <div style={{fontSize:'13px', color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:'24px'}}>
+                Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
+              </div>
+              <button
+                onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail('') }}
+                style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit'}}
+              >
+                Retour à la connexion
+              </button>
+            </div>
+          ) : (
+            <>
+              {message && (
+                <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background:'rgba(251,158,160,0.15)', color:'#fb9ea0'}}>
+                  {message}
+                </div>
+              )}
+              <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Votre email</label>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                placeholder="ton@email.com"
+                style={{...inp, marginBottom:'16px'}}
+              />
+              <button
+                onClick={handleForgotPassword}
+                disabled={forgotLoading}
+                style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: forgotLoading ? 0.7 : 1, marginBottom:'12px'}}
+              >
+                {forgotLoading ? 'Envoi...' : 'Envoyer le lien'}
+              </button>
+              <button
+                onClick={() => { setShowForgot(false); setMessage('') }}
+                style={{width:'100%', padding:'11px', fontWeight:'600', fontSize:'13px', cursor:'pointer', background:'transparent', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'12px', fontFamily:'inherit'}}
+              >
+                ← Retour
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -178,10 +259,35 @@ export default function Login() {
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inp} />
 
           <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Mot de passe</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom: message ? '12px' : '0'}} />
+          <div style={{position:'relative', marginBottom:'4px'}}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••"
+              style={{...inp, marginBottom:0, paddingRight:'44px'}}
+            />
+            <button
+              onClick={() => setShowPassword(!showPassword)}
+              style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', fontSize:'16px', padding:'0', lineHeight:1}}
+            >
+              {showPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
+
+          {mode === 'login' && (
+            <div style={{textAlign:'right', marginBottom:'14px'}}>
+              <button
+                onClick={() => { setShowForgot(true); setForgotEmail(email); setMessage('') }}
+                style={{background:'none', border:'none', cursor:'pointer', color:'rgba(94,234,212,0.7)', fontSize:'12px', fontFamily:'inherit', padding:0}}
+              >
+                Mot de passe oublié ?
+              </button>
+            </div>
+          )}
 
           {message && (
-            <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background:'rgba(251,158,160,0.15)', color:'#fb9ea0'}}>
+            <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background: messageType === 'success' ? 'rgba(94,234,212,0.15)' : 'rgba(251,158,160,0.15)', color: messageType === 'success' ? '#5eead4' : '#fb9ea0'}}>
               {message}
             </div>
           )}
@@ -189,7 +295,7 @@ export default function Login() {
           <button
             onClick={mode === 'login' ? handleLogin : handleRegister}
             disabled={loading}
-            style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: loading ? 0.7 : 1, marginTop:'4px'}}
+            style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: loading ? 0.7 : 1, marginTop: mode === 'register' ? '4px' : '0'}}
           >
             {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
           </button>
