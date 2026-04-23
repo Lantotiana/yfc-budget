@@ -20,14 +20,12 @@ body {
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0; /* ✅ FIX */
+  padding: 0 8px;
 }
 
 /* HERO */
 .app-hero {
-  background: #2d1f6e;
-  padding: 20px 16px 16px;
-  margin-bottom: 16px;
+  margin: 0 -8px; /* 👉 stretch full width */
 }
 
 .app-topbar {
