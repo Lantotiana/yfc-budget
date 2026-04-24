@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'
+import { collection, addDoc, deleteDoc, doc, onSnapshot, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { auth } from '../auth'
 
 export default function TransactionForm({ onAdd }) {
   const [type, setType] = useState('entree')
@@ -27,14 +28,47 @@ export default function TransactionForm({ onAdd }) {
     setMotifCustom('')
   }, [type])
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const motifFinal = motif === 'Autre' ? motifCustom.trim() : motif
     if (!montant || !motifFinal) {
       alert('Veuillez remplir le montant et le motif.')
       return
     }
-    onAdd({ type, date, montant: Number(montant), motif: motifFinal, note })
+
+    // Récupération des infos utilisateur connecté
+    const user = auth.currentUser
+    let createdBy = null
+    if (user) {
+      let nom = user.displayName || user.email
+      let photoURL = user.photoURL || null
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (userDoc.exists()) {
+          const data = userDoc.data()
+          nom = data.nom || data.displayName || data.prenom || nom
+          photoURL = data.photoURL || photoURL
+        }
+      } catch (err) {
+        console.warn('Impossible de charger le profil utilisateur', err)
+      }
+      createdBy = {
+        uid: user.uid,
+        nom,
+        email: user.email,
+        photoURL
+      }
+    }
+
+    onAdd({
+      type,
+      date,
+      montant: Number(montant),
+      motif: motifFinal,
+      note,
+      createdBy,
+      createdAt: new Date().toISOString()
+    })
     setMontant('')
     setMotif('')
     setMotifCustom('')

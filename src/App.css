@@ -127,9 +127,7 @@ body {
   background: white;
   border-radius: 14px;
   padding: 14px;
-
-  margin: 0 12px 16px; /* ✅ ajout gauche + droite */
-
+  margin: 0 0 16px; /* ✅ FIX */
   display: flex;
   justify-content: space-between;
 }
@@ -380,4 +378,47 @@ input:focus, select:focus {
 .type-btn.active-depense {
   background: #2d1f6e;
   color: #fb9ea0;
+}
+
+/* ==================== */
+/* TX USER (traçabilité) */
+/* ==================== */
+.tx-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #2d1f6e;
+  font-weight: 600;
+}
+
+.tx-user-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #5eead4;
+  flex-shrink: 0;
+}
+
+.tx-user-avatar-fallback {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2d1f6e;
+  color: #5eead4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.tx-user span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
 }

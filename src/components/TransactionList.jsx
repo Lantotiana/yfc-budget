@@ -68,7 +68,9 @@ export default function TransactionList({
     return transactions.filter(tx =>
       fuzzyMatch(tx.motif, search) ||
       fuzzyMatch(tx.note, search) ||
-      fuzzyMatch(tx.date, search)
+      fuzzyMatch(tx.date, search) ||
+      fuzzyMatch(tx.createdBy?.nom, search) ||
+      fuzzyMatch(tx.createdBy?.email, search)
     )
   }, [transactions, search])
 
@@ -137,13 +139,14 @@ export default function TransactionList({
       Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
       Motif: t.motif,
       Montant: Number(t.montant),
-      Note: t.note || ''
+      Note: t.note || '',
+      'Ajouté par': t.createdBy?.nom || '—'
     }))
     const totalEntrees = searched.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
     const totalDepenses = searched.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
     data.push({}, { Motif: 'TOTAL ENTRÉES', Montant: totalEntrees }, { Motif: 'TOTAL DÉPENSES', Montant: totalDepenses }, { Motif: 'SOLDE', Montant: totalEntrees - totalDepenses })
     const ws = XLSX.utils.json_to_sheet(data)
-    ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 15 }, { wch: 30 }]
+    ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 15 }, { wch: 30 }, { wch: 20 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Historique')
     XLSX.writeFile(wb, `YFC-budget-${new Date().toISOString().slice(0,10)}.xlsx`)
@@ -171,7 +174,7 @@ export default function TransactionList({
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher (motif, note, date)..."
+            placeholder="Rechercher (motif, note, date, utilisateur)..."
             style={{...inp, paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
           />
           <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9b8fb5'}}>🔍</div>
@@ -214,6 +217,18 @@ export default function TransactionList({
             <div className="tx-info">
               <div className="tx-motif">{tx.motif}</div>
               <div className="tx-date">{tx.date}{tx.note ? ' · ' + tx.note : ''}</div>
+            {tx.createdBy && (
+                <div className="tx-user">
+                  {tx.createdBy.photoURL ? (
+                    <img src={tx.createdBy.photoURL} alt="" className="tx-user-avatar" />
+                  ) : (
+                    <div className="tx-user-avatar-fallback">
+                      {(tx.createdBy.nom || '?').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span>{tx.createdBy.nom}</span>
+                </div>
+              )}
             </div>
             <div className={`tx-amount ${tx.type}`}>
               {tx.type === 'depense' ? '−' : '+'}{fmt(tx.montant)}
@@ -252,6 +267,33 @@ export default function TransactionList({
               <h3 style={{fontSize:'16px', fontWeight:'700', color:'#2d1f6e'}}>Modifier la transaction</h3>
               <button onClick={closeEdit} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'#9b8fb5'}}>✕</button>
             </div>
+
+            {selected.createdBy && (
+              <div style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 12px', background:'#f0eef8', borderRadius:'12px', marginBottom:'14px'}}>
+                {selected.createdBy.photoURL ? (
+                  <img
+                    src={selected.createdBy.photoURL}
+                    alt=""
+                    style={{width:'32px', height:'32px', borderRadius:'50%', objectFit:'cover', border:'2px solid #5eead4'}}
+                  />
+                ) : (
+                  <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#2d1f6e', color:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'13px'}}>
+                    {(selected.createdBy.nom || '?').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:'10px', color:'#9b8fb5', fontWeight:'600', marginBottom:'2px'}}>AJOUTÉ PAR</div>
+                  <div style={{fontSize:'13px', fontWeight:'700', color:'#2d1f6e', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                    {selected.createdBy.nom}
+                  </div>
+                  {selected.createdBy.email && selected.createdBy.email !== selected.createdBy.nom && (
+                    <div style={{fontSize:'10px', color:'#9b8fb5', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                      {selected.createdBy.email}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', background:'#e8e4f4', borderRadius:'12px', padding:'3px', marginBottom:'14px'}}>
               <button onClick={() => handleChangeType('entree')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: editType==='entree' ? '#2d1f6e' : 'transparent', color: editType==='entree' ? '#5eead4' : '#9b8fb5'}}>
