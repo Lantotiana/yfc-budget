@@ -70,17 +70,30 @@ export default function Login() {
     }
   }
 
-  async function handleForgotPassword() {
-    if (!forgotEmail.trim()) { showMsg('Veuillez entrer votre email.'); return }
-    setForgotLoading(true)
-    try {
-      await sendPasswordResetEmail(auth, forgotEmail.trim())
-      setForgotSent(true)
-    } catch(e) {
-      showMsg('Email introuvable ou erreur lors de l\'envoi.')
-    }
-    setForgotLoading(false)
+ async function handleForgotPassword() {
+  if (!forgotEmail.trim()) { 
+    showMsg('Veuillez entrer votre email.')
+    return 
   }
+  setForgotLoading(true)
+  setMessage('')
+  try {
+    await sendPasswordResetEmail(auth, forgotEmail.trim())
+    setForgotSent(true)
+  } catch(e) {
+    console.error('Erreur reset password:', e.code, e.message)
+    if (e.code === 'auth/user-not-found') {
+      showMsg('Aucun compte trouvé avec cet email.')
+    } else if (e.code === 'auth/invalid-email') {
+      showMsg('Email invalide.')
+    } else if (e.code === 'auth/too-many-requests') {
+      showMsg('Trop de tentatives. Réessayez plus tard.')
+    } else {
+      showMsg('Erreur : ' + e.code + ' - ' + e.message)
+    }
+  }
+  setForgotLoading(false)
+}
 
   const inp = {
     width: '100%',

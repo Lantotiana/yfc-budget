@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -9,9 +9,27 @@ const DEFAULT_MOTIFS = {
 }
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const PAGE_SIZE = 10
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
+}
+
+function normalize(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+}
+
+function fuzzyMatch(text, query) {
+  const t = normalize(text)
+  const q = normalize(query)
+  if (!q) return true
+  if (t.includes(q)) return true
+  const words = q.split(/\s+/).filter(Boolean)
+  return words.every(w => t.includes(w) || t.includes(w.slice(0, Math.max(3, w.length - 1))))
 }
 
 export default function TransactionList({
@@ -26,6 +44,36 @@ export default function TransactionList({
   const [editMotifCustom, setEditMotifCustom] = useState('')
   const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const [hasInit, setHasInit] = useState(false)
+
+  useEffect(() => {
+    if (!hasInit && months.length > 0) {
+      if (months.includes(currentMonth)) {
+        onFilterMonth(currentMonth)
+      }
+      setHasInit(true)
+    }
+  }, [months, hasInit])
+
+  useEffect(() => {
+    setPage(1)
+  }, [filterMonth, filterType, search])
+
+  const searched = useMemo(() => {
+    if (!search.trim()) return transactions
+    return transactions.filter(tx =>
+      fuzzyMatch(tx.motif, search) ||
+      fuzzyMatch(tx.note, search) ||
+      fuzzyMatch(tx.date, search)
+    )
+  }, [transactions, search])
+
+  const totalPages = Math.max(1, Math.ceil(searched.length / PAGE_SIZE))
+  const paginated = searched.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   function openEdit(tx) {
     setSelected(tx)
@@ -83,16 +131,16 @@ export default function TransactionList({
   }
 
   function exportToExcel() {
-    if (!transactions.length) return
-    const data = transactions.map(t => ({
+    if (!searched.length) return
+    const data = searched.map(t => ({
       Date: t.date,
       Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
       Motif: t.motif,
       Montant: Number(t.montant),
       Note: t.note || ''
     }))
-    const totalEntrees = transactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
-    const totalDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const totalEntrees = searched.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const totalDepenses = searched.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
     data.push({}, { Motif: 'TOTAL ENTRÉES', Montant: totalEntrees }, { Motif: 'TOTAL DÉPENSES', Montant: totalDepenses }, { Motif: 'SOLDE', Montant: totalEntrees - totalDepenses })
     const ws = XLSX.utils.json_to_sheet(data)
     ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 15 }, { wch: 30 }]
@@ -118,6 +166,25 @@ export default function TransactionList({
       <div className="card">
         <div className="card-title">Historique</div>
 
+        <div style={{position:'relative', marginBottom:'12px'}}>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher (motif, note, date)..."
+            style={{...inp, paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
+          />
+          <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'#9b8fb5'}}>🔍</div>
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#9b8fb5', fontSize:'14px', padding:'6px'}}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         <div className="filter-row">
           <select value={filterMonth} onChange={e => onFilterMonth(e.target.value)}>
             <option value="">Tous les mois</option>
@@ -134,9 +201,14 @@ export default function TransactionList({
           <button className="btn-export" onClick={exportToExcel}>Exporter Excel</button>
         </div>
 
-        {transactions.length === 0 && <div className="empty">Aucune transaction</div>}
+        <div style={{fontSize:'11px', color:'#9b8fb5', marginBottom:'10px', fontWeight:'600'}}>
+          {searched.length} transaction{searched.length > 1 ? 's' : ''}
+          {searched.length > PAGE_SIZE && ` · Page ${page}/${totalPages}`}
+        </div>
 
-        {transactions.map(tx => (
+        {paginated.length === 0 && <div className="empty">Aucune transaction</div>}
+
+        {paginated.map(tx => (
           <div key={tx.id} className="tx-item" onClick={() => openEdit(tx)} style={{cursor:'pointer'}}>
             <div className={`tx-icon ${tx.type}`}>{tx.type === 'entree' ? '+' : '−'}</div>
             <div className="tx-info">
@@ -148,6 +220,28 @@ export default function TransactionList({
             </div>
           </div>
         ))}
+
+        {searched.length > PAGE_SIZE && (
+          <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:'8px', marginTop:'14px', paddingTop:'14px', borderTop:'0.5px solid #e8e4f4'}}>
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{padding:'8px 14px', background:'#e8e4f4', border:'none', borderRadius:'10px', cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:'600', color: page === 1 ? '#c8c0e0' : '#2d1f6e', fontFamily:'inherit'}}
+            >
+              ← Précédent
+            </button>
+            <div style={{fontSize:'12px', color:'#9b8fb5', fontWeight:'600', padding:'0 8px'}}>
+              {page} / {totalPages}
+            </div>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{padding:'8px 14px', background:'#e8e4f4', border:'none', borderRadius:'10px', cursor: page === totalPages ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:'600', color: page === totalPages ? '#c8c0e0' : '#2d1f6e', fontFamily:'inherit'}}
+            >
+              Suivant →
+            </button>
+          </div>
+        )}
       </div>
 
       {selected && (
