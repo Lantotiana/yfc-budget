@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useTheme } from '../context/ThemeContext'
+import { Share2, Check } from 'lucide-react'
 
 export default function Presences({ user, userData }) {
   const navigate = useNavigate()
@@ -167,9 +168,9 @@ export default function Presences({ user, userData }) {
           {selectedEvent && membres.length > 0 && (
             <button
               onClick={partager}
-              style={{background:'rgba(255,255,255,0.2)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', flexShrink:0, display:'flex', alignItems:'center', gap:'5px'}}
+              style={{background:'rgba(255,255,255,0.2)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', flexShrink:0, display:'flex', alignItems:'center', gap:'6px'}}
             >
-              📤 <span>Partager</span>
+              <Share2 size={15} /> Partager
             </button>
           )}
         </div>
@@ -243,10 +244,10 @@ export default function Presences({ user, userData }) {
                     width:'28px', height:'28px', borderRadius:'8px', flexShrink:0,
                     background: present ? '#5eead4' : 'var(--input-bg)',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:'15px',
                     transition: 'background 0.15s',
+                    display:'flex', alignItems:'center', justifyContent:'center',
                   }}>
-                    {present ? '✓' : ''}
+                    {present ? <Check size={16} strokeWidth={3} color="#1a1040" /> : null}
                   </div>
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:'14px', fontWeight:'600', color:'var(--text-primary)'}}>

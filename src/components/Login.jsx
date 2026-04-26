@@ -3,6 +3,7 @@ import { auth } from '../auth'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { Eye, EyeOff, CheckCircle, Clock, Mail, Feather } from 'lucide-react'
 
 export default function Login() {
   const [mode, setMode] = useState('login')
@@ -112,8 +113,8 @@ export default function Login() {
     <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
       <div style={{width:'100%', maxWidth:'400px', textAlign:'center'}}>
         <div style={{marginBottom:'2rem'}}>
-          <div style={{width:'80px', height:'80px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', border:'2px solid #5eead4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', fontSize:'36px'}}>
-            🕊️
+          <div style={{width:'80px', height:'80px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', border:'2px solid #5eead4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px'}}>
+            <Feather size={36} color="#5eead4" />
           </div>
           <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'12px'}}>
             Demande envoyée
@@ -126,21 +127,21 @@ export default function Login() {
 
         <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem', marginBottom:'1.5rem', textAlign:'left'}}>
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>✅</div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><CheckCircle size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Compte créé avec succès</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vos informations ont bien été enregistrées dans notre système.</div>
             </div>
           </div>
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>⏳</div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><Clock size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>En attente d'approbation</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
             </div>
           </div>
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'14px'}}>📧</div>
+            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><Mail size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Notification par email</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vous recevrez un email dès que votre compte sera approuvé.</div>
@@ -184,7 +185,7 @@ export default function Login() {
         <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem'}}>
           {forgotSent ? (
             <div style={{textAlign:'center'}}>
-              <div style={{fontSize:'36px', marginBottom:'16px'}}>📧</div>
+              <div style={{marginBottom:'16px', display:'flex', justifyContent:'center'}}><Mail size={36} color="#5eead4" /></div>
               <div style={{fontSize:'15px', fontWeight:'700', color:'#5eead4', marginBottom:'8px'}}>Email envoyé !</div>
               <div style={{fontSize:'13px', color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:'24px'}}>
                 Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
@@ -282,9 +283,9 @@ export default function Login() {
             />
             <button
               onClick={() => setShowPassword(!showPassword)}
-              style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', fontSize:'16px', padding:'0', lineHeight:1}}
+              style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', padding:'0', display:'flex', alignItems:'center'}}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { Search, Trash2 } from 'lucide-react'
 const EMPTY = { nom: '', prenoms: '', adresse: '', telephone: '', email: '' }
 
 function normalize(s) {
@@ -117,7 +118,7 @@ export default function Membres({ user, userData }) {
         </div>
 
         <div style={{position:'relative'}}>
-          <span style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'rgba(255,255,255,0.4)', fontSize:'14px'}}>🔍</span>
+          <span style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'rgba(255,255,255,0.4)', display:'flex'}}><Search size={15} /></span>
           <input
             type="text"
             value={search}
@@ -155,9 +156,9 @@ export default function Membres({ user, userData }) {
             </div>
             <button
               onClick={e => { e.stopPropagation(); setConfirmDel(m) }}
-              style={{background:'var(--del-btn-bg)', border:'none', borderRadius:'8px', padding:'6px 8px', cursor:'pointer', color:'#be123c', fontSize:'13px'}}
+              style={{background:'var(--del-btn-bg)', border:'none', borderRadius:'8px', padding:'6px 8px', cursor:'pointer', color:'#be123c', display:'flex', alignItems:'center'}}
             >
-              🗑
+              <Trash2 size={15} />
             </button>
           </div>
         ))}

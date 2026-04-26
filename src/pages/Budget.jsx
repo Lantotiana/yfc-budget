@@ -6,9 +6,7 @@ import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from '
 import { signOut } from 'firebase/auth'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
-import Admin from '../components/Admin'
 import DetailTransactions from '../components/DetailTransactions'
-import { ADMIN_EMAIL } from '../constants'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -20,7 +18,6 @@ export default function Budget({ user, userData }) {
   const [loading, setLoading] = useState(true)
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
-  const [showAdmin, setShowAdmin] = useState(false)
   const [showDetail, setShowDetail] = useState(null)
   const [editTx, setEditTx] = useState(null)
 
@@ -106,12 +103,6 @@ export default function Budget({ user, userData }) {
             <p>Young For Christ · Tanora ho an'i Kristy</p>
           </div>
 
-          <div className="header-actions">
-            {user.email === ADMIN_EMAIL && (
-              <button className="btn-admin" onClick={() => setShowAdmin(true)}>Admin</button>
-            )}
-            <button className="btn-logout" onClick={() => signOut(auth)}>Déconnexion</button>
-          </div>
         </div>
 
         <div className="hero-stats">
@@ -154,7 +145,6 @@ export default function Budget({ user, userData }) {
         onEditDone={() => setEditTx(null)}
       />
 
-      {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
   )
 }

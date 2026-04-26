@@ -3,6 +3,7 @@ import { db } from '../firebase'
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import emailjs from '@emailjs/browser'
 import { useTheme } from '../context/ThemeContext'
+import { X } from 'lucide-react'
 
 const EMAILJS_SERVICE_ID = 'service_q55ivrp'
 const EMAILJS_TEMPLATE_ID = 'template_wgibd9k'
@@ -71,7 +72,7 @@ export default function Admin({ onClose }) {
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
           <h2 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Gestion des membres</h2>
-          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'var(--text-secondary)'}}>✕</button>
+          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
         </div>
 
         <div style={{...sectionLabel, marginTop:0}}>

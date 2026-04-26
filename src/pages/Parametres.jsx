@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '../auth'
 import { db } from '../firebase'
@@ -234,8 +235,8 @@ export default function Parametres({ user, userData, setUserData }) {
                   style={{...inp, paddingRight: f.toggleShow ? '44px' : '14px'}}
                 />
                 {f.toggleShow && (
-                  <button onClick={f.toggleShow} style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', fontSize:'15px', padding:0, lineHeight:1}}>
-                    {f.show ? '🙈' : '👁️'}
+                  <button onClick={f.toggleShow} style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:0, display:'flex', alignItems:'center'}}>
+                    {f.show ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 )}
               </div>

@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../auth'
+import Admin from '../components/Admin'
+import { ADMIN_EMAIL } from '../constants'
+import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -8,31 +12,14 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  {
-    path: '/budget',
-    icon: '💰',
-    label: 'Budget',
-    desc: 'Entrées, dépenses & solde',
-    color: '#5eead4',
-  },
-  {
-    path: '/presences',
-    icon: '✅',
-    label: 'Présence Alimbavaka',
-    desc: 'Suivi des présences aux cultes',
-    color: '#a78bfa',
-  },
-  {
-    path: '/membres',
-    icon: '👥',
-    label: 'Membres',
-    desc: 'Gestion de la liste des membres',
-    color: '#fb923c',
-  },
+  { path: '/budget',    Icon: Wallet,        label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
+  { path: '/presences', Icon: CalendarCheck, label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
+  { path: '/membres',   Icon: Users,         label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
 ]
 
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
+  const [showAdmin, setShowAdmin] = useState(false)
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   const avatarStyle = {
@@ -55,8 +42,8 @@ export default function Home({ user, userData }) {
   return (
     <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
       {/* Header */}
-      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.5rem', paddingTop:'max(1rem, env(safe-area-inset-top))'}}>
-        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
+      <div style={{background:'var(--hero-bg)', padding:'1rem', paddingTop:'max(1rem, env(safe-area-inset-top))'}}>
+        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
           <div style={avatarStyle} onClick={() => navigate('/parametres')}>
             {userData?.photoURL
               ? <img src={userData.photoURL} alt="avatar" style={{width:'100%', height:'100%', objectFit:'cover'}} />
@@ -64,30 +51,37 @@ export default function Home({ user, userData }) {
             }
           </div>
 
-          <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+          <div style={{flex:1, minWidth:0}}>
+            <h1 style={{margin:0, fontSize:'17px', fontWeight:'700', color:'#fff', lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
+              Bonjour, <span style={{color:'#5eead4'}}>{prenom}</span>
+            </h1>
+            <p style={{margin:0, fontSize:'11px', color:'rgba(255,255,255,0.45)', marginTop:'2px'}}>Young For Christ</p>
+          </div>
+
+          <div style={{display:'flex', gap:'6px', alignItems:'center', flexShrink:0}}>
+            {user.email === ADMIN_EMAIL && (
+              <button
+                onClick={() => setShowAdmin(true)}
+                style={{background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'10px', padding:'7px 10px', cursor:'pointer', color:'#fff', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+              >
+                Admin
+              </button>
+            )}
             <button
               onClick={() => navigate('/parametres')}
-              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px 10px', cursor:'pointer', color:'#fff', fontSize:'16px', fontFamily:'inherit'}}
+              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center'}}
               title="Paramètres"
             >
-              ⚙
+              <Settings size={17} />
             </button>
             <button
               onClick={() => signOut(auth)}
-              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'rgba(255,255,255,0.7)', fontSize:'12px', fontWeight:'600', fontFamily:'inherit'}}
+              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px', cursor:'pointer', color:'rgba(255,255,255,0.7)', display:'flex', alignItems:'center', justifyContent:'center'}}
+              title="Déconnexion"
             >
-              Déco
+              <LogOut size={17} />
             </button>
           </div>
-        </div>
-
-        <div>
-          <div style={{fontSize:'11px', fontWeight:'600', color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'4px'}}>
-            Young For Christ · Tanora ho an'i Kristy
-          </div>
-          <h1 style={{fontSize:'26px', fontWeight:'700', color:'#fff', lineHeight:1.2, margin:0}}>
-            Bonjour, <span style={{color:'#5eead4'}}>{prenom}</span> 👋
-          </h1>
         </div>
       </div>
 
@@ -112,9 +106,9 @@ export default function Home({ user, userData }) {
               width:'52px', height:'52px', borderRadius:'14px',
               background:`${m.color}18`,
               display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:'24px', flexShrink:0,
+              flexShrink:0,
             }}>
-              {m.icon}
+              <m.Icon size={24} color={m.color} />
             </div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{fontSize:'15px', fontWeight:'700', color:'var(--text-primary)', marginBottom:'2px'}}>
@@ -124,7 +118,7 @@ export default function Home({ user, userData }) {
                 {m.desc}
               </div>
             </div>
-            <div style={{color:'var(--text-muted)', fontSize:'18px', flexShrink:0}}>›</div>
+            <ChevronRight size={18} color="var(--text-muted)" style={{flexShrink:0}} />
           </button>
         ))}
       </div>
@@ -133,6 +127,8 @@ export default function Home({ user, userData }) {
       <div style={{textAlign:'center', padding:'0 1rem 2rem', color:'var(--text-muted)', fontSize:'11px'}}>
         YFC Budget · {new Date().getFullYear()}
       </div>
+
+      {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
   )
 }

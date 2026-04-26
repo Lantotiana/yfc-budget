@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { auth } from '../auth'
+import { X } from 'lucide-react'
 
 export default function TransactionForm({ onAdd }) {
   const [type, setType] = useState('entree')
@@ -155,7 +156,7 @@ export default function TransactionForm({ onAdd }) {
               <h3 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>
                 Motifs {type === 'entree' ? 'Entrée' : 'Dépense'}
               </h3>
-              <button onClick={() => setShowModal(false)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'var(--text-secondary)'}}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
             </div>
 
             <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'1.25rem'}}>

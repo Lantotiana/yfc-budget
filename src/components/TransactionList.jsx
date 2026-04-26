@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { Search, X } from 'lucide-react'
 
 const DEFAULT_MOTIFS = {
   entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
@@ -177,13 +178,13 @@ export default function TransactionList({
             placeholder="Rechercher (motif, note, date, utilisateur)..."
             style={{...inp, paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
           />
-          <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', fontSize:'14px', color:'var(--text-secondary)'}}>🔍</div>
+          <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'var(--text-secondary)', display:'flex'}}><Search size={14} /></div>
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', fontSize:'14px', padding:'6px'}}
+              style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:'6px', display:'flex', alignItems:'center'}}
             >
-              ✕
+              <X size={14} />
             </button>
           )}
         </div>
@@ -265,7 +266,7 @@ export default function TransactionList({
 
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem'}}>
               <h3 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Modifier la transaction</h3>
-              <button onClick={closeEdit} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'var(--text-secondary)'}}>✕</button>
+              <button onClick={closeEdit} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
             </div>
 
             {selected.createdBy && (
