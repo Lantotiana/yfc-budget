@@ -129,14 +129,14 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
     fontSize: '14px',
     fontFamily: 'inherit',
     outline: 'none',
-    background: '#e8e4f4',
-    color: '#2d1f6e',
+    background: 'var(--input-bg)',
+    color: 'var(--text-primary)',
     marginBottom: '12px'
   }
 
   const label = {
     fontSize: '11px',
-    color: '#9b8fb5',
+    color: 'var(--text-secondary)',
     fontWeight: '600',
     display: 'block',
     marginBottom: '4px'
@@ -145,9 +145,9 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
   const initiales = (nom || user?.email || '?').slice(0, 2).toUpperCase()
 
   return (
-    <div style={{minHeight:'100vh', background:'#f0eef8'}}>
+    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
 
-      <div style={{background:'#2d1f6e', padding:'20px 16px 32px'}}>
+      <div style={{background:'var(--hero-bg)', padding:'20px 16px 32px'}}>
         <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'480px', margin:'0 auto'}}>
           <button onClick={onBack} style={{background:'rgba(255,255,255,0.1)', border:'none', color:'white', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', fontSize:'13px', fontFamily:'inherit'}}>
             ← Retour
@@ -194,14 +194,14 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
             {uploading ? 'Upload en cours...' : 'Changer la photo'}
           </button>
 
-            <div style={{marginTop:'10px', display:'flex', alignItems:'center', gap:'6px'}}>
+          <div style={{marginTop:'10px', display:'flex', alignItems:'center', gap:'6px'}}>
             <span style={{fontSize:'20px', fontWeight:'700', color:'white'}}>{nom || user?.email}</span>
             <div style={{width:'15px', height:'15px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <path d="M5 13l4 4L19 7" stroke="#1a1040" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-    </div>
-    </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M5 13l4 4L19 7" stroke="#1a1040" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
           <div style={{fontSize:'12px', color:'rgba(255,255,255,0.5)', marginTop:'2px'}}>{user?.email}</div>
         </div>
       </div>
@@ -214,8 +214,8 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
           </div>
         )}
 
-        <div style={{background:'white', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
             Informations personnelles
           </div>
 
@@ -226,8 +226,8 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{...inp, marginBottom:0}} />
         </div>
 
-        <div style={{background:'white', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
             Changer le mot de passe
           </div>
 
@@ -238,8 +238,8 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
           <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom:0}} />
         </div>
 
-        <div style={{background:'white', borderRadius:'16px', padding:'1.25rem', marginBottom:'1.25rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1.25rem'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
             Confirmation
           </div>
           <label style={label}>Mot de passe actuel (requis pour sauvegarder)</label>
@@ -249,7 +249,7 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
         <button
           onClick={handleSave}
           disabled={saving || uploading}
-          style={{width:'100%', padding:'14px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#2d1f6e', color:'white', border:'none', borderRadius:'14px', fontFamily:'inherit', opacity: saving || uploading ? 0.7 : 1}}
+          style={{width:'100%', padding:'14px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'var(--btn-primary-bg)', color:'white', border:'none', borderRadius:'14px', fontFamily:'inherit', opacity: saving || uploading ? 0.7 : 1}}
         >
           {saving ? 'Enregistrement...' : 'Sauvegarder les modifications'}
         </button>

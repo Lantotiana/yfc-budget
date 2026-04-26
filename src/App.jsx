@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from './firebase'
 import { auth } from './auth'
+import { useTheme } from './context/ThemeContext'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query, getDoc } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import TransactionForm from './components/TransactionForm'
@@ -23,6 +24,7 @@ function getPrenom(fullName) {
 }
 
 export default function App() {
+  const { dark, toggle } = useTheme()
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
@@ -64,7 +66,15 @@ export default function App() {
     setLoading(true)
     const q = query(collection(db, 'transactions'), orderBy('date', 'desc'))
     const unsub = onSnapshot(q, snapshot => {
-      setTransactions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      // Tri : date décroissante, puis createdAt décroissant (la plus récemment créée en premier)
+      data.sort((a, b) => {
+        if (a.date !== b.date) return b.date.localeCompare(a.date)
+        const aCreated = a.createdAt || ''
+        const bCreated = b.createdAt || ''
+        return bCreated.localeCompare(aCreated)
+      })
+      setTransactions(data)
       setLoading(false)
     })
     return () => unsub()
@@ -161,6 +171,9 @@ export default function App() {
             {user.email === ADMIN_EMAIL && (
               <button className="btn-admin" onClick={() => setShowAdmin(true)}>Admin</button>
             )}
+            <button className="btn-theme" onClick={toggle} title={dark ? 'Mode clair' : 'Mode sombre'}>
+              {dark ? '☀' : '☾'}
+            </button>
             <button className="btn-logout" onClick={() => signOut(auth)}>Déconnexion</button>
           </div>
         </div>

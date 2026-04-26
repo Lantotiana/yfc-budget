@@ -1,3 +1,38 @@
+/* VARIABLES */
+:root {
+  --bg-body: #f0eef8;
+  --text-primary: #2d1f6e;
+  --text-secondary: #9b8fb5;
+  --text-muted: #b8afd4;
+  --hero-bg: #2d1f6e;
+  --card-bg: #ffffff;
+  --input-bg: #e8e4f4;
+  --input-focus-bg: #ddd8f0;
+  --surface-alt: #f0eef8;
+  --border-light: #eeeeee;
+  --border-input: #e8e4f4;
+  --del-btn-bg: #f3f0fa;
+  --btn-primary-bg: #2d1f6e;
+  --btn-secondary-bg: #e8e4f4;
+}
+
+[data-theme="dark"] {
+  --bg-body: #0f0c1e;
+  --text-primary: #e8e4f4;
+  --text-secondary: #9b8fb5;
+  --text-muted: #5c5470;
+  --hero-bg: #130f30;
+  --card-bg: #1e1840;
+  --input-bg: #2a2460;
+  --input-focus-bg: #332d70;
+  --surface-alt: #2a2460;
+  --border-light: #2a2460;
+  --border-input: #2a2460;
+  --del-btn-bg: #2a2460;
+  --btn-primary-bg: #4a3a9e;
+  --btn-secondary-bg: #2a2460;
+}
+
 /* RESET */
 * {
   box-sizing: border-box;
@@ -11,8 +46,8 @@ html, body {
 
 body {
   font-family: system-ui, sans-serif;
-  background: #f0eef8;
-  color: #2d1f6e;
+  background: var(--bg-body);
+  color: var(--text-primary);
   min-height: 100vh;
 }
 
@@ -20,13 +55,13 @@ body {
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0; /* ✅ FIX */
+  padding: 0;
 }
 
 /* HERO */
 .app-hero {
-  margin: 0; /* ✅ FIX */
-  background: #2d1f6e;
+  margin: 0;
+  background: var(--hero-bg);
   padding: 20px 16px 16px;
   margin-bottom: 16px;
 }
@@ -71,7 +106,8 @@ body {
 
 /* BUTTONS HEADER */
 .btn-admin,
-.btn-logout {
+.btn-logout,
+.btn-theme {
   padding: 6px 10px;
   border-radius: 8px;
   font-size: 11px;
@@ -84,10 +120,15 @@ body {
   border: 1px solid rgba(94,234,212,0.25);
 }
 
-.btn-logout {
+.btn-logout,
+.btn-theme {
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.6);
   border: 1px solid rgba(255,255,255,0.12);
+}
+
+.btn-theme {
+  font-size: 14px;
 }
 
 /* HERO STATS */
@@ -124,10 +165,10 @@ body {
 
 /* SOLDE */
 .solde-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 14px;
   padding: 14px;
-  margin: 0 0 16px; /* ✅ FIX */
+  margin: 0 0 16px;
   display: flex;
   justify-content: space-between;
 }
@@ -148,16 +189,16 @@ body {
 
 /* CARD */
 .card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 16px;
-  margin: 0 0 16px; /* ✅ FIX */
+  margin: 0 0 16px;
 }
 
 .card-title {
   font-size: 10px;
   font-weight: 700;
-  color: #9b8fb5;
+  color: var(--text-secondary);
   margin-bottom: 12px;
 }
 
@@ -180,7 +221,7 @@ body {
 
 .form-group label {
   font-size: 11px;
-  color: #9b8fb5;
+  color: var(--text-secondary);
 }
 
 /* INPUT */
@@ -189,11 +230,13 @@ input, select {
   padding: 10px;
   border-radius: 10px;
   border: none;
-  background: #e8e4f4;
+  background: var(--input-bg);
+  color: var(--text-primary);
 }
 
 input:focus, select:focus {
-  background: #ddd8f0;
+  background: var(--input-focus-bg);
+  outline: none;
 }
 
 /* MOTIF ROW */
@@ -210,28 +253,32 @@ input:focus, select:focus {
 .btn-primary {
   width: 100%;
   padding: 12px;
-  background: #2d1f6e;
+  background: var(--btn-primary-bg);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .btn-secondary {
   padding: 10px;
-  background: #e8e4f4;
+  background: var(--btn-secondary-bg);
   border-radius: 10px;
   border: none;
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 .btn-motif,
 .btn-export {
   padding: 10px;
-  background: #e8e4f4;
+  background: var(--btn-secondary-bg);
   border-radius: 10px;
   border: none;
   font-weight: 600;
   cursor: pointer;
+  color: var(--text-primary);
 }
 
 /* TRANSACTIONS */
@@ -240,7 +287,7 @@ input:focus, select:focus {
   align-items: center;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .tx-icon {
@@ -278,7 +325,7 @@ input:focus, select:focus {
 
 .tx-date {
   font-size: 11px;
-  color: #9b8fb5;
+  color: var(--text-secondary);
 }
 
 .tx-amount {
@@ -300,7 +347,7 @@ input:focus, select:focus {
   height: 28px;
   border-radius: 8px;
   border: none;
-  background: #f3f0fa;
+  background: var(--del-btn-bg);
   cursor: pointer;
 }
 
@@ -333,7 +380,7 @@ input:focus, select:focus {
 }
 
 .modal {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 16px;
   width: 90%;
@@ -346,14 +393,14 @@ input:focus, select:focus {
 .loading, .empty {
   text-align: center;
   padding: 20px;
-  color: #9b8fb5;
+  color: var(--text-secondary);
 }
 
 /* TOGGLE */
 .type-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #e8e4f4;
+  background: var(--input-bg);
   border-radius: 12px;
   padding: 3px;
   margin-bottom: 14px;
@@ -366,17 +413,17 @@ input:focus, select:focus {
   font-size: 13px;
   font-weight: 600;
   background: transparent;
-  color: #9b8fb5;
+  color: var(--text-secondary);
   border-radius: 9px;
 }
 
 .type-btn.active-entree {
-  background: #2d1f6e;
+  background: var(--btn-primary-bg);
   color: #5eead4;
 }
 
 .type-btn.active-depense {
-  background: #2d1f6e;
+  background: var(--btn-primary-bg);
   color: #fb9ea0;
 }
 
@@ -389,7 +436,7 @@ input:focus, select:focus {
   gap: 6px;
   margin-top: 4px;
   font-size: 11px;
-  color: #2d1f6e;
+  color: var(--text-primary);
   font-weight: 600;
 }
 

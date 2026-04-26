@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import emailjs from '@emailjs/browser'
+import { useTheme } from '../context/ThemeContext'
 
 const EMAILJS_SERVICE_ID = 'service_q55ivrp'
 const EMAILJS_TEMPLATE_ID = 'template_wgibd9k'
@@ -9,6 +10,7 @@ const EMAILJS_PUBLIC_KEY = 'DBkP2rCi6WMgXW9kq'
 const APP_URL = 'https://yfc-budget.vercel.app'
 
 export default function Admin({ onClose }) {
+  const { dark } = useTheme()
   const [users, setUsers] = useState([])
   const [sending, setSending] = useState(null)
 
@@ -49,10 +51,14 @@ export default function Admin({ onClose }) {
   const enAttente = users.filter(u => u.approuve !== true)
   const approuves = users.filter(u => u.approuve === true)
 
+  const pendingItemBg = dark ? 'rgba(180,83,9,0.12)' : '#fef9ec'
+  const pendingAvatarBg = dark ? 'rgba(180,83,9,0.2)' : '#fef3c7'
+  const pendingColor = dark ? '#f59e0b' : '#b45309'
+
   const sectionLabel = {
     fontSize: '10px',
     fontWeight: '700',
-    color: '#9b8fb5',
+    color: 'var(--text-secondary)',
     textTransform: 'uppercase',
     letterSpacing: '.06em',
     marginBottom: '8px',
@@ -61,11 +67,11 @@ export default function Admin({ onClose }) {
 
   return (
     <div style={{position:'fixed', inset:0, background:'rgba(26,16,64,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200}}>
-      <div style={{background:'white', borderRadius:'20px', padding:'1.5rem', width:'420px', maxHeight:'85vh', overflowY:'auto'}}>
+      <div style={{background:'var(--card-bg)', borderRadius:'20px', padding:'1.5rem', width:'420px', maxHeight:'85vh', overflowY:'auto'}}>
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
-          <h2 style={{fontSize:'16px', fontWeight:'700', color:'#2d1f6e'}}>Gestion des membres</h2>
-          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'#9b8fb5'}}>✕</button>
+          <h2 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Gestion des membres</h2>
+          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'var(--text-secondary)'}}>✕</button>
         </div>
 
         <div style={{...sectionLabel, marginTop:0}}>
@@ -73,18 +79,18 @@ export default function Admin({ onClose }) {
         </div>
 
         {enAttente.length === 0 ? (
-          <div style={{fontSize:'13px', color:'#9b8fb5', padding:'10px 0', marginBottom:'8px'}}>
+          <div style={{fontSize:'13px', color:'var(--text-secondary)', padding:'10px 0', marginBottom:'8px'}}>
             Aucune demande en attente
           </div>
         ) : enAttente.map(u => (
-          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:'#fef9ec', borderRadius:'12px', marginBottom:'8px'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'#fef3c7', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:'#b45309', flexShrink:0}}>
+          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:pendingItemBg, borderRadius:'12px', marginBottom:'8px'}}>
+            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:pendingAvatarBg, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:pendingColor, flexShrink:0}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
             <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'#2d1f6e'}}>{u.nom || 'Sans nom'}</div>
-              <div style={{fontSize:'11px', color:'#9b8fb5', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
-              <div style={{fontSize:'10px', color:'#b8afd4', marginTop:'2px'}}>{u.dateInscription}</div>
+              <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{u.nom || 'Sans nom'}</div>
+              <div style={{fontSize:'11px', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
+              <div style={{fontSize:'10px', color:'var(--text-muted)', marginTop:'2px'}}>{u.dateInscription}</div>
             </div>
             <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
               <button
@@ -109,13 +115,13 @@ export default function Admin({ onClose }) {
         </div>
 
         {approuves.map(u => (
-          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:'#f0eef8', borderRadius:'12px', marginBottom:'8px'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'#e8e4f4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:'#2d1f6e', flexShrink:0}}>
+          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:'var(--surface-alt)', borderRadius:'12px', marginBottom:'8px'}}>
+            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'var(--input-bg)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:'var(--text-primary)', flexShrink:0}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
             <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'#2d1f6e'}}>{u.nom || 'Sans nom'}</div>
-              <div style={{fontSize:'11px', color:'#9b8fb5', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
+              <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{u.nom || 'Sans nom'}</div>
+              <div style={{fontSize:'11px', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
             </div>
             <button
               onClick={() => supprimer(u.id)}
@@ -126,7 +132,7 @@ export default function Admin({ onClose }) {
           </div>
         ))}
 
-        <div style={{marginTop:'1rem', padding:'12px', background:'#f0eef8', borderRadius:'12px', fontSize:'12px', color:'#9b8fb5', lineHeight:'1.5'}}>
+        <div style={{marginTop:'1rem', padding:'12px', background:'var(--surface-alt)', borderRadius:'12px', fontSize:'12px', color:'var(--text-secondary)', lineHeight:'1.5'}}>
           Un email est automatiquement envoyé lors de l'approbation d'un membre.
         </div>
       </div>

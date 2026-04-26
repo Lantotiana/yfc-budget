@@ -36,7 +36,6 @@ export default function TransactionForm({ onAdd }) {
       return
     }
 
-    // Récupération des infos utilisateur connecté
     const user = auth.currentUser
     let createdBy = null
     if (user) {
@@ -153,20 +152,20 @@ export default function TransactionForm({ onAdd }) {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem'}}>
-              <h3 style={{fontSize:'16px', fontWeight:'700', color:'#2d1f6e'}}>
+              <h3 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>
                 Motifs {type === 'entree' ? 'Entrée' : 'Dépense'}
               </h3>
-              <button onClick={() => setShowModal(false)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'#9b8fb5'}}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'18px', color:'var(--text-secondary)'}}>✕</button>
             </div>
 
             <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'1.25rem'}}>
               {filteredMotifs.length === 0 && (
-                <div style={{fontSize:'13px', color:'#9b8fb5', padding:'8px 0'}}>Aucun motif — ajoutez-en ci-dessous</div>
+                <div style={{fontSize:'13px', color:'var(--text-secondary)', padding:'8px 0'}}>Aucun motif — ajoutez-en ci-dessous</div>
               )}
               {filteredMotifs.map(m => (
-                <div key={m.id} style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'#f0eef8', borderRadius:'10px'}}>
+                <div key={m.id} style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--surface-alt)', borderRadius:'10px'}}>
                   <span
-                    style={{fontSize:'13px', fontWeight:'500', color:'#2d1f6e', cursor:'pointer', flex:1}}
+                    style={{fontSize:'13px', fontWeight:'500', color:'var(--text-primary)', cursor:'pointer', flex:1}}
                     onClick={() => { setMotif(m.name); setMotifCustom(''); setShowModal(false) }}
                   >
                     {m.name}
@@ -187,11 +186,11 @@ export default function TransactionForm({ onAdd }) {
                 onChange={e => setNewMotif(e.target.value)}
                 placeholder={`Nouveau motif ${type === 'entree' ? 'entrée' : 'dépense'}...`}
                 onKeyDown={e => e.key === 'Enter' && addMotif()}
-                style={{flex:1, padding:'10px 12px', border:'none', borderRadius:'10px', fontSize:'13px', fontFamily:'inherit', outline:'none', background:'#e8e4f4', color:'#2d1f6e'}}
+                style={{flex:1, padding:'10px 12px', border:'none', borderRadius:'10px', fontSize:'13px', fontFamily:'inherit', outline:'none', background:'var(--input-bg)', color:'var(--text-primary)'}}
               />
               <button
                 onClick={addMotif}
-                style={{padding:'10px 14px', background:'#2d1f6e', color:'white', border:'none', borderRadius:'10px', cursor:'pointer', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', whiteSpace:'nowrap'}}
+                style={{padding:'10px 14px', background:'var(--btn-primary-bg)', color:'white', border:'none', borderRadius:'10px', cursor:'pointer', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', whiteSpace:'nowrap'}}
               >
                 Ajouter
               </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { Chart, registerables } from 'chart.js'
+import { useTheme } from '../context/ThemeContext'
 
 Chart.register(...registerables)
 
@@ -11,6 +12,7 @@ function fmt(n) {
 }
 
 export default function DetailTransactions({ type, transactions, onBack, onEdit }) {
+  const { dark } = useTheme()
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
   const chartRef = useRef(null)
@@ -82,7 +84,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
             ticks: { font: { size: 11 }, color: '#9b8fb5' }
           },
           y: {
-            grid: { color: '#e8e4f4' },
+            grid: { color: dark ? '#2a2460' : '#e8e4f4' },
             ticks: {
               font: { size: 11 },
               color: '#9b8fb5',
@@ -96,7 +98,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
     return () => {
       if (chartInstance.current) chartInstance.current.destroy()
     }
-  }, [type, transactions])
+  }, [type, transactions, dark])
 
   function exportExcel() {
     if (!filtered.length) return
@@ -122,14 +124,14 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
     fontSize: '13px',
     fontFamily: 'inherit',
     outline: 'none',
-    background: '#e8e4f4',
-    color: '#2d1f6e'
+    background: 'var(--input-bg)',
+    color: 'var(--text-primary)'
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#f0eef8'}}>
+    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
 
-      <div style={{background:'#2d1f6e', padding:'20px 16px 24px'}}>
+      <div style={{background:'var(--hero-bg)', padding:'20px 16px 24px'}}>
         <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'680px', margin:'0 auto'}}>
           <button onClick={onBack} style={{background:'rgba(255,255,255,0.1)', border:'none', color:'white', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', fontSize:'13px', fontFamily:'inherit'}}>
             ← Retour
@@ -159,65 +161,65 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
 
       <div style={{maxWidth:'680px', margin:'0 auto', padding:'1rem'}}>
 
-        <div style={{background:'white', borderRadius:'16px', padding:'16px', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'14px'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'16px', marginBottom:'1rem'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'14px'}}>
             Évolution mensuelle
           </div>
           <div style={{height:'200px', position:'relative'}}>
             {moisLabels.length === 0
-              ? <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#9b8fb5', fontSize:'13px'}}>Aucune donnée</div>
+              ? <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'var(--text-secondary)', fontSize:'13px'}}>Aucune donnée</div>
               : <canvas ref={chartRef} />
             }
           </div>
         </div>
 
-        <div style={{background:'white', borderRadius:'16px', padding:'14px 16px', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'14px 16px', marginBottom:'1rem'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
             Filtrer par date
           </div>
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
             <div>
-              <label style={{fontSize:'11px', color:'#9b8fb5', fontWeight:'600', display:'block', marginBottom:'4px'}}>Du</label>
+              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Du</label>
               <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={inp} />
             </div>
             <div>
-              <label style={{fontSize:'11px', color:'#9b8fb5', fontWeight:'600', display:'block', marginBottom:'4px'}}>Au</label>
+              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Au</label>
               <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={inp} />
             </div>
           </div>
           {(dateDebut || dateFin) && (
-            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{marginTop:'10px', padding:'6px 12px', background:'#e8e4f4', border:'none', borderRadius:'8px', fontSize:'12px', color:'#9b8fb5', cursor:'pointer', fontFamily:'inherit'}}>
+            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{marginTop:'10px', padding:'6px 12px', background:'var(--btn-secondary-bg)', border:'none', borderRadius:'8px', fontSize:'12px', color:'var(--text-secondary)', cursor:'pointer', fontFamily:'inherit'}}>
               Réinitialiser
             </button>
           )}
         </div>
 
-        <div style={{background:'white', borderRadius:'16px', padding:'14px 16px'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'#9b8fb5', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
+        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'14px 16px'}}>
+          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
           </div>
 
           {filtered.length === 0 && (
-            <div style={{textAlign:'center', padding:'2rem', color:'#9b8fb5', fontSize:'13px'}}>
+            <div style={{textAlign:'center', padding:'2rem', color:'var(--text-secondary)', fontSize:'13px'}}>
               Aucune transaction trouvée
             </div>
           )}
 
           {filtered.map(tx => (
-            <div key={tx.id} onClick={() => onEdit(tx)} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 0', borderBottom:'0.5px solid #e8e4f4', cursor:'pointer'}}>
+            <div key={tx.id} onClick={() => onEdit(tx)} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 0', borderBottom:'0.5px solid var(--border-input)', cursor:'pointer'}}>
               <div style={{width:'34px', height:'34px', borderRadius:'10px', background:colorLight, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color, flexShrink:0}}>
                 {isEntree ? '+' : '−'}
               </div>
               <div style={{flex:1, minWidth:0}}>
-                <div style={{fontSize:'13px', fontWeight:'600', color:'#2d1f6e'}}>{tx.motif}</div>
-                <div style={{fontSize:'11px', color:'#9b8fb5', marginTop:'2px'}}>
+                <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{tx.motif}</div>
+                <div style={{fontSize:'11px', color:'var(--text-secondary)', marginTop:'2px'}}>
                   {tx.date}{tx.note ? ' · ' + tx.note : ''}
                 </div>
               </div>
               <div style={{fontSize:'14px', fontWeight:'700', color, flexShrink:0}}>
                 {isEntree ? '+' : '−'}{fmt(tx.montant)}
               </div>
-              <div style={{fontSize:'12px', color:'#c8c0e0'}}>›</div>
+              <div style={{fontSize:'12px', color:'var(--text-muted)'}}>›</div>
             </div>
           ))}
         </div>
