@@ -154,19 +154,6 @@ export default function Login() {
   setForgotLoading(false)
 }
 
-  const inp = {
-    width: '100%',
-    padding: '11px 14px',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '14px',
-    background: 'rgba(255,255,255,0.12)',
-    color: '#fff',
-    fontFamily: 'inherit',
-    outline: 'none',
-    marginBottom: '12px'
-  }
-
   if (inscriptionReussie) return (
     <div className="login-page">
       <div className="login-container">
@@ -174,10 +161,10 @@ export default function Login() {
           <div className="success-icon">
             <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
-          <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'12px'}}>
+          <div className="login-eyebrow mb-12">
             Demande envoyée
           </div>
-          <h1 style={{fontSize:'26px', fontWeight:'700', color:'white', lineHeight:1.3, marginBottom:'12px'}}>
+          <h1 className="text-26 font-700 text-white mb-12" style={{lineHeight:1.3}}>
             Merci {nomInscrit},<br/>
             <span style={{color:'#5eead4'}}>nous avons bien reçu<br/>votre demande !</span>
           </h1>
@@ -187,36 +174,36 @@ export default function Login() {
           <div className="success-message-item">
             <div className="icon-circle-32 bg-teal-15"><CheckCircle size={16} color="#5eead4" /></div>
             <div>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Compte créé avec succès</div>
-              <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vos informations ont bien été enregistrées dans notre système.</div>
+              <div className="login-msg-title">Compte créé avec succès</div>
+              <div className="login-msg-desc">Vos informations ont bien été enregistrées dans notre système.</div>
             </div>
           </div>
           <div className="success-message-item">
             <div className="icon-circle-32 bg-teal-15"><Clock size={16} color="#5eead4" /></div>
             <div>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>En attente d'approbation</div>
-              <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
+              <div className="login-msg-title">En attente d'approbation</div>
+              <div className="login-msg-desc">L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
             </div>
           </div>
-          <div style={{display:'flex', gap:'14px', alignItems:'flex-start'}}>
+          <div className="flex-start gap-14">
             <div className="icon-circle-32 bg-teal-15"><Mail size={16} color="#5eead4" /></div>
             <div>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Notification par email</div>
-              <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vous recevrez un email dès que votre compte sera approuvé.</div>
+              <div className="login-msg-title">Notification par email</div>
+              <div className="login-msg-desc">Vous recevrez un email dès que votre compte sera approuvé.</div>
             </div>
           </div>
         </div>
 
-        <div style={{background:'rgba(94,234,212,0.08)', border:'1px solid rgba(94,234,212,0.2)', borderRadius:'14px', padding:'14px 18px', marginBottom:'1.5rem'}}>
-          <p style={{fontSize:'13px', color:'rgba(255,255,255,0.6)', margin:0, lineHeight:1.6}}>
-            <span style={{color:'#5eead4', fontWeight:'600'}}>Que Dieu vous bénisse !</span><br/>
+        <div className="login-blessing">
+          <p className="text-13" style={{color:'rgba(255,255,255,0.6)', margin:0, lineHeight:1.6}}>
+            <span className="font-600" style={{color:'#5eead4'}}>Que Dieu vous bénisse !</span><br/>
             L'équipe Young For Christ vous accueille chaleureusement.
           </p>
         </div>
 
         <button
           onClick={() => { setInscriptionReussie(false); setMode('login'); setEmail(''); setPassword(''); setNom('') }}
-          style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'12px', fontFamily:'inherit'}}
+          className="login-btn-secondary"
         >
           Retour à la connexion
         </button>
@@ -232,25 +219,25 @@ export default function Login() {
           <div className="w-56-h-56 rounded-50 m-0-auto-16 overflow-hidden">
             <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
-          <h1 style={{fontSize:'22px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
+          <h1 className="text-22 font-700 text-white leading-tight mb-8">
             Mot de passe<br/><span style={{color:'#5eead4'}}>oublié ?</span>
           </h1>
-          <p style={{fontSize:'13px', color:'rgba(255,255,255,0.4)'}}>
+          <p className="text-13" style={{color:'rgba(255,255,255,0.4)'}}>
             On va vous envoyer un lien de réinitialisation
           </p>
         </div>
 
         <div className="rounded-20 p-12" style={{ background: 'rgba(255,255,255,0.06)' }}>
           {forgotSent ? (
-            <div style={{textAlign:'center'}}>
-              <div style={{marginBottom:'16px', display:'flex', justifyContent:'center'}}><Mail size={36} color="#5eead4" /></div>
-              <div style={{fontSize:'15px', fontWeight:'700', color:'#5eead4', marginBottom:'8px'}}>Email envoyé !</div>
-              <div style={{fontSize:'13px', color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:'24px'}}>
+            <div className="text-center">
+              <div className="flex-center mb-16"><Mail size={36} color="#5eead4" /></div>
+              <div className="text-15 font-700 mb-8" style={{color:'#5eead4'}}>Email envoyé !</div>
+              <div className="text-13 mb-16" style={{color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:'24px'}}>
                 Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
               </div>
               <button
                 onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail('') }}
-                style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit'}}
+                className="login-btn-primary"
               >
                 Retour à la connexion
               </button>
@@ -258,28 +245,30 @@ export default function Login() {
           ) : (
             <>
               {message && (
-                <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background:'rgba(251,158,160,0.15)', color:'#fb9ea0'}}>
+                <div className="login-alert login-alert-error">
                   {message}
                 </div>
               )}
-              <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Votre email</label>
+              <label className="login-label">Votre email</label>
               <input
                 type="email"
                 value={forgotEmail}
                 onChange={e => setForgotEmail(e.target.value)}
                 placeholder="ton@email.com"
-                style={{...inp, marginBottom:'16px'}}
+                className="login-input"
+                style={{marginBottom:'16px'}}
               />
               <button
                 onClick={handleForgotPassword}
                 disabled={forgotLoading}
-                style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: forgotLoading ? 0.7 : 1, marginBottom:'12px'}}
+                className="login-btn-primary mb-12"
+                style={{opacity: forgotLoading ? 0.7 : 1}}
               >
                 {forgotLoading ? 'Envoi...' : 'Envoyer le lien'}
               </button>
               <button
                 onClick={() => { setShowForgot(false); setMessage('') }}
-                style={{width:'100%', padding:'11px', fontWeight:'600', fontSize:'13px', cursor:'pointer', background:'transparent', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'12px', fontFamily:'inherit'}}
+                className="login-btn-back"
               >
                 ← Retour
               </button>
@@ -291,67 +280,68 @@ export default function Login() {
   )
 
   return (
-    <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
-      <div style={{width:'100%', maxWidth:'360px'}}>
+    <div className="login-page">
+      <div className="login-container" style={{ maxWidth: '360px' }}>
 
         <div className="text-center mb-16">
           <div className="w-56-h-56 rounded-50 m-0-auto-16 overflow-hidden">
             <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
-          <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'8px'}}>
+          <div className="login-eyebrow mb-8">
             Tanora ho an'i Kristy
           </div>
-          <h1 style={{fontSize:'28px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
+          <h1 className="text-28 font-700 text-white leading-tight mb-8">
             Gestion<br/><span style={{color:'#5eead4'}}>Budget</span>
           </h1>
-          <p style={{fontSize:'13px', color:'rgba(255,255,255,0.4)'}}>
+          <p className="text-13" style={{color:'rgba(255,255,255,0.4)'}}>
             Finances de l'association YFC
           </p>
         </div>
 
         <div className="rounded-20 p-12" style={{ background: 'rgba(255,255,255,0.06)' }}>
 
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', background:'rgba(255,255,255,0.08)', borderRadius:'12px', padding:'3px', marginBottom:'1.5rem'}}>
-            <button onClick={() => { setMode('login'); setMessage('') }} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: mode==='login' ? '#2d1f6e' : 'transparent', color: mode==='login' ? '#fff' : 'rgba(255,255,255,0.4)'}}>
+          <div className="login-tab-row">
+            <button onClick={() => { setMode('login'); setMessage('') }} className={`login-tab ${mode === 'login' ? 'login-tab-active' : ''}`}>
               Connexion
             </button>
-            <button onClick={() => { setMode('register'); setMessage('') }} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: mode==='register' ? '#2d1f6e' : 'transparent', color: mode==='register' ? '#fff' : 'rgba(255,255,255,0.4)'}}>
+            <button onClick={() => { setMode('register'); setMessage('') }} className={`login-tab ${mode === 'register' ? 'login-tab-active' : ''}`}>
               Inscription
             </button>
           </div>
 
           {mode === 'register' && (
             <div>
-              <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Nom complet</label>
-              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." style={inp} />
+              <label className="login-label">Nom complet</label>
+              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." className="login-input" />
             </div>
           )}
 
-          <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" style={inp} />
+          <label className="login-label">Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" className="login-input" />
 
-          <label style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', display:'block', marginBottom:'4px', fontWeight:'600'}}>Mot de passe</label>
-          <div style={{position:'relative', marginBottom:'4px'}}>
+          <label className="login-label">Mot de passe</label>
+          <div className="relative mb-4">
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••"
-              style={{...inp, marginBottom:0, paddingRight:'44px'}}
+              className="login-input"
+              style={{marginBottom:0, paddingRight:'44px'}}
             />
             <button
               onClick={() => setShowPassword(!showPassword)}
-              style={{position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', padding:'0', display:'flex', alignItems:'center'}}
+              className="login-eye-btn"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
 
           {mode === 'login' && (
-            <div style={{textAlign:'right', marginBottom:'14px'}}>
+            <div className="mb-14" style={{textAlign:'right'}}>
               <button
                 onClick={() => { setShowForgot(true); setForgotEmail(email); setMessage('') }}
-                style={{background:'none', border:'none', cursor:'pointer', color:'rgba(94,234,212,0.7)', fontSize:'12px', fontFamily:'inherit', padding:0}}
+                className="login-forgot-btn"
               >
                 Mot de passe oublié ?
               </button>
@@ -359,7 +349,7 @@ export default function Login() {
           )}
 
           {message && (
-            <div style={{padding:'10px 14px', borderRadius:'10px', marginBottom:'12px', fontSize:'12px', background: messageType === 'success' ? 'rgba(94,234,212,0.15)' : 'rgba(251,158,160,0.15)', color: messageType === 'success' ? '#5eead4' : '#fb9ea0'}}>
+            <div className={`login-alert ${messageType === 'success' ? 'login-alert-success' : 'login-alert-error'}`}>
               {message}
             </div>
           )}
@@ -367,7 +357,8 @@ export default function Login() {
           <button
             onClick={mode === 'login' ? handleLogin : handleRegister}
             disabled={loading}
-            style={{width:'100%', padding:'13px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#5eead4', color:'#1a1040', border:'none', borderRadius:'12px', fontFamily:'inherit', opacity: loading ? 0.7 : 1, marginTop: mode === 'register' ? '4px' : '0'}}
+            className="login-btn-primary"
+            style={{opacity: loading ? 0.7 : 1, marginTop: mode === 'register' ? '4px' : '0'}}
           >
             {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
           </button>
