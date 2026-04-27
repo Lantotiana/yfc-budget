@@ -201,9 +201,9 @@ export default function Dashboard({ user, userData }) {
               onClick={() => navigate('/evenements')}
               className="rounded-16 cursor-pointer" style={{ padding: '1.25rem', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)', opacity: focusIsUpcoming ? 1 : 0.85 }}
             >
-              <div className="flex-center gap-10 mb-10">
+              <div className="flex-row gap-10 mb-10">
                 <div className="w-36-h-36 rounded-10 flex-center flex-shrink-0" style={{ background: focusIsUpcoming ? 'rgba(232,68,90,0.12)' : 'var(--input-bg)' }}>
-                  <CalendarDays size={18} color={focusIsUpcoming ? '#E8445A' : 'var(--text-muted)'} />
+                  <CalendarDays size={18} color={focusIsUpcoming ? '#E8445A' : '#A0A0B8'} />
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: focusIsUpcoming ? '#E8445A' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
                   {focusIsUpcoming ? 'Prochain événement' : 'Dernier événement'}

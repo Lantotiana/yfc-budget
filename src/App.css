@@ -929,6 +929,11 @@ input:focus, select:focus {
   justify-content: center;
 }
 
+.flex-row {
+  display: flex;
+  align-items: center;
+}
+
 .flex-start {
   display: flex;
   align-items: flex-start;
