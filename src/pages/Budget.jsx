@@ -70,7 +70,7 @@ export default function Budget({ user, userData }) {
   return (
     <div className="app">
       {/* Hero */}
-      <div style={{ background: C, padding: '18px 16px 20px', paddingTop: 'max(18px, env(safe-area-inset-top))' }}>
+      <div style={{ background: C, padding: '18px 16px 2.5rem', paddingTop: 'max(18px, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <button
             onClick={() => navigate('/')}
@@ -102,47 +102,49 @@ export default function Budget({ user, userData }) {
         </div>
       </div>
 
-      {/* Solde */}
-      <div style={{
-        background: 'var(--card-bg)', borderRadius: '16px', padding: '16px',
-        margin: '14px 16px 0',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        boxShadow: 'var(--card-shadow)',
-      }}>
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>
-            Solde actuel
-          </div>
-          <div style={{ fontSize: '22px', fontWeight: '700', color: solde >= 0 ? '#0D9370' : '#D63B5E' }}>
-            {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
-          </div>
-        </div>
+      <div style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Solde */}
         <div style={{
-          width: '42px', height: '42px', borderRadius: '50%',
-          background: solde >= 0 ? '#E6FAF5' : '#FEF0F4',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '20px', fontWeight: '700',
-          color: solde >= 0 ? '#0D9370' : '#D63B5E',
+          background: 'var(--card-bg)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px', padding: '16px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          boxShadow: 'var(--card-shadow)',
+          margin: '8px 16px 0',
         }}>
-          {solde >= 0 ? '+' : '−'}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>
+              Solde actuel
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: '700', color: solde >= 0 ? '#0D9370' : '#D63B5E' }}>
+              {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
+            </div>
+          </div>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '50%',
+            background: solde >= 0 ? '#E6FAF5' : '#FEF0F4',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '20px', fontWeight: '700',
+            color: solde >= 0 ? '#0D9370' : '#D63B5E',
+          }}>
+            {solde >= 0 ? '+' : '−'}
+          </div>
         </div>
+
+        {loading && <div className="loading">Chargement...</div>}
+
+        <TransactionForm onAdd={addTransaction} />
+        <TransactionList
+          transactions={filtered}
+          months={months}
+          filterMonth={filterMonth}
+          filterType={filterType}
+          onFilterMonth={setFilterMonth}
+          onFilterType={setFilterType}
+          onDelete={deleteTransaction}
+          allTransactions={transactions}
+          editTx={editTx}
+          onEditDone={() => setEditTx(null)}
+        />
       </div>
-
-      {loading && <div className="loading">Chargement...</div>}
-
-      <TransactionForm onAdd={addTransaction} />
-      <TransactionList
-        transactions={filtered}
-        months={months}
-        filterMonth={filterMonth}
-        filterType={filterType}
-        onFilterMonth={setFilterMonth}
-        onFilterType={setFilterType}
-        onDelete={deleteTransaction}
-        allTransactions={transactions}
-        editTx={editTx}
-        onEditDone={() => setEditTx(null)}
-      />
     </div>
   )
 }

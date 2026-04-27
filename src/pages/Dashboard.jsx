@@ -128,7 +128,7 @@ export default function Dashboard({ user, userData }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '2rem' }}>
 
       {/* Header avec cartes budget */}
-      <div style={{ background: C, padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
+      <div style={{ background: C, padding: '1rem 1rem 2.5rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
           <button
             onClick={() => navigate('/')}
@@ -180,7 +180,7 @@ export default function Dashboard({ user, userData }) {
       {loading ? (
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem', fontSize: '13px' }}>Chargement...</div>
       ) : (
-        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1 }}>
 
           {/* Membres */}
           <div

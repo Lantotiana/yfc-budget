@@ -27,7 +27,7 @@ export default function Home({ user, userData }) {
 
       {/* Header Facebook style */}
       <div style={{
-        background: 'var(--card-bg)',
+        background: 'var(--bg-body)',
         paddingTop: 'env(safe-area-inset-top)',
         position: 'relative',
       }}>
@@ -43,7 +43,7 @@ export default function Home({ user, userData }) {
           )}
           <button
             onClick={() => navigate('/parametres')}
-            style={{ background: 'var(--input-bg)', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ background: 'transparent', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <Settings size={18} />
           </button>
