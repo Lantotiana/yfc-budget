@@ -870,6 +870,7 @@ input:focus, select:focus {
 .text-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ====== SPACING SHORTCUTS ====== */
+.gap-4 { gap: 4px; }
 .gap-5 { gap: 5px; }
 .gap-6 { gap: 6px; }
 .gap-8 { gap: 8px; }
@@ -911,6 +912,7 @@ input:focus, select:focus {
 .text-26 { font-size: 26px; }
 .text-28 { font-size: 28px; }
 
+.font-400 { font-weight: 400; }
 .font-500 { font-weight: 500; }
 .font-600 { font-weight: 600; }
 .font-700 { font-weight: 700; }
@@ -979,6 +981,9 @@ input:focus, select:focus {
 .inline-block { display: inline-block; }
 .block { display: block; }
 .none { display: none; }
+
+/* ====== OUTLINE ====== */
+.outline-none { outline: none; }
 
 /* ====== CURSOR ====== */
 .cursor-pointer { cursor: pointer; }

@@ -152,28 +152,29 @@ export default function TransactionForm({ onAdd }) {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem'}}>
-              <h3 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>
+            <div className="dialog-header mb-16">
+              <h3 className="dialog-title">
                 Motifs {type === 'entree' ? 'Entrée' : 'Dépense'}
               </h3>
-              <button onClick={() => setShowModal(false)} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
+              <button onClick={() => setShowModal(false)} className="dialog-close-btn"><X size={18} /></button>
             </div>
 
-            <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'1.25rem'}}>
+            <div className="flex-col gap-6 mb-16">
               {filteredMotifs.length === 0 && (
-                <div style={{fontSize:'13px', color:'var(--text-secondary)', padding:'8px 0'}}>Aucun motif — ajoutez-en ci-dessous</div>
+                <div className="text-13 text-secondary p-12">Aucun motif — ajoutez-en ci-dessous</div>
               )}
               {filteredMotifs.map(m => (
-                <div key={m.id} style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', background:'var(--surface-alt)', borderRadius:'10px'}}>
+                <div key={m.id} className="flex-between p-14 rounded-10 gap-8" style={{background:'var(--surface-alt)'}}>
                   <span
-                    style={{fontSize:'13px', fontWeight:'500', color:'var(--text-primary)', cursor:'pointer', flex:1}}
+                    className="text-13 font-500 text-primary cursor-pointer flex-1"
                     onClick={() => { setMotif(m.name); setMotifCustom(''); setShowModal(false) }}
                   >
                     {m.name}
                   </span>
                   <button
                     onClick={() => deleteMotif(m)}
-                    style={{background:'#fde8e8', border:'none', color:'#be123c', borderRadius:'6px', padding:'4px 8px', cursor:'pointer', fontSize:'12px', fontWeight:'600', fontFamily:'inherit'}}
+                    className="btn-danger text-12 flex-shrink-0"
+                    style={{padding:'4px 8px'}}
                   >
                     Supprimer
                   </button>
@@ -181,17 +182,19 @@ export default function TransactionForm({ onAdd }) {
               ))}
             </div>
 
-            <div style={{display:'flex', gap:'8px', marginBottom:'1rem'}}>
+            <div className="flex-center gap-8 mb-16">
               <input
                 value={newMotif}
                 onChange={e => setNewMotif(e.target.value)}
                 placeholder={`Nouveau motif ${type === 'entree' ? 'entrée' : 'dépense'}...`}
                 onKeyDown={e => e.key === 'Enter' && addMotif()}
-                style={{flex:1, padding:'10px 12px', border:'none', borderRadius:'10px', fontSize:'13px', fontFamily:'inherit', outline:'none', background:'var(--input-bg)', color:'var(--text-primary)'}}
+                className="flex-1 rounded-10 text-13 bg-input text-primary border-none outline-none"
+                style={{padding:'10px 12px'}}
               />
               <button
                 onClick={addMotif}
-                style={{padding:'10px 14px', background:'var(--btn-primary-bg)', color:'white', border:'none', borderRadius:'10px', cursor:'pointer', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', whiteSpace:'nowrap'}}
+                className="rounded-10 text-13 font-700 text-white border-none cursor-pointer flex-shrink-0"
+                style={{padding:'10px 14px', background:'var(--btn-primary-bg)'}}
               >
                 Ajouter
               </button>
