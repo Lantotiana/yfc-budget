@@ -157,15 +157,13 @@ export default function Evenements({ user, userData }) {
               key={e.id}
               onClick={() => openEdit(e)}
               style={{
-                borderRadius: '16px', padding: '14px', marginBottom: '10px',
-                cursor: 'pointer', background: 'var(--card-bg)',
-                boxShadow: 'var(--card-shadow)',
+                borderRadius: '16px', padding: '14px', marginBottom: '10px', cursor: 'pointer', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)',
                 opacity: isPast ? 0.65 : 1,
                 borderLeft: isPast ? 'none' : `4px solid ${C}`,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="flex-start gap-12">
+                <div className="flex-1-min">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
                       {e.nom}
@@ -183,18 +181,18 @@ export default function Evenements({ user, userData }) {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {dateLabel && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        <Calendar size={12} style={{ flexShrink: 0 }} />{dateLabel}
+                      <div className="icon-label">
+                        <Calendar size={12} className="flex-shrink-0" />{dateLabel}
                       </div>
                     )}
                     {timeLabel && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        <Clock size={12} style={{ flexShrink: 0 }} />{timeLabel}
+                      <div className="icon-label">
+                        <Clock size={12} className="flex-shrink-0" />{timeLabel}
                       </div>
                     )}
                     {e.lieu && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        <MapPin size={12} style={{ flexShrink: 0 }} />{e.lieu}
+                      <div className="icon-label">
+                        <MapPin size={12} className="flex-shrink-0" />{e.lieu}
                       </div>
                     )}
                   </div>
@@ -235,7 +233,7 @@ export default function Evenements({ user, userData }) {
               {isEditing ? "Modifier l'événement" : 'Nouvel événement'}
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="flex-col gap-12">
               <div>
                 <label className="form-label">Nom *</label>
                 <input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder="Nom de l'événement" style={inp} />
