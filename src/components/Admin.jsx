@@ -56,16 +56,6 @@ export default function Admin({ onClose }) {
   const pendingAvatarBg = dark ? 'rgba(180,83,9,0.2)' : '#fef3c7'
   const pendingColor = dark ? '#f59e0b' : '#b45309'
 
-  const sectionLabel = {
-    fontSize: '10px',
-    fontWeight: '700',
-    color: 'var(--text-secondary)',
-    textTransform: 'uppercase',
-    letterSpacing: '.06em',
-    marginBottom: '8px',
-    marginTop: '1rem'
-  }
-
   return (
     <div className="modal-overlay">
       <div className="modal" style={{width:'420px'}}>
@@ -75,35 +65,36 @@ export default function Admin({ onClose }) {
           <button onClick={onClose} className="dialog-close-btn"><X size={18} /></button>
         </div>
 
-        <div style={{...sectionLabel, marginTop:0}}>
+        <div className="card-title mt-0">
           En attente ({enAttente.length})
         </div>
 
         {enAttente.length === 0 ? (
-          <div style={{fontSize:'13px', color:'var(--text-secondary)', padding:'10px 0', marginBottom:'8px'}}>
+          <div className="text-13 text-secondary p-12 mb-8">
             Aucune demande en attente
           </div>
         ) : enAttente.map(u => (
-          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:pendingItemBg, borderRadius:'12px', marginBottom:'8px'}}>
+          <div key={u.id} className="flex-center gap-10 p-12 rounded-12 mb-8" style={{background:pendingItemBg}}>
             <div className="avatar-circle" style={{background:pendingAvatarBg, color:pendingColor}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{u.nom || 'Sans nom'}</div>
-              <div style={{fontSize:'11px', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
-              <div style={{fontSize:'10px', color:'var(--text-muted)', marginTop:'2px'}}>{u.dateInscription}</div>
+            <div className="flex-1-min">
+              <div className="text-13 font-600 text-primary">{u.nom || 'Sans nom'}</div>
+              <div className="text-11 text-secondary text-ellipsis">{u.email}</div>
+              <div className="text-10 text-muted mt-2">{u.dateInscription}</div>
             </div>
-            <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
+            <div className="flex-col gap-6 flex-shrink-0">
               <button
                 onClick={() => approuver(u)}
                 disabled={sending === u.id}
-                style={{padding:'6px 10px', background:'#d4f4ee', color:'#0f766e', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit', opacity: sending === u.id ? 0.7 : 1}}
+                className="rounded-8 text-11 font-700 text-white border-none cursor-pointer"
+                style={{padding:'6px 10px', background:'#d4f4ee', color:'#0f766e', opacity: sending === u.id ? 0.7 : 1}}
               >
                 {sending === u.id ? '...' : 'Approuver'}
               </button>
               <button
                 onClick={() => supprimer(u.id)}
-                className="btn-danger"
+                className="btn-danger text-11 px-12"
               >
                 Refuser
               </button>
@@ -111,29 +102,29 @@ export default function Admin({ onClose }) {
           </div>
         ))}
 
-        <div style={sectionLabel}>
+        <div className="card-title">
           Membres approuvés ({approuves.length})
         </div>
 
         {approuves.map(u => (
-          <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:'var(--surface-alt)', borderRadius:'12px', marginBottom:'8px'}}>
+          <div key={u.id} className="flex-center gap-10 p-12 rounded-12 mb-8" style={{background:'var(--surface-alt)'}}>
             <div className="avatar-circle" style={{background:'var(--input-bg)', color:'var(--text-primary)'}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{u.nom || 'Sans nom'}</div>
-              <div style={{fontSize:'11px', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{u.email}</div>
+            <div className="flex-1-min">
+              <div className="text-13 font-600 text-primary">{u.nom || 'Sans nom'}</div>
+              <div className="text-11 text-secondary text-ellipsis">{u.email}</div>
             </div>
             <button
               onClick={() => supprimer(u.id)}
-              className="btn-danger"
+              className="btn-danger flex-shrink-0"
             >
               Supprimer
             </button>
           </div>
         ))}
 
-        <div style={{marginTop:'1rem', padding:'12px', background:'var(--surface-alt)', borderRadius:'12px', fontSize:'12px', color:'var(--text-secondary)', lineHeight:'1.5'}}>
+        <div className="p-12 rounded-12 text-12 text-secondary leading-relaxed mt-16" style={{background:'var(--surface-alt)'}}>
           Un email est automatiquement envoyé lors de l'approbation d'un membre.
         </div>
       </div>
