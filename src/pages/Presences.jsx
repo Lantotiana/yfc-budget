@@ -2,38 +2,34 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { useTheme } from '../context/ThemeContext'
 import { toDisplayDate } from '../utils'
-import { Share2, Check, Search } from 'lucide-react'
+import { Share2, Search } from 'lucide-react'
+
+const C = '#2EC4A9'
 
 export default function Presences({ user, userData }) {
   const navigate = useNavigate()
-  const { dark } = useTheme()
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [presences, setPresences] = useState({}) // { membreId: true/false }
+  const [presences, setPresences] = useState({})
   const [loadingPresences, setLoadingPresences] = useState(false)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0,10) })
   const [savingEvent, setSavingEvent] = useState(false)
-  const [saving, setSaving] = useState(null) // membreId being saved
+  const [saving, setSaving] = useState(null)
   const [copied, setCopied] = useState(false)
   const [search, setSearch] = useState('')
 
-  // Load events (most recent first)
   useEffect(() => {
     const q = query(collection(db, 'evenements'), orderBy('date', 'desc'))
     return onSnapshot(q, snap => {
       const evts = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       setEvenements(evts)
-      if (!selectedEvent && evts.length > 0) {
-        setSelectedEvent(evts[0])
-      }
+      if (!selectedEvent && evts.length > 0) setSelectedEvent(evts[0])
     })
   }, [])
 
-  // Load members
   useEffect(() => {
     const q = query(collection(db, 'membres'), orderBy('nom'))
     return onSnapshot(q, snap => {
@@ -41,7 +37,6 @@ export default function Presences({ user, userData }) {
     })
   }, [])
 
-  // Load presences for selected event
   useEffect(() => {
     if (!selectedEvent) return
     setLoadingPresences(true)
@@ -50,9 +45,7 @@ export default function Presences({ user, userData }) {
       const map = {}
       snap.docs.forEach(d => {
         const data = d.data()
-        if (data.eventId === selectedEvent.id) {
-          map[data.membreId] = data.present
-        }
+        if (data.eventId === selectedEvent.id) map[data.membreId] = data.present
       })
       setPresences(map)
       setLoadingPresences(false)
@@ -75,9 +68,7 @@ export default function Presences({ user, userData }) {
         updatedAt: new Date().toISOString(),
       })
       setPresences(prev => ({ ...prev, [membre.id]: nowPresent }))
-    } catch(e) {
-      console.error(e)
-    }
+    } catch(e) { console.error(e) }
     setSaving(null)
   }
 
@@ -93,9 +84,7 @@ export default function Presences({ user, userData }) {
       setSelectedEvent({ id: ref.id, titre: newEventForm.titre.trim(), date: newEventForm.date })
       setShowNewEvent(false)
       setNewEventForm({ titre: '', date: new Date().toISOString().slice(0,10) })
-    } catch(e) {
-      console.error(e)
-    }
+    } catch(e) { console.error(e) }
     setSavingEvent(false)
   }
 
@@ -123,11 +112,11 @@ export default function Presences({ user, userData }) {
     const presents = membres.filter(m => presences[m.id] === true)
     const absents  = membres.filter(m => presences[m.id] !== true)
     let t = `Présence ${selectedEvent.titre} — ${dateFormatted}\n\n`
-    t += `✅ Présents\n`
+    t += `Présents\n`
     t += presents.length ? presents.map(m => m.prenoms || m.nom).join('\n') : 'Aucun'
-    t += `\n\n❌ Absents\n`
+    t += `\n\nAbsents\n`
     t += absents.length  ? absents.map(m => m.prenoms || m.nom).join('\n')  : 'Aucun'
-    t += `\n\n👥 Total : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${membres.length} membre${membres.length !== 1 ? 's' : ''}`
+    t += `\n\nTotal : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${membres.length} membre${membres.length !== 1 ? 's' : ''}`
     return t
   }
 
@@ -146,33 +135,28 @@ export default function Presences({ user, userData }) {
   }
 
   const inp = {
-    width: '100%',
-    padding: '11px 14px',
-    border: '1.5px solid var(--border-input)',
-    borderRadius: '12px',
-    fontSize: '14px',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)',
-    fontFamily: 'inherit',
-    outline: 'none',
-    boxSizing: 'border-box',
+    width: '100%', padding: '11px 14px',
+    border: '1.5px solid var(--border-input)', borderRadius: '12px',
+    fontSize: '14px', background: 'var(--input-bg)', color: 'var(--text-primary)',
+    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   }
 
   return (
-    <div style={{height:'100vh', display:'flex', flexDirection:'column', background:'var(--bg-body)', overflow:'hidden'}}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-body)', overflow: 'hidden' }}>
+
       {/* Header */}
-      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.25rem', paddingTop:'max(1rem, env(safe-area-inset-top))', flexShrink:0}}>
-        <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'1rem'}}>
+      <div style={{ background: C, padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
           <button
             onClick={() => navigate('/')}
-            style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontSize:'16px', fontFamily:'inherit', flexShrink:0}}
+            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
           >
             ‹
           </button>
-          <div style={{flex:1}}>
-            <h1 style={{margin:0, fontSize:'18px', fontWeight:'700', color:'#fff'}}>Présence Alimbavaka</h1>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Présence Alimbavaka</h1>
             {selectedEvent && (
-              <p style={{margin:0, fontSize:'11px', color:'rgba(255,255,255,0.5)'}}>
+              <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
                 {presentCount} / {membres.length} présent{presentCount !== 1 ? 's' : ''}
               </p>
             )}
@@ -180,7 +164,7 @@ export default function Presences({ user, userData }) {
           {selectedEvent && membres.length > 0 && (
             <button
               onClick={partager}
-              style={{background:'rgba(255,255,255,0.2)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', flexShrink:0, display:'flex', alignItems:'center', gap:'6px'}}
+              style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Share2 size={15} /> Partager
             </button>
@@ -188,34 +172,34 @@ export default function Presences({ user, userData }) {
         </div>
 
         {/* Event selector */}
-        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
           <select
             value={selectedEvent?.id || ''}
             onChange={e => {
               const evt = evenements.find(ev => ev.id === e.target.value)
               setSelectedEvent(evt || null)
             }}
-            style={{flex:1, padding:'10px 12px', border:'none', borderRadius:'12px', fontSize:'13px', background:'rgba(255,255,255,0.12)', color:'#fff', fontFamily:'inherit', outline:'none', cursor:'pointer'}}
+            style={{ flex: 1, padding: '10px 12px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
           >
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
-              <option key={ev.id} value={ev.id} style={{background:'#2d1f6e', color:'#fff'}}>
+              <option key={ev.id} value={ev.id} style={{ background: '#1a8a7a', color: '#fff' }}>
                 {ev.titre} — {toDisplayDate(ev.date)}
               </option>
             ))}
           </select>
           <button
             onClick={() => setShowNewEvent(true)}
-            style={{background:'rgba(255,255,255,0.2)', border:'none', borderRadius:'12px', padding:'10px 14px', cursor:'pointer', color:'#fff', fontSize:'13px', fontWeight:'700', fontFamily:'inherit', flexShrink:0}}
+            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '12px', padding: '10px 14px', cursor: 'pointer', color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', flexShrink: 0 }}
           >
             + Nouveau
           </button>
         </div>
 
-        {/* Search members */}
+        {/* Barre de recherche */}
         {selectedEvent && membres.length > 0 && (
-          <div style={{position:'relative', marginTop:'10px'}}>
-            <span style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'rgba(255,255,255,0.4)', display:'flex'}}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', display: 'flex' }}>
               <Search size={14} />
             </span>
             <input
@@ -223,34 +207,43 @@ export default function Presences({ user, userData }) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher un membre..."
-              style={{width:'100%', padding:'10px 14px 10px 34px', border:'none', borderRadius:'12px', fontSize:'13px', background:'rgba(255,255,255,0.12)', color:'#fff', fontFamily:'inherit', outline:'none', boxSizing:'border-box'}}
+              style={{ width: '100%', padding: '10px 14px 10px 34px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
         )}
       </div>
 
-      {/* Copied toast */}
+      {/* Toast copié */}
       {copied && (
-        <div style={{position:'fixed', bottom:'1.5rem', left:'50%', transform:'translateX(-50%)', background:'#1e1840', color:'#5eead4', padding:'10px 20px', borderRadius:'12px', fontSize:'13px', fontWeight:'700', zIndex:200, boxShadow:'0 4px 16px rgba(0,0,0,0.3)', whiteSpace:'nowrap'}}>
-          ✓ Rapport copié !
+        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', background: '#1A1A2E', color: C, padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', zIndex: 200, boxShadow: '0 4px 16px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}>
+          Rapport copié !
         </div>
       )}
 
-      {/* Member checklist */}
-      <div style={{flex:1, overflowY:'auto', padding:'1rem', paddingBottom:'2rem'}}>
+      {/* Liste membres */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', paddingBottom: '2rem' }}>
         {!selectedEvent ? (
-          <div style={{textAlign:'center', color:'var(--text-secondary)', padding:'3rem 1rem', fontSize:'13px'}}>
+          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
             Créez un culte pour commencer le suivi des présences.
           </div>
         ) : membres.length === 0 ? (
-          <div style={{textAlign:'center', color:'var(--text-secondary)', padding:'3rem 1rem', fontSize:'13px'}}>
+          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
             Aucun membre enregistré. Ajoutez des membres dans le module Membres.
           </div>
         ) : (
           <>
-            <div style={{fontSize:'11px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'8px'}}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>
               {selectedEvent.titre} · {toDisplayDate(selectedEvent.date)}
             </div>
+
+            {/* Badge présents */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: `${C}18`, borderRadius: '20px', padding: '5px 12px', marginBottom: '12px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: C }} />
+              <span style={{ fontSize: '12px', fontWeight: '700', color: C }}>
+                {presentCount} présent{presentCount !== 1 ? 's' : ''} sur {membres.length}
+              </span>
+            </div>
+
             {filteredMembres.map(m => {
               const present = presences[m.id] === true
               const isSaving = saving === m.id
@@ -259,33 +252,49 @@ export default function Presences({ user, userData }) {
                   key={m.id}
                   onClick={() => !isSaving && togglePresence(m)}
                   style={{
-                    display:'flex', alignItems:'center', gap:'12px',
-                    background: present ? (dark ? 'rgba(94,234,212,0.08)' : 'rgba(94,234,212,0.12)') : 'var(--card-bg)',
-                    borderRadius:'14px', padding:'12px', marginBottom:'8px',
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    background: 'var(--card-bg)',
+                    borderRadius: '14px', padding: '12px 14px', marginBottom: '8px',
                     cursor: isSaving ? 'wait' : 'pointer',
-                    border: present ? '1.5px solid rgba(94,234,212,0.3)' : '1.5px solid transparent',
-                    transition: 'all 0.15s',
+                    boxShadow: 'var(--card-shadow)',
+                    border: present ? `1.5px solid ${C}50` : '1.5px solid transparent',
+                    transition: 'border-color 0.15s',
                     opacity: isSaving ? 0.6 : 1,
                   }}
                 >
+                  {/* Avatar */}
                   <div style={{
-                    width:'28px', height:'28px', borderRadius:'8px', flexShrink:0,
-                    background: present ? '#5eead4' : 'var(--input-bg)',
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    transition: 'background 0.15s',
+                    width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
+                    background: present ? `${C}18` : 'var(--input-bg)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: '700', fontSize: '14px',
+                    color: present ? C : 'var(--text-secondary)',
                   }}>
-                    {present ? <Check size={16} strokeWidth={3} color="#1a1040" /> : null}
+                    {(m.nom || '?')[0].toUpperCase()}
                   </div>
-                  <div style={{flex:1, minWidth:0}}>
-                    <div style={{fontSize:'14px', fontWeight:'600', color:'var(--text-primary)'}}>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
                       {m.nom} {m.prenoms}
                     </div>
                     {m.telephone && (
-                      <div style={{fontSize:'11px', color:'var(--text-secondary)'}}>{m.telephone}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '1px' }}>{m.telephone}</div>
                     )}
                   </div>
-                  <div style={{fontSize:'12px', fontWeight:'600', color: present ? '#5eead4' : 'var(--text-muted)'}}>
-                    {present ? 'Présent' : 'Absent'}
+
+                  {/* Checkbox droite */}
+                  <div style={{
+                    width: '26px', height: '26px', borderRadius: '8px', flexShrink: 0,
+                    background: present ? C : 'var(--input-bg)',
+                    border: present ? 'none' : '2px solid var(--border-input)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.15s',
+                  }}>
+                    {present && (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
                   </div>
                 </div>
               )
@@ -294,16 +303,16 @@ export default function Presences({ user, userData }) {
         )}
       </div>
 
-      {/* New event modal */}
+      {/* Modal nouveau culte */}
       {showNewEvent && (
-        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:100, display:'flex', alignItems:'flex-end'}} onClick={() => setShowNewEvent(false)}>
-          <div style={{width:'100%', background:'var(--card-bg)', borderRadius:'20px 20px 0 0', padding:'1.5rem', paddingBottom:'max(1.5rem, env(safe-area-inset-bottom))'}} onClick={e => e.stopPropagation()}>
-            <div style={{width:'36px', height:'4px', background:'var(--border-light)', borderRadius:'2px', margin:'0 auto 1.5rem'}} />
-            <h2 style={{margin:'0 0 1.25rem', fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Nouveau culte</h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }} onClick={() => setShowNewEvent(false)}>
+          <div style={{ width: '100%', background: 'var(--card-bg)', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: '36px', height: '4px', background: 'var(--border-light)', borderRadius: '2px', margin: '0 auto 1.5rem' }} />
+            <h2 style={{ margin: '0 0 1.25rem', fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>Nouveau culte</h2>
 
-            <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{fontSize:'11px', fontWeight:'600', color:'var(--text-secondary)', display:'block', marginBottom:'4px'}}>Titre *</label>
+                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Titre *</label>
                 <input
                   type="text"
                   value={newEventForm.titre}
@@ -313,7 +322,7 @@ export default function Presences({ user, userData }) {
                 />
               </div>
               <div>
-                <label style={{fontSize:'11px', fontWeight:'600', color:'var(--text-secondary)', display:'block', marginBottom:'4px'}}>Date</label>
+                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Date</label>
                 <input
                   type="date"
                   value={newEventForm.date}
@@ -323,17 +332,17 @@ export default function Presences({ user, userData }) {
               </div>
             </div>
 
-            <div style={{display:'flex', gap:'10px', marginTop:'1.5rem'}}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem' }}>
               <button
                 onClick={() => setShowNewEvent(false)}
-                style={{flex:1, padding:'13px', border:'1.5px solid var(--border-input)', borderRadius:'12px', background:'transparent', color:'var(--text-secondary)', fontWeight:'600', cursor:'pointer', fontFamily:'inherit'}}
+                style={{ flex: 1, padding: '13px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 Annuler
               </button>
               <button
                 onClick={createEvent}
                 disabled={savingEvent || !newEventForm.titre.trim()}
-                style={{flex:2, padding:'13px', border:'none', borderRadius:'12px', background:'var(--btn-primary-bg)', color:'#fff', fontWeight:'700', cursor:'pointer', fontFamily:'inherit', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1}}
+                style={{ flex: 2, padding: '13px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
               >
                 {savingEvent ? 'Création...' : 'Créer le culte'}
               </button>

@@ -6,6 +6,8 @@ import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
 
+const C = '#5B4FCF'
+
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
 }
@@ -52,7 +54,7 @@ export default function Budget({ user, userData }) {
     return true
   })
 
-  const allEntrees = transactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+  const allEntrees  = transactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
   const allDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
   const solde = allEntrees - allDepenses
 
@@ -61,68 +63,67 @@ export default function Budget({ user, userData }) {
       type={showDetail}
       transactions={transactions}
       onBack={() => setShowDetail(null)}
-      onEdit={tx => {
-        setEditTx(tx)
-        setShowDetail(null)
-      }}
+      onEdit={tx => { setEditTx(tx); setShowDetail(null) }}
     />
   )
 
-  const avatarStyle = {
-    cursor: 'pointer',
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: '#5eead4',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    fontSize: '13px',
-    color: '#1a1040',
-    flexShrink: 0,
-    overflow: 'hidden',
-    border: userData?.photoURL ? '2px solid #5eead4' : 'none',
-  }
-
   return (
     <div className="app">
-      <div className="app-hero">
-        <div className="app-topbar">
+      {/* Hero */}
+      <div style={{ background: C, padding: '18px 16px 20px', paddingTop: 'max(18px, env(safe-area-inset-top))' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <button
             onClick={() => navigate('/')}
-            style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontSize:'16px', fontFamily:'inherit', flexShrink:0}}
+            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
           >
             ‹
           </button>
-
-          <div style={{flex:1}}>
-            <h1>Budget</h1>
-            <p>Young For Christ · Tanora ho an'i Kristy</p>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Budget</h1>
+            <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.55)' }}>Young For Christ</p>
           </div>
-
         </div>
 
-        <div className="hero-stats">
-          <div className="hero-stat" onClick={() => setShowDetail('entree')} style={{cursor:'pointer'}}>
-            <div className="hero-stat-label">Entrées</div>
-            <div className="hero-stat-value green">{fmt(allEntrees)}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div
+            onClick={() => setShowDetail('entree')}
+            style={{ background: 'rgba(255,255,255,0.14)', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
+          >
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>Entrées</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#4ADE80' }}>{fmt(allEntrees)}</div>
           </div>
-          <div className="hero-stat" onClick={() => setShowDetail('depense')} style={{cursor:'pointer'}}>
-            <div className="hero-stat-label">Dépenses</div>
-            <div className="hero-stat-value red">{fmt(allDepenses)}</div>
+          <div
+            onClick={() => setShowDetail('depense')}
+            style={{ background: 'rgba(255,255,255,0.14)', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
+          >
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>Dépenses</div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#FC8FAE' }}>{fmt(allDepenses)}</div>
           </div>
         </div>
       </div>
 
-      <div className="solde-card">
+      {/* Solde */}
+      <div style={{
+        background: 'var(--card-bg)', borderRadius: '16px', padding: '16px',
+        margin: '14px 16px 0',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        boxShadow: 'var(--card-shadow)',
+      }}>
         <div>
-          <div className="solde-label">Solde actuel</div>
-          <div className={`solde-value ${solde >= 0 ? 'green' : 'red'}`}>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>
+            Solde actuel
+          </div>
+          <div style={{ fontSize: '22px', fontWeight: '700', color: solde >= 0 ? '#0D9370' : '#D63B5E' }}>
             {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
           </div>
         </div>
-        <div className={`solde-icon ${solde >= 0 ? 'green' : 'red'}`}>
+        <div style={{
+          width: '42px', height: '42px', borderRadius: '50%',
+          background: solde >= 0 ? '#E6FAF5' : '#FEF0F4',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '20px', fontWeight: '700',
+          color: solde >= 0 ? '#0D9370' : '#D63B5E',
+        }}>
           {solde >= 0 ? '+' : '−'}
         </div>
       </div>
@@ -142,7 +143,6 @@ export default function Budget({ user, userData }) {
         editTx={editTx}
         onEditDone={() => setEditTx(null)}
       />
-
     </div>
   )
 }

@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
-import { auth } from '../auth'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
-import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
+import { Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -12,11 +10,11 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  { path: '/dashboard',   Icon: LayoutDashboard, label: 'Tableau de bord',     desc: 'Budget, membres & événements',    color: '#a78bfa' },
-  { path: '/budget',      Icon: Wallet,          label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
-  { path: '/presences',   Icon: CalendarCheck,   label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
-  { path: '/membres',     Icon: Users,           label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
-  { path: '/evenements',  Icon: CalendarDays,    label: 'Événements',           desc: 'Agenda & suivi des événements',   color: '#38bdf8' },
+  { path: '/dashboard',  Icon: LayoutDashboard, label: 'Tableau de bord',    desc: 'Budget, membres & événements',   bg: '#4338CA' },
+  { path: '/budget',     Icon: Wallet,          label: 'Budget YFC',          desc: 'Entrées, dépenses & solde',      bg: '#5B4FCF' },
+  { path: '/presences',  Icon: CalendarCheck,   label: 'Présence Alimbavaka', desc: 'Suivi des présences aux cultes', bg: '#2EC4A9' },
+  { path: '/membres',    Icon: Users,           label: 'Membres',             desc: 'Gestion de la liste des membres',bg: '#2F80ED' },
+  { path: '/evenements', Icon: CalendarDays,    label: 'Événements',          desc: 'Agenda & suivi des événements',  bg: '#E8445A' },
 ]
 
 export default function Home({ user, userData }) {
@@ -24,72 +22,62 @@ export default function Home({ user, userData }) {
   const [showAdmin, setShowAdmin] = useState(false)
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
-  const avatarStyle = {
-    width: '42px',
-    height: '42px',
-    borderRadius: '50%',
-    background: '#5eead4',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    fontSize: '13px',
-    color: '#1a1040',
-    flexShrink: 0,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    border: userData?.photoURL ? '2px solid #5eead4' : 'none',
-  }
-
   return (
-    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
+
       {/* Header */}
-      <div style={{background:'var(--hero-bg)', padding:'1rem', paddingTop:'max(1rem, env(safe-area-inset-top))'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-          <div style={avatarStyle} onClick={() => navigate('/parametres')}>
+      <div style={{
+        background: 'var(--card-bg)',
+        padding: '1.25rem 1rem',
+        paddingTop: 'max(1.25rem, env(safe-area-inset-top))',
+        borderBottom: '1px solid var(--border-light)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            onClick={() => navigate('/parametres')}
+            style={{
+              width: '46px', height: '46px', borderRadius: '50%',
+              background: '#5B4FCF', flexShrink: 0, overflow: 'hidden',
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontWeight: '700', fontSize: '15px', color: '#fff',
+              border: userData?.photoURL ? '2px solid #5B4FCF' : 'none',
+            }}
+          >
             {userData?.photoURL
-              ? <img src={userData.photoURL} alt="avatar" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+              ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
             }
           </div>
 
-          <div style={{flex:1, minWidth:0}}>
-            <h1 style={{margin:0, fontSize:'17px', fontWeight:'700', color:'#fff', lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>
-              Bonjour, <span style={{color:'#5eead4'}}>{prenom}</span>
-            </h1>
-            <p style={{margin:0, fontSize:'11px', color:'rgba(255,255,255,0.45)', marginTop:'2px'}}>Young For Christ</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
+            <div style={{ fontSize: '19px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {prenom}
+            </div>
           </div>
 
-          <div style={{display:'flex', gap:'6px', alignItems:'center', flexShrink:0}}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
             {user.email === ADMIN_EMAIL && (
               <button
                 onClick={() => setShowAdmin(true)}
-                style={{background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'10px', padding:'7px 10px', cursor:'pointer', color:'#fff', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+                style={{ background: 'rgba(91,79,207,0.1)', border: 'none', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer', color: '#5B4FCF', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit' }}
               >
                 Admin
               </button>
             )}
             <button
               onClick={() => navigate('/parametres')}
-              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center'}}
-              title="Paramètres"
+              style={{ background: 'var(--input-bg)', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Settings size={17} />
-            </button>
-            <button
-              onClick={() => signOut(auth)}
-              style={{background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'10px', padding:'8px', cursor:'pointer', color:'rgba(255,255,255,0.7)', display:'flex', alignItems:'center', justifyContent:'center'}}
-              title="Déconnexion"
-            >
-              <LogOut size={17} />
+              <Settings size={18} />
             </button>
           </div>
         </div>
       </div>
 
       {/* Module cards */}
-      <div style={{padding:'1.5rem 1rem', display:'flex', flexDirection:'column', gap:'12px'}}>
-        <div style={{fontSize:'11px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'4px'}}>
+      <div style={{ padding: '1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>
           Modules
         </div>
 
@@ -98,36 +86,44 @@ export default function Home({ user, userData }) {
             key={m.path}
             onClick={() => navigate(m.path)}
             style={{
-              display:'flex', alignItems:'center', gap:'16px',
-              background: m.gradient || 'var(--card-bg)',
-              border:'none', borderRadius:'16px',
-              padding:'16px', cursor:'pointer', textAlign:'left', width:'100%',
-              boxShadow: m.gradient ? '0 4px 16px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.06)',
+              display: 'flex', alignItems: 'center', gap: '14px',
+              background: m.bg,
+              border: 'none', borderRadius: '18px',
+              padding: '16px', cursor: 'pointer', textAlign: 'left', width: '100%',
+              boxShadow: `0 4px 18px ${m.bg}50`,
+              transition: 'opacity 0.15s',
+              WebkitTapHighlightColor: 'transparent',
             }}
           >
             <div style={{
-              width:'52px', height:'52px', borderRadius:'14px',
-              background: m.gradient ? 'rgba(255,255,255,0.15)' : `${m.color}18`,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              flexShrink:0,
+              width: '48px', height: '48px', borderRadius: '14px',
+              background: 'rgba(255,255,255,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
             }}>
-              <m.Icon size={24} color={m.gradient ? '#fff' : m.color} />
+              <m.Icon size={24} color="#fff" />
             </div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'15px', fontWeight:'700', color: m.gradient ? '#fff' : 'var(--text-primary)', marginBottom:'2px'}}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '2px' }}>
                 {m.label}
               </div>
-              <div style={{fontSize:'12px', color: m.gradient ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary)'}}>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>
                 {m.desc}
               </div>
             </div>
-            <ChevronRight size={18} color={m.gradient ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)'} style={{flexShrink:0}} />
+            <ChevronRight size={20} color="rgba(255,255,255,0.5)" style={{ flexShrink: 0 }} />
           </button>
         ))}
       </div>
 
       {/* Footer */}
-      <div style={{position:'fixed', bottom:0, left:0, right:0, textAlign:'center', padding:'10px 1rem', paddingBottom:'max(10px, env(safe-area-inset-bottom))', color:'var(--text-muted)', fontSize:'11px', background:'var(--bg-body)'}}>
+      <div style={{
+        textAlign: 'center',
+        padding: '0.5rem 1rem',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+        color: 'var(--text-muted)',
+        fontSize: '11px',
+      }}>
         Young For Christ · Tanora ho an'i Kristy · {new Date().getFullYear()}
       </div>
 
