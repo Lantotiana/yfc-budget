@@ -122,9 +122,9 @@ export default function Membres({ user, userData }) {
   const isEditing = sheet && sheet !== 'add'
 
   return (
-    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
+    <div style={{height:'100vh', display:'flex', flexDirection:'column', background:'var(--bg-body)', overflow:'hidden'}}>
       {/* Header */}
-      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.5rem', paddingTop:'max(1rem, env(safe-area-inset-top))', position:'sticky', top:0, zIndex:10}}>
+      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.5rem', paddingTop:'max(1rem, env(safe-area-inset-top))', flexShrink:0}}>
         <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'1rem'}}>
           <button
             onClick={() => navigate('/')}
@@ -161,7 +161,7 @@ export default function Membres({ user, userData }) {
       </div>
 
       {/* List */}
-      <div style={{padding:'1rem'}}>
+      <div style={{flex:1, overflowY:'auto', padding:'1rem', paddingBottom:'5rem'}}>
         {loading ? (
           <div style={{textAlign:'center', color:'var(--text-secondary)', padding:'2rem', fontSize:'13px'}}>Chargement...</div>
         ) : filtered.length === 0 ? (
