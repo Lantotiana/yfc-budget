@@ -3,7 +3,7 @@ import { auth } from '../auth'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { Eye, EyeOff, CheckCircle, Clock, Mail, Feather } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
 
 export default function Login() {
   const [mode, setMode] = useState('login')
@@ -171,8 +171,8 @@ export default function Login() {
     <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
       <div style={{width:'100%', maxWidth:'400px', textAlign:'center'}}>
         <div style={{marginBottom:'2rem'}}>
-          <div style={{width:'80px', height:'80px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', border:'2px solid #5eead4', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px'}}>
-            <Feather size={36} color="#5eead4" />
+          <div style={{width:'80px', height:'80px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 24px'}}>
+            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
           </div>
           <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'12px'}}>
             Demande envoyée
@@ -229,8 +229,8 @@ export default function Login() {
       <div style={{width:'100%', maxWidth:'360px'}}>
 
         <div style={{textAlign:'center', marginBottom:'2rem'}}>
-          <div style={{width:'56px', height:'56px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', color:'#1a1040', margin:'0 auto 16px'}}>
-            YFC
+          <div style={{width:'56px', height:'56px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 16px'}}>
+            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
           </div>
           <h1 style={{fontSize:'22px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
             Mot de passe<br/><span style={{color:'#5eead4'}}>oublié ?</span>
@@ -295,8 +295,8 @@ export default function Login() {
       <div style={{width:'100%', maxWidth:'360px'}}>
 
         <div style={{textAlign:'center', marginBottom:'2rem'}}>
-          <div style={{width:'56px', height:'56px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', color:'#1a1040', margin:'0 auto 16px'}}>
-            YFC
+          <div style={{width:'56px', height:'56px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 16px'}}>
+            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
           </div>
           <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'8px'}}>
             Tanora ho an'i Kristy
