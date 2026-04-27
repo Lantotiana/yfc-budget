@@ -199,7 +199,7 @@ export default function Login() {
             </div>
           </div>
           <div style={{display:'flex', gap:'14px', alignItems:'flex-start'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><Mail size={16} color="#5eead4" /></div>
+            <div className="icon-circle-32 bg-teal-15"><Mail size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Notification par email</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vous recevrez un email dès que votre compte sera approuvé.</div>
@@ -225,12 +225,12 @@ export default function Login() {
   )
 
   if (showForgot) return (
-    <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
-      <div style={{width:'100%', maxWidth:'360px'}}>
+    <div className="login-page">
+      <div className="login-container" style={{ maxWidth: '360px' }}>
 
-        <div style={{textAlign:'center', marginBottom:'2rem'}}>
-          <div style={{width:'56px', height:'56px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 16px'}}>
-            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+        <div className="text-center mb-16">
+          <div className="w-56-h-56 rounded-50 m-0-auto-16 overflow-hidden">
+            <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
           <h1 style={{fontSize:'22px', fontWeight:'700', color:'#fff', lineHeight:1.2, marginBottom:'8px'}}>
             Mot de passe<br/><span style={{color:'#5eead4'}}>oublié ?</span>
@@ -240,7 +240,7 @@ export default function Login() {
           </p>
         </div>
 
-        <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem'}}>
+        <div className="rounded-20 p-12" style={{ background: 'rgba(255,255,255,0.06)' }}>
           {forgotSent ? (
             <div style={{textAlign:'center'}}>
               <div style={{marginBottom:'16px', display:'flex', justifyContent:'center'}}><Mail size={36} color="#5eead4" /></div>
@@ -294,9 +294,9 @@ export default function Login() {
     <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
       <div style={{width:'100%', maxWidth:'360px'}}>
 
-        <div style={{textAlign:'center', marginBottom:'2rem'}}>
-          <div style={{width:'56px', height:'56px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 16px'}}>
-            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+        <div className="text-center mb-16">
+          <div className="w-56-h-56 rounded-50 m-0-auto-16 overflow-hidden">
+            <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
           <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'8px'}}>
             Tanora ho an'i Kristy
@@ -309,7 +309,7 @@ export default function Login() {
           </p>
         </div>
 
-        <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem'}}>
+        <div className="rounded-20 p-12" style={{ background: 'rgba(255,255,255,0.06)' }}>
 
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', background:'rgba(255,255,255,0.08)', borderRadius:'12px', padding:'3px', marginBottom:'1.5rem'}}>
             <button onClick={() => { setMode('login'); setMessage('') }} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: mode==='login' ? '#2d1f6e' : 'transparent', color: mode==='login' ? '#fff' : 'rgba(255,255,255,0.4)'}}>
