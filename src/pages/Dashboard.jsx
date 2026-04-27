@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
@@ -7,6 +7,31 @@ import { toDisplayDate } from '../utils'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
+}
+
+function useCountUp(target, duration = 900) {
+  const [value, setValue] = useState(0)
+  const raf = useRef(null)
+  const prev = useRef(null)
+
+  useEffect(() => {
+    if (target === 0) { setValue(0); return }
+    const start = performance.now()
+    const from = prev.current ?? 0
+    prev.current = target
+
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1)
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(from + (target - from) * eased))
+      if (progress < 1) raf.current = requestAnimationFrame(tick)
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf.current)
+  }, [target, duration])
+
+  return value
 }
 
 function useNow() {
@@ -85,6 +110,13 @@ export default function Dashboard({ user, userData }) {
   const moisEntrees = transactions.filter(t => t.type === 'entree' && t.date?.startsWith(currentMonth)).reduce((s, t) => s + Number(t.montant || 0), 0)
   const moisDepenses = transactions.filter(t => t.type === 'depense' && t.date?.startsWith(currentMonth)).reduce((s, t) => s + Number(t.montant || 0), 0)
 
+  const aSolde = useCountUp(Math.abs(solde))
+  const aTotalEntrees = useCountUp(totalEntrees)
+  const aTotalDepenses = useCountUp(totalDepenses)
+  const aMoisEntrees = useCountUp(moisEntrees, 700)
+  const aMoisDepenses = useCountUp(moisDepenses, 700)
+  const aMembres = useCountUp(membres.length, 600)
+
   const upcoming = evenements.filter(e => { const end = parseEventEnd(e); return end && end > now })
   const past = evenements.filter(e => { const end = parseEventEnd(e); return !end || end <= now })
   upcoming.sort((a, b) => parseEventStart(a) - parseEventStart(b))
@@ -95,9 +127,9 @@ export default function Dashboard({ user, userData }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '5rem' }}>
 
-      {/* Header */}
-      <div style={{ background: 'var(--hero-bg)', padding: '1rem 1rem 1.5rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Header avec cartes budget intégrées */}
+      <div style={{ background: 'var(--hero-bg)', padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
           <button onClick={() => navigate('/')} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}>
             ‹
           </button>
@@ -106,55 +138,46 @@ export default function Dashboard({ user, userData }) {
             <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Vue d'ensemble</p>
           </div>
         </div>
+
+        {/* SOLDE + CE MOIS dans le header */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Solde total */}
+          <div onClick={() => navigate('/budget')} style={{ flex: 1, borderRadius: '14px', padding: '1rem', background: 'rgba(255,255,255,0.1)', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
+              Solde total
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: solde >= 0 ? '#5eead4' : '#fb9ea0', lineHeight: 1.1, marginBottom: '8px' }}>
+              {solde < 0 ? '−' : ''}{fmt(aSolde)}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#5eead4' }}>↑ {fmt(aTotalEntrees)}</div>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#fb9ea0' }}>↓ {fmt(aTotalDepenses)}</div>
+            </div>
+          </div>
+
+          {/* Ce mois */}
+          <div onClick={() => navigate('/budget')} style={{ flex: 1, borderRadius: '14px', padding: '1rem', background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
+              Ce mois
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>Entrées</div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#5eead4' }}>↑ {fmt(aMoisEntrees)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>Dépenses</div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#fb9ea0' }}>↓ {fmt(aMoisDepenses)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem', fontSize: '13px' }}>Chargement...</div>
       ) : (
         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-
-          {/* SOLDE + CE MOIS côte à côte */}
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {/* Solde total */}
-            <div onClick={() => navigate('/budget')} style={{
-              flex: 1, borderRadius: '20px', padding: '1.25rem',
-              background: 'var(--hero-bg)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-              cursor: 'pointer',
-            }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
-                Solde total
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: '700', color: solde >= 0 ? '#5eead4' : '#fb9ea0', lineHeight: 1.1, marginBottom: '10px' }}>
-                {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: '#5eead4' }}>↑ {fmt(totalEntrees)}</div>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: '#fb9ea0' }}>↓ {fmt(totalDepenses)}</div>
-              </div>
-            </div>
-
-            {/* Ce mois */}
-            <div onClick={() => navigate('/budget')} style={{
-              flex: 1, borderRadius: '20px', padding: '1.25rem',
-              background: 'var(--card-bg)',
-              cursor: 'pointer',
-            }}>
-              <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
-                Ce mois
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px' }}>Entrées</div>
-                  <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>↑ {fmt(moisEntrees)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px' }}>Dépenses</div>
-                  <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-secondary)' }}>↓ {fmt(moisDepenses)}</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Membres */}
           <div
@@ -166,7 +189,7 @@ export default function Dashboard({ user, userData }) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>Membres</div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#fb923c', lineHeight: 1 }}>{membres.length}</div>
+              <div style={{ fontSize: '28px', fontWeight: '700', color: '#fb923c', lineHeight: 1 }}>{aMembres}</div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '1px' }}>inscrits</div>
             </div>
             <ArrowRight size={20} color="#fb923c" />
