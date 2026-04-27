@@ -142,19 +142,16 @@ export default function Presences({ user, userData }) {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-body)', overflow: 'hidden' }}>
+    <div className="page-container">
 
       {/* Header */}
-      <div style={{ background: C, padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))', flexShrink: 0 }}>
+      <div className="page-header" style={{ background: C }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Présence Alimbavaka</h1>
+            <h1 className="page-title">Présence Alimbavaka</h1>
             {selectedEvent && (
               <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
                 {presentCount} / {membres.length} présent{presentCount !== 1 ? 's' : ''}
