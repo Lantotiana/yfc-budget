@@ -124,8 +124,8 @@ export default function Home({ user, userData }) {
       </div>
 
       {/* Footer */}
-      <div style={{textAlign:'center', padding:'0 1rem 2rem', color:'var(--text-muted)', fontSize:'11px'}}>
-        YFC Budget · {new Date().getFullYear()}
+      <div style={{position:'fixed', bottom:0, left:0, right:0, textAlign:'center', padding:'10px 1rem', paddingBottom:'max(10px, env(safe-area-inset-bottom))', color:'var(--text-muted)', fontSize:'11px', background:'var(--bg-body)'}}>
+        Young For Christ · Tanora ho an'i Kristy · {new Date().getFullYear()}
       </div>
 
       {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
