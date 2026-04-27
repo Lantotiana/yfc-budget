@@ -203,7 +203,7 @@ export default function TransactionList({
         {paginated.length === 0 && <div className="empty">Aucune transaction</div>}
 
         {paginated.map(tx => (
-          <div key={tx.id} className="tx-item" onClick={() => openEdit(tx)} style={{cursor:'pointer'}}>
+          <div key={tx.id} className="tx-item cursor-pointer" onClick={() => openEdit(tx)}>
             <div className={`tx-icon ${tx.type}`}>{tx.type === 'entree' ? '+' : '−'}</div>
             <div className="tx-info">
               <div className="tx-motif">{tx.motif}</div>
@@ -228,21 +228,23 @@ export default function TransactionList({
         ))}
 
         {searched.length > PAGE_SIZE && (
-          <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:'8px', marginTop:'14px', paddingTop:'14px', borderTop:'0.5px solid var(--border-input)'}}>
+          <div className="flex-center gap-8" style={{marginTop:'14px', paddingTop:'14px', borderTop:'0.5px solid var(--border-input)'}}>
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              style={{padding:'8px 14px', background:'var(--btn-secondary-bg)', border:'none', borderRadius:'10px', cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:'600', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit'}}
+              className="text-12 font-600 rounded-10 border-none bg-secondary"
+              style={{ padding:'8px 14px', cursor: page === 1 ? 'not-allowed' : 'pointer', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit' }}
             >
               ← Précédent
             </button>
-            <div style={{fontSize:'12px', color:'var(--text-secondary)', fontWeight:'600', padding:'0 8px'}}>
+            <div className="text-12 text-secondary font-600" style={{padding:'0 8px'}}>
               {page} / {totalPages}
             </div>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              style={{padding:'8px 14px', background:'var(--btn-secondary-bg)', border:'none', borderRadius:'10px', cursor: page === totalPages ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:'600', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit'}}
+              className="text-12 font-600 rounded-10 border-none bg-secondary"
+              style={{ padding:'8px 14px', cursor: page === totalPages ? 'not-allowed' : 'pointer', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit' }}
             >
               Suivant →
             </button>

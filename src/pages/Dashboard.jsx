@@ -175,7 +175,7 @@ export default function Dashboard({ user, userData }) {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem', fontSize: '13px' }}>Chargement...</div>
+        <div className="text-center text-secondary text-13" style={{ padding: '3rem' }}>Chargement...</div>
       ) : (
         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1 }}>
 

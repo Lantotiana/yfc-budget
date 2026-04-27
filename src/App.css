@@ -855,3 +855,244 @@ input:focus, select:focus {
   font-size: 12px;
   color: var(--text-secondary);
 }
+
+/* ====== SIZING UTILITIES ====== */
+.flex-1 { flex: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+.min-w-0 { min-width: 0; }
+.flex-1-min { flex: 1; min-width: 0; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.w-h-full { width: 100%; height: 100%; }
+
+.overflow-hidden { overflow: hidden; }
+.text-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ====== SPACING SHORTCUTS ====== */
+.gap-5 { gap: 5px; }
+.gap-6 { gap: 6px; }
+.gap-8 { gap: 8px; }
+.gap-10 { gap: 10px; }
+.gap-12 { gap: 12px; }
+.gap-14 { gap: 14px; }
+
+.mb-1 { margin-bottom: 1px; }
+.mb-2 { margin-bottom: 2px; }
+.mb-3 { margin-bottom: 3px; }
+.mb-4 { margin-bottom: 4px; }
+.mb-6 { margin-bottom: 6px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-14 { margin-bottom: 14px; }
+.mb-16 { margin-bottom: 16px; }
+
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: 1px; }
+.mt-2 { margin-top: 2px; }
+.mt-8 { margin-top: 8px; }
+.mt-10 { margin-top: 10px; }
+.mt-16 { margin-top: 16px; }
+
+.px-0 { padding: 0; }
+
+/* ====== TEXT UTILITIES ====== */
+.text-10 { font-size: 10px; }
+.text-11 { font-size: 11px; }
+.text-12 { font-size: 12px; }
+.text-13 { font-size: 13px; }
+.text-14 { font-size: 14px; }
+.text-15 { font-size: 15px; }
+.text-16 { font-size: 16px; }
+.text-18 { font-size: 18px; }
+.text-20 { font-size: 20px; }
+.text-22 { font-size: 22px; }
+.text-24 { font-size: 24px; }
+.text-26 { font-size: 26px; }
+.text-28 { font-size: 28px; }
+
+.font-500 { font-weight: 500; }
+.font-600 { font-weight: 600; }
+.font-700 { font-weight: 700; }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-white { color: #fff; }
+
+.text-center { text-align: center; }
+
+/* ====== TEXT COLORS ====== */
+.text-success { color: #0D9370; }
+.text-danger { color: #D63B5E; }
+.text-teal { color: #5eead4; }
+
+.text-white-50 { color: rgba(255,255,255,0.5); }
+.text-white-45 { color: rgba(255,255,255,0.45); }
+.text-white-40 { color: rgba(255,255,255,0.4); }
+.text-white-65 { color: rgba(255,255,255,0.65); }
+.text-white-55 { color: rgba(255,255,255,0.55); }
+
+/* ====== BACKGROUNDS ====== */
+.bg-primary { background: var(--btn-primary-bg); }
+.bg-secondary { background: var(--btn-secondary-bg); }
+.bg-surface { background: var(--surface-alt); }
+.bg-input { background: var(--input-bg); }
+.bg-card { background: var(--card-bg); }
+
+.bg-white-10 { background: rgba(255,255,255,0.1); }
+.bg-white-08 { background: rgba(255,255,255,0.08); }
+.bg-white-18 { background: rgba(255,255,255,0.18); }
+
+.bg-teal-15 { background: rgba(94,234,212,0.15); }
+.bg-teal-20 { background: rgba(94,234,212,0.2); }
+
+/* ====== BORDER RADIUS ====== */
+.rounded-6 { border-radius: 6px; }
+.rounded-8 { border-radius: 8px; }
+.rounded-10 { border-radius: 10px; }
+.rounded-12 { border-radius: 12px; }
+.rounded-14 { border-radius: 14px; }
+.rounded-16 { border-radius: 16px; }
+.rounded-20 { border-radius: 20px; }
+.rounded-50 { border-radius: 50%; }
+
+/* ====== PADDING UTILITIES ====== */
+.p-12 { padding: 12px; }
+.p-14 { padding: 14px; }
+.p-16 { padding: 16px; }
+
+.px-12 { padding-left: 12px; padding-right: 12px; }
+.px-14 { padding-left: 14px; padding-right: 14px; }
+
+.py-12 { padding-top: 12px; padding-bottom: 12px; }
+
+/* ====== OBJECT FIT ====== */
+.object-cover { object-fit: cover; }
+
+/* ====== BORDER ====== */
+.border-none { border: none; }
+.border-input { border: 1.5px solid var(--border-input); }
+.border-light { border: 1px solid var(--border-light); }
+
+/* ====== DISPLAY ====== */
+.inline-block { display: inline-block; }
+.block { display: block; }
+.none { display: none; }
+
+/* ====== CURSOR ====== */
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* ====== WIDTH/HEIGHT UTILITIES ====== */
+.w-32 { width: 32px; }
+.w-36 { width: 36px; }
+.w-52 { width: 52px; }
+.w-56 { width: 56px; }
+.w-64 { width: 64px; }
+.w-80 { width: 80px; }
+.w-90 { width: 90px; }
+
+.h-22 { height: 22px; }
+.h-28 { height: 28px; }
+.h-32 { height: 32px; }
+.h-36 { height: 36px; }
+.h-42 { height: 42px; }
+.h-52 { height: 52px; }
+.h-56 { height: 56px; }
+.h-64 { height: 64px; }
+.h-80 { height: 80px; }
+.h-90 { height: 90px; }
+
+.w-32-h-32 { width: 32px; height: 32px; }
+.w-36-h-36 { width: 36px; height: 36px; }
+.w-42-h-42 { width: 42px; height: 42px; }
+.w-52-h-52 { width: 52px; height: 52px; }
+.w-56-h-56 { width: 56px; height: 56px; }
+.w-64-h-64 { width: 64px; height: 64px; }
+.w-80-h-80 { width: 80px; height: 80px; }
+.w-90-h-90 { width: 90px; height: 90px; }
+
+/* ====== SPACING UTILITIES ====== */
+.m-auto { margin: 0 auto; }
+.m-0-auto-16 { margin: 0 auto 16px; }
+.m-0-auto-24 { margin: 0 auto 24px; }
+
+/* ====== LINE HEIGHT ====== */
+.leading-tight { line-height: 1; }
+.leading-normal { line-height: 1.2; }
+.leading-relaxed { line-height: 1.5; }
+
+/* ====== OVERFLOW ====== */
+.overflow-auto { overflow: auto; }
+.overflow-y-auto { overflow-y: auto; }
+.overflow-hidden { overflow: hidden; }
+
+/* ====== POSITION ====== */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+
+/* ====== ICON CIRCLES ====== */
+.icon-circle-32 {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-circle-52 {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ====== LOGIN PAGE ====== */
+.login-page {
+  min-height: 100vh;
+  background: #1a1040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto 24px;
+}
+
+.success-message {
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.success-message-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.success-message-item:last-child {
+  margin-bottom: 0;
+}

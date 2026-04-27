@@ -168,11 +168,11 @@ export default function Login() {
   }
 
   if (inscriptionReussie) return (
-    <div style={{minHeight:'100vh', background:'#1a1040', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'}}>
-      <div style={{width:'100%', maxWidth:'400px', textAlign:'center'}}>
-        <div style={{marginBottom:'2rem'}}>
-          <div style={{width:'80px', height:'80px', borderRadius:'50%', overflow:'hidden', margin:'0 auto 24px'}}>
-            <img src="/Yfc_icone.png" alt="YFC" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+    <div className="login-page">
+      <div className="login-container">
+        <div className="mb-16">
+          <div className="success-icon">
+            <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
           <div style={{fontSize:'11px', fontWeight:'600', color:'#5eead4', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:'12px'}}>
             Demande envoyée
@@ -183,16 +183,16 @@ export default function Login() {
           </h1>
         </div>
 
-        <div style={{background:'rgba(255,255,255,0.06)', borderRadius:'20px', padding:'1.5rem', marginBottom:'1.5rem', textAlign:'left'}}>
-          <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><CheckCircle size={16} color="#5eead4" /></div>
+        <div className="success-message">
+          <div className="success-message-item">
+            <div className="icon-circle-32 bg-teal-15"><CheckCircle size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>Compte créé avec succès</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>Vos informations ont bien été enregistrées dans notre système.</div>
             </div>
           </div>
-          <div style={{display:'flex', gap:'14px', alignItems:'flex-start', marginBottom:'16px'}}>
-            <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'rgba(94,234,212,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><Clock size={16} color="#5eead4" /></div>
+          <div className="success-message-item">
+            <div className="icon-circle-32 bg-teal-15"><Clock size={16} color="#5eead4" /></div>
             <div>
               <div style={{fontSize:'13px', fontWeight:'600', color:'white', marginBottom:'3px'}}>En attente d'approbation</div>
               <div style={{fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:1.5}}>L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
