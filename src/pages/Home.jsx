@@ -28,20 +28,20 @@ export default function Home({ user, userData }) {
       {/* Header Facebook style */}
       <div style={{background: 'var(--bg-body)', paddingTop: 'env(safe-area-inset-top)', position: 'relative'}}>
         {/* Boutons haut droite */}
-        <div className="absolute flex-center gap-4" style={{ top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', zIndex: 10 }}>
+        <div className="absolute flex-center gap-6" style={{ top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', zIndex: 10 }}>
           {user.email === ADMIN_EMAIL && (
             <button
               onClick={() => setShowAdmin(true)}
-              className="rounded-10 border-input text-11 font-700 text-white border-none cursor-pointer flex-center"
-              style={{ padding: '9px 10px', borderColor: 'var(--input-bg)', borderStyle: 'solid', borderWidth: '1.5px', color: 'var(--input-bg)' }}
+              className="rounded-10 text-11 font-700 cursor-pointer flex-center"
+              style={{ background: 'transparent', border: '1.5px solid var(--input-bg)', padding: '9px 10px', color: 'var(--input-bg)' }}
             >
               Admin
             </button>
           )}
           <button
             onClick={() => navigate('/parametres')}
-            className="rounded-10 text-white border-none cursor-pointer flex-center"
-            style={{ padding: '9px' }}
+            className="rounded-10 text-white cursor-pointer flex-center"
+            style={{ background: 'transparent', border: 'none', padding: '9px' }}
           >
             <Settings size={18} />
           </button>
