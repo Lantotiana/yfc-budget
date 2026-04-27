@@ -57,41 +57,75 @@ export default function Login() {
     try {
       cred = await createUserWithEmailAndPassword(auth, email, password)
     } catch(e) {
-      if (e.code === 'auth/email-already-in-use') showMsg('Cet email est déjà utilisé.')
-      else if (e.code === 'auth/weak-password') showMsg('Mot de passe trop court (minimum 6 caractères).')
-      else showMsg('Erreur lors de la création du compte.')
-      setLoading(false)
-      return
+      if (e.code === 'auth/email-already-in-use') {
+        // L'email existe déjà dans Auth — peut-être supprimé par l'admin (doc Firestore absent)
+        // On tente une connexion pour vérifier
+        try {
+          const existing = await signInWithEmailAndPassword(auth, email, password)
+          const snap = await getDoc(doc(db, 'users', existing.user.uid))
+          if (snap.exists()) {
+            // Doc présent : vrai compte existant
+            await signOut(auth)
+            if (snap.data().approuve === false) {
+              showMsg('Votre demande est déjà en attente d\'approbation.')
+            } else {
+              showMsg('Cet email est déjà utilisé. Connectez-vous.')
+            }
+          } else {
+            // Doc absent : compte supprimé par admin → on recycle l'uid
+            cred = existing
+            // Continuer vers l'étape 2 (setDoc)
+          }
+        } catch {
+          await signOut(auth).catch(() => {})
+          showMsg('Cet email est déjà utilisé.')
+        }
+        if (!cred) { setLoading(false); return }
+      } else if (e.code === 'auth/weak-password') {
+        showMsg('Mot de passe trop court (minimum 6 caractères).')
+        setLoading(false)
+        return
+      } else {
+        showMsg('Erreur lors de la création du compte.')
+        setLoading(false)
+        return
+      }
     }
 
-    // Étape 2 : écrire dans Firestore (3 tentatives)
+    // Étape 2 : écrire dans Firestore avec timeout (réseau mobile instable)
     const userData = {
       nom: nom.trim(),
       email: email.trim(),
       approuve: false,
       dateInscription: new Date().toISOString().slice(0, 10)
     }
+
+    const writeWithTimeout = () => Promise.race([
+      setDoc(doc(db, 'users', cred.user.uid), userData),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
+    ])
+
     let firestoreOk = false
-    for (let i = 0; i < 3; i++) {
+    for (let attempt = 0; attempt < 3 && !firestoreOk; attempt++) {
       try {
-        await setDoc(doc(db, 'users', cred.user.uid), userData)
+        await writeWithTimeout()
         firestoreOk = true
-        break
       } catch {
-        if (i < 2) await new Promise(r => setTimeout(r, 1200))
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000))
       }
     }
 
     if (!firestoreOk) {
-      await signOut(auth)
-      showMsg('Compte créé mais erreur réseau. Réessayez de vous inscrire dans quelques instants.', false)
+      await cred.user.delete().catch(() => {})
+      showMsg('Connexion trop lente. Réessayez avec une meilleure connexion.', false)
       setLoading(false)
       return
     }
 
+    // Succès — afficher l'écran de confirmation puis déconnecter
     setNomInscrit(nom.trim().split(' ')[0])
-    setLoading(false)
     setInscriptionReussie(true)
+    setLoading(false)
     signOut(auth)
   }
 

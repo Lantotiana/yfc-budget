@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { auth } from './auth'
 import { db } from './firebase'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import Login from './components/Login'
 import Home from './pages/Home'
@@ -31,7 +31,8 @@ export default function App() {
             setUser(u)
             setUserData(snap.data())
           } else {
-            await signOut(auth)
+            // Ne pas signOut ici — évite la race condition avec l'inscription
+            // Login.jsx gère sa propre déconnexion après inscription/login refusé
             setUser(null)
           }
         } else {

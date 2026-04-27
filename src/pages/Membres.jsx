@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Search, Trash2 } from 'lucide-react'
-const EMPTY = { nom: '', prenoms: '', adresse: '', telephone: '', email: '' }
+import { Search, Trash2, Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
+const EMPTY = { nom: '', prenoms: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
+const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -34,7 +36,7 @@ export default function Membres({ user, userData }) {
   }
 
   function openEdit(m) {
-    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '' })
+    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '' })
     setSheet(m)
   }
 
@@ -49,9 +51,12 @@ export default function Membres({ user, userData }) {
     try {
       if (sheet === 'add') {
         await addDoc(collection(db, 'membres'), {
-          ...form,
           nom: form.nom.trim(),
           prenoms: form.prenoms.trim(),
+          adresse: form.adresse.trim(),
+          telephone: form.telephone.trim(),
+          email: form.email.trim(),
+          tailleTshirt: form.tailleTshirt,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
       } else {
@@ -61,6 +66,7 @@ export default function Membres({ user, userData }) {
           adresse: form.adresse.trim(),
           telephone: form.telephone.trim(),
           email: form.email.trim(),
+          tailleTshirt: form.tailleTshirt,
         })
       }
       closeSheet()
@@ -74,6 +80,22 @@ export default function Membres({ user, userData }) {
     if (!confirmDel) return
     await deleteDoc(doc(db, 'membres', confirmDel.id))
     setConfirmDel(null)
+  }
+
+  function exportExcel() {
+    const rows = membres.map(m => ({
+      'Nom': m.nom || '',
+      'Prénoms': m.prenoms || '',
+      'Téléphone': m.telephone || '',
+      'Email': m.email || '',
+      'Adresse': m.adresse || '',
+      'Taille T-shirt': m.tailleTshirt || '',
+      'Date d\'ajout': m.dateAjout || '',
+    }))
+    const ws = XLSX.utils.json_to_sheet(rows)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Membres')
+    XLSX.writeFile(wb, `membres_yfc_${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
   const term = normalize(search)
@@ -115,6 +137,14 @@ export default function Membres({ user, userData }) {
               {membres.length} membre{membres.length !== 1 ? 's' : ''}
             </p>
           </div>
+          {membres.length > 0 && (
+            <button
+              onClick={exportExcel}
+              style={{background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', color:'#fff', fontFamily:'inherit', display:'flex', alignItems:'center', gap:'6px', fontSize:'13px', fontWeight:'600', flexShrink:0}}
+            >
+              <Download size={15} /> Exporter
+            </button>
+          )}
         </div>
 
         <div style={{position:'relative'}}>
@@ -204,6 +234,22 @@ export default function Membres({ user, userData }) {
                   />
                 </div>
               ))}
+
+              <div>
+                <label style={{fontSize:'11px', fontWeight:'600', color:'var(--text-secondary)', display:'block', marginBottom:'4px'}}>
+                  Taille T-shirt
+                </label>
+                <select
+                  value={form.tailleTshirt}
+                  onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))}
+                  style={{...inp, cursor:'pointer'}}
+                >
+                  <option value="">Non spécifiée</option>
+                  {TAILLES_TSHIRT.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div style={{display:'flex', gap:'10px', marginTop:'1.5rem'}}>
