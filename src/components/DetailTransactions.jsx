@@ -130,7 +130,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
+    <div className="page-container">
 
       <div style={{background:'var(--hero-bg)', padding:'20px 16px 24px'}}>
         <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'680px', margin:'0 auto'}}>

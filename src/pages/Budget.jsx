@@ -68,19 +68,16 @@ export default function Budget({ user, userData }) {
   )
 
   return (
-    <div className="app">
+    <div className="page-container">
       {/* Hero */}
-      <div style={{ background: C, padding: '18px 16px 2.5rem', paddingTop: 'max(18px, env(safe-area-inset-top))' }}>
+      <div className="page-header" style={{ background: C, padding: '18px 16px 2.5rem', paddingTop: 'max(18px, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Budget</h1>
-            <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.55)' }}>Young For Christ</p>
+            <h1 className="page-title">Budget</h1>
+            <p className="page-subtitle">Young For Christ</p>
           </div>
         </div>
 

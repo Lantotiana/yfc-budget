@@ -23,7 +23,7 @@ export default function Home({ user, userData }) {
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '3rem' }}>
+    <div className="page-container" style={{ paddingBottom: '3rem' }}>
 
       {/* Header Facebook style */}
       <div style={{

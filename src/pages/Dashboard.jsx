@@ -125,20 +125,17 @@ export default function Dashboard({ user, userData }) {
   const focusIsUpcoming = focusEvent && upcoming[0]?.id === focusEvent.id
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '2rem' }}>
+    <div className="page-container" style={{ paddingBottom: '2rem' }}>
 
       {/* Header avec cartes budget */}
-      <div style={{ background: C, padding: '1rem 1rem 2.5rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+      <div className="page-header" style={{ background: C, paddingBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Tableau de bord</h1>
-            <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>Vue d'ensemble</p>
+            <h1 className="page-title">Tableau de bord</h1>
+            <p className="page-subtitle">Vue d'ensemble</p>
           </div>
         </div>
 

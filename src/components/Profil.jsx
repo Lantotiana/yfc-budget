@@ -145,7 +145,7 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
   const initiales = (nom || user?.email || '?').slice(0, 2).toUpperCase()
 
   return (
-    <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
+    <div className="page-container">
 
       <div style={{background:'var(--hero-bg)', padding:'20px 16px 32px'}}>
         <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'480px', margin:'0 auto'}}>

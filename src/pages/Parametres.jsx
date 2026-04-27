@@ -102,18 +102,15 @@ export default function Parametres({ user, userData, setUserData }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
+    <div className="page-container">
 
       {/* Header */}
-      <div style={{ background: C, padding: '1rem 1rem 1.5rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+      <div className="page-header" style={{ background: C, paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff', flex: 1 }}>Paramètres</h1>
+          <h1 className="page-title" style={{ flex: 1 }}>Paramètres</h1>
         </div>
       </div>
 
