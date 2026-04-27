@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Search, Trash2, Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { toDisplayDate } from '../utils'
 
 const C = '#2F80ED'
@@ -66,8 +67,7 @@ export default function Membres({ user, userData }) {
     setConfirmDel(null)
   }
 
-  async function exportExcel() {
-    const XLSX = await import('xlsx')
+  function exportExcel() {
     const rows = membres.map(m => ({
       'Nom': m.nom || '',
       'Prénoms': m.prenoms || '',

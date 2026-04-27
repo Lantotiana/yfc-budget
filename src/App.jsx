@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { auth } from './auth'
@@ -7,20 +7,13 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import Login from './components/Login'
 import Home from './pages/Home'
+import Budget from './pages/Budget'
+import Membres from './pages/Membres'
+import Presences from './pages/Presences'
+import Parametres from './pages/Parametres'
+import Evenements from './pages/Evenements'
+import Dashboard from './pages/Dashboard'
 import './App.css'
-
-const Budget = lazy(() => import('./pages/Budget'))
-const Membres = lazy(() => import('./pages/Membres'))
-const Presences = lazy(() => import('./pages/Presences'))
-const Parametres = lazy(() => import('./pages/Parametres'))
-const Evenements = lazy(() => import('./pages/Evenements'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-
-const LoadingFallback = () => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-body)', color: '#5eead4', fontSize: '14px', fontWeight: '600' }}>
-    Chargement...
-  </div>
-)
 
 function ProtectedRoute({ user, children }) {
   if (!user) return <Navigate to="/login" replace />
@@ -74,48 +67,36 @@ export default function App() {
         } />
         <Route path="/budget" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Budget user={user} userData={userData} />
-            </Suspense>
+            <Budget user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/membres" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Membres user={user} userData={userData} />
-            </Suspense>
+            <Membres user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/presences" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Presences user={user} userData={userData} />
-            </Suspense>
+            <Presences user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/dashboard" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Dashboard user={user} userData={userData} />
-            </Suspense>
+            <Dashboard user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/evenements" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Evenements user={user} userData={userData} />
-            </Suspense>
+            <Evenements user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/parametres" element={
           <ProtectedRoute user={user}>
-            <Suspense fallback={<LoadingFallback />}>
-              <Parametres
-                user={user}
-                userData={userData}
-                setUserData={setUserData}
-              />
-            </Suspense>
+            <Parametres
+              user={user}
+              userData={userData}
+              setUserData={setUserData}
+            />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
