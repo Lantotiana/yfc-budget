@@ -166,7 +166,7 @@ export default function TransactionList({
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher (motif, note, date, utilisateur)..."
             className="tx-search-input"
-            style={{paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
+            style={{paddingLeft: '38px', paddingRight: search ? '38px' : '12px'}}
           />
           <div className="tx-search-icon"><Search size={14} /></div>
           {search && (
@@ -232,19 +232,19 @@ export default function TransactionList({
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-12 font-600 rounded-10 border-none bg-secondary"
-              style={{ padding:'8px 14px', cursor: page === 1 ? 'not-allowed' : 'pointer', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit' }}
+              className="text-12 font-600 rounded-10 border-none bg-secondary cursor-pointer"
+              style={{ padding:'8px 14px', color: page === 1 ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === 1 ? 0.5 : 1 }}
             >
               ← Précédent
             </button>
-            <div className="text-12 text-secondary font-600" style={{padding:'0 8px'}}>
+            <div className="text-12 text-secondary font-600 px-12">
               {page} / {totalPages}
             </div>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="text-12 font-600 rounded-10 border-none bg-secondary"
-              style={{ padding:'8px 14px', cursor: page === totalPages ? 'not-allowed' : 'pointer', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily:'inherit' }}
+              className="text-12 font-600 rounded-10 border-none bg-secondary cursor-pointer"
+              style={{ padding:'8px 14px', color: page === totalPages ? 'var(--text-muted)' : 'var(--text-primary)', opacity: page === totalPages ? 0.5 : 1 }}
             >
               Suivant →
             </button>
@@ -253,34 +253,35 @@ export default function TransactionList({
       </div>
 
       {selected && (
-        <div style={{position:'fixed', inset:0, background:'rgba(26,16,64,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, padding:'1rem'}}>
-          <div style={{background:'var(--card-bg)', borderRadius:'20px', padding:'1.5rem', width:'100%', maxWidth:'400px', maxHeight:'90vh', overflowY:'auto'}}>
+        <div className="modal-overlay">
+          <div className="modal">
 
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem'}}>
-              <h3 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Modifier la transaction</h3>
-              <button onClick={closeEdit} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
+            <div className="dialog-header">
+              <h3 className="dialog-title">Modifier la transaction</h3>
+              <button onClick={closeEdit} className="dialog-close-btn"><X size={18} /></button>
             </div>
 
             {selected.createdBy && (
-              <div style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 12px', background:'var(--surface-alt)', borderRadius:'12px', marginBottom:'14px'}}>
+              <div className="flex-center gap-10 p-12 rounded-12 mb-14" style={{background:'var(--surface-alt)'}}>
                 {selected.createdBy.photoURL ? (
                   <img
                     src={selected.createdBy.photoURL}
                     alt=""
-                    style={{width:'32px', height:'32px', borderRadius:'50%', objectFit:'cover', border:'2px solid #5eead4'}}
+                    className="w-32-h-32 rounded-50 object-cover flex-shrink-0"
+                    style={{border:'2px solid #5eead4'}}
                   />
                 ) : (
-                  <div style={{width:'32px', height:'32px', borderRadius:'50%', background:'#2d1f6e', color:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'13px'}}>
+                  <div className="w-32-h-32 rounded-50 flex-center flex-shrink-0 font-700 text-13" style={{background:'#2d1f6e', color:'#5eead4'}}>
                     {(selected.createdBy.nom || '?').charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:'10px', color:'var(--text-secondary)', fontWeight:'600', marginBottom:'2px'}}>AJOUTÉ PAR</div>
-                  <div style={{fontSize:'13px', fontWeight:'700', color:'var(--text-primary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                <div className="flex-1-min">
+                  <div className="text-10 text-secondary font-600 mb-2" style={{textTransform:'uppercase', letterSpacing:'.05em'}}>Ajouté par</div>
+                  <div className="text-13 font-700 text-primary text-ellipsis">
                     {selected.createdBy.nom}
                   </div>
                   {selected.createdBy.email && selected.createdBy.email !== selected.createdBy.nom && (
-                    <div style={{fontSize:'10px', color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                    <div className="text-10 text-secondary text-ellipsis">
                       {selected.createdBy.email}
                     </div>
                   )}
@@ -288,57 +289,57 @@ export default function TransactionList({
               </div>
             )}
 
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', background:'var(--input-bg)', borderRadius:'12px', padding:'3px', marginBottom:'14px'}}>
-              <button onClick={() => handleChangeType('entree')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: editType==='entree' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='entree' ? '#5eead4' : 'var(--text-secondary)'}}>
+            <div className="type-toggle mb-14">
+              <button onClick={() => handleChangeType('entree')} className="type-btn" style={{background: editType==='entree' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='entree' ? '#5eead4' : 'var(--text-secondary)'}}>
                 + Entrée
               </button>
-              <button onClick={() => handleChangeType('depense')} style={{padding:'9px', border:'none', cursor:'pointer', fontWeight:'700', fontSize:'13px', borderRadius:'9px', fontFamily:'inherit', background: editType==='depense' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='depense' ? '#fb9ea0' : 'var(--text-secondary)'}}>
+              <button onClick={() => handleChangeType('depense')} className="type-btn" style={{background: editType==='depense' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='depense' ? '#fb9ea0' : 'var(--text-secondary)'}}>
                 − Dépense
               </button>
             </div>
 
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+            <div className="form-row gap-10 mb-10">
               <div>
-                <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Date</label>
-                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} style={inp} />
+                <label className="form-label">Date</label>
+                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" />
               </div>
               <div>
-                <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Montant (Ar)</label>
-                <input type="number" value={editMontant} onChange={e => setEditMontant(e.target.value)} min="0" style={inp} />
+                <label className="form-label">Montant (Ar)</label>
+                <input type="number" value={editMontant} onChange={e => setEditMontant(e.target.value)} min="0" className="form-input" />
               </div>
             </div>
 
-            <div style={{marginBottom: editMotif === 'Autre' ? '8px' : '10px'}}>
-              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Motif</label>
-              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} style={inp}>
+            <div className="mb-10">
+              <label className="form-label">Motif</label>
+              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input">
                 {DEFAULT_MOTIFS[editType].map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
 
             {editMotif === 'Autre' && (
-              <div style={{marginBottom:'10px'}}>
-                <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Précisez le motif</label>
+              <div className="mb-10">
+                <label className="form-label">Précisez le motif</label>
                 <input
                   type="text"
                   value={editMotifCustom}
                   onChange={e => setEditMotifCustom(e.target.value)}
                   placeholder="Ex: Achat matériel évangélisation..."
-                  style={inp}
+                  className="form-input"
                   autoFocus
                 />
               </div>
             )}
 
-            <div style={{marginBottom:'1.25rem'}}>
-              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Note (optionnel)</label>
-              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." style={inp} />
+            <div className="mb-16">
+              <label className="form-label">Note (optionnel)</label>
+              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" />
             </div>
 
-            <button onClick={handleSave} disabled={saving} style={{width:'100%', padding:'12px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'var(--btn-primary-bg)', color:'white', border:'none', borderRadius:'12px', fontFamily:'inherit', marginBottom:'10px', opacity: saving ? 0.7 : 1}}>
+            <button onClick={handleSave} disabled={saving} className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none mb-8" style={{padding:'12px', background:'var(--btn-primary-bg)', opacity: saving ? 0.7 : 1}}>
               {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
 
-            <button onClick={handleDelete} style={{width:'100%', padding:'12px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'12px', fontFamily:'inherit'}}>
+            <button onClick={handleDelete} className="btn-danger w-full" style={{padding:'12px', fontSize:'14px', fontWeight:'700'}}>
               Supprimer la transaction
             </button>
           </div>
