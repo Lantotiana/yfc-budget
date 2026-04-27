@@ -25,22 +25,18 @@ export default function Home({ user, userData }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '3rem' }}>
 
-      {/* Header centré */}
+      {/* Header Facebook style */}
       <div style={{
         background: 'var(--card-bg)',
-        padding: '1rem 1rem 1.75rem',
-        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        paddingTop: 'env(safe-area-inset-top)',
         position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
       }}>
         {/* Boutons haut droite */}
-        <div style={{ position: 'absolute', top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', display: 'flex', gap: '6px', alignItems: 'center', zIndex: 10 }}>
           {user.email === ADMIN_EMAIL && (
             <button
               onClick={() => setShowAdmin(true)}
-              style={{ background: 'rgba(91,79,207,0.1)', border: 'none', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer', color: '#5B4FCF', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit' }}
+              style={{ background: 'transparent', border: '1.5px solid var(--input-bg)', borderRadius: '10px', padding: '9px 10px', cursor: 'pointer', color: 'var(--input-bg)', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               Admin
             </button>
@@ -53,29 +49,46 @@ export default function Home({ user, userData }) {
           </button>
         </div>
 
-        {/* Avatar centré */}
-        <div
-          onClick={() => navigate('/parametres')}
-          style={{
-            width: '76px', height: '76px', borderRadius: '50%',
-            background: '#5B4FCF', overflow: 'hidden',
-            cursor: 'pointer', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontWeight: '700', fontSize: '22px', color: '#fff',
-            border: '3px solid #5B4FCF',
-            marginTop: '1.5rem',
-          }}
-        >
-          {userData?.photoURL
-            ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
-          }
-        </div>
+        {/* Cover image */}
+        <div style={{
+          height: '110px',
+          background: 'linear-gradient(135deg, #5B4FCF 0%, #4338CA 100%)',
+          position: 'relative',
+        }} />
 
-        {/* Texte centré */}
-        <div style={{ textAlign: 'center', marginTop: '12px' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
-          <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2 }}>
-            {prenom}
+        {/* Avatar qui chevauche */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          paddingBottom: '1.5rem',
+          paddingTop: '-40px',
+          marginTop: '-50px',
+        }}>
+          <div
+            onClick={() => navigate('/parametres')}
+            style={{
+              width: '90px', height: '90px', borderRadius: '50%',
+              background: '#5B4FCF', overflow: 'hidden',
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontWeight: '700', fontSize: '28px', color: '#fff',
+              border: '4px solid var(--card-bg)',
+              boxShadow: 'var(--card-shadow)',
+            }}
+          >
+            {userData?.photoURL
+              ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
+            }
+          </div>
+
+          {/* Texte centré */}
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
+            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              {prenom}
+            </div>
           </div>
         </div>
       </div>
