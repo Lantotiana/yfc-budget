@@ -905,6 +905,7 @@ input:focus, select:focus {
 .text-14 { font-size: 14px; }
 .text-15 { font-size: 15px; }
 .text-16 { font-size: 16px; }
+.text-17 { font-size: 17px; }
 .text-18 { font-size: 18px; }
 .text-20 { font-size: 20px; }
 .text-22 { font-size: 22px; }
@@ -963,6 +964,7 @@ input:focus, select:focus {
 .p-12 { padding: 12px; }
 .p-14 { padding: 14px; }
 .p-16 { padding: 16px; }
+.p-20 { padding: 20px; }
 
 .px-12 { padding-left: 12px; padding-right: 12px; }
 .px-14 { padding-left: 14px; padding-right: 14px; }
