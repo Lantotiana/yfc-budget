@@ -147,16 +147,13 @@ export default function Presences({ user, userData }) {
           <div className="flex-1">
             <h1 className="page-title">Présence Alimbavaka</h1>
             {selectedEvent && (
-              <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
+              <p className="page-subtitle">
                 {presentCount} / {membres.length} présent{presentCount !== 1 ? 's' : ''}
               </p>
             )}
           </div>
           {selectedEvent && membres.length > 0 && (
-            <button
-              onClick={partager}
-              className="rounded-10 flex-center gap-6 flex-shrink-0 text-white font-700 text-13 border-none cursor-pointer" style={{ background: 'rgba(255,255,255,0.18)', padding: '8px 12px', fontFamily: 'inherit' }}
-            >
+            <button onClick={partager} className="header-btn-sm">
               <Share2 size={15} /> Partager
             </button>
           )}
@@ -170,7 +167,7 @@ export default function Presences({ user, userData }) {
               const evt = evenements.find(ev => ev.id === e.target.value)
               setSelectedEvent(evt || null)
             }}
-            className="flex-1 rounded-12 text-white text-13 border-none cursor-pointer" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.18)', fontFamily: 'inherit', outline: 'none' }}
+            className="header-select"
           >
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
@@ -179,10 +176,7 @@ export default function Presences({ user, userData }) {
               </option>
             ))}
           </select>
-          <button
-            onClick={() => setShowNewEvent(true)}
-            className="rounded-12 text-white text-13 font-700 border-none cursor-pointer flex-shrink-0" style={{ background: 'rgba(255,255,255,0.18)', padding: '10px 14px', fontFamily: 'inherit' }}
-          >
+          <button onClick={() => setShowNewEvent(true)} className="header-btn">
             + Nouveau
           </button>
         </div>
@@ -190,7 +184,7 @@ export default function Presences({ user, userData }) {
         {/* Barre de recherche */}
         {selectedEvent && membres.length > 0 && (
           <div className="relative">
-            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', display: 'flex' }}>
+            <span className="header-search-icon">
               <Search size={14} />
             </span>
             <input
@@ -198,8 +192,7 @@ export default function Presences({ user, userData }) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher un membre..."
-              className="input-header"
-              style={{ width: '100%', padding: '10px 14px 10px 34px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+              className="header-search-input"
             />
           </div>
         )}
