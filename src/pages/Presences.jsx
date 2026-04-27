@@ -134,12 +134,6 @@ export default function Presences({ user, userData }) {
     }
   }
 
-  const inp = {
-    width: '100%', padding: '11px 14px',
-    border: '1.5px solid var(--border-input)', borderRadius: '12px',
-    fontSize: '14px', background: 'var(--input-bg)', color: 'var(--text-primary)',
-    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
-  }
 
   return (
     <div className="page-container">
@@ -213,7 +207,7 @@ export default function Presences({ user, userData }) {
 
       {/* Toast copié */}
       {copied && (
-        <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', background: '#1A1A2E', color: C, padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', zIndex: 200, boxShadow: '0 4px 16px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}>
+        <div className="toast" style={{ color: C }}>
           Rapport copié !
         </div>
       )}
@@ -303,44 +297,46 @@ export default function Presences({ user, userData }) {
 
       {/* Modal nouveau culte */}
       {showNewEvent && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }} onClick={() => setShowNewEvent(false)}>
-          <div style={{ width: '100%', background: 'var(--card-bg)', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width: '36px', height: '4px', background: 'var(--border-light)', borderRadius: '2px', margin: '0 auto 1.5rem' }} />
-            <h2 style={{ margin: '0 0 1.25rem', fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>Nouveau culte</h2>
+        <div className="bottom-sheet-overlay" onClick={() => setShowNewEvent(false)}>
+          <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
+            <div className="bottom-sheet-handle" />
+            <h2 className="dialog-title mb-16">Nouveau culte</h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="dialog-content">
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Titre *</label>
+                <label className="form-label">Titre *</label>
                 <input
                   type="text"
                   value={newEventForm.titre}
                   onChange={e => setNewEventForm(p => ({ ...p, titre: e.target.value }))}
                   placeholder="Ex: Culte du dimanche"
-                  style={inp}
+                  className="form-input"
                 />
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Date</label>
+                <label className="form-label">Date</label>
                 <input
                   type="date"
                   value={newEventForm.date}
                   onChange={e => setNewEventForm(p => ({ ...p, date: e.target.value }))}
-                  style={inp}
+                  className="form-input"
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem' }}>
+            <div className="dialog-footer">
               <button
                 onClick={() => setShowNewEvent(false)}
-                style={{ flex: 1, padding: '13px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}
+                className="btn-secondary"
+                style={{ flex: 1, padding: '13px' }}
               >
                 Annuler
               </button>
               <button
                 onClick={createEvent}
                 disabled={savingEvent || !newEventForm.titre.trim()}
-                style={{ flex: 2, padding: '13px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
+                className="rounded-12 font-700 text-white border-none cursor-pointer"
+                style={{ flex: 2, padding: '13px', background: C, opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
               >
                 {savingEvent ? 'Création...' : 'Créer le culte'}
               </button>

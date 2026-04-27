@@ -114,12 +114,6 @@ export default function Evenements({ user, userData }) {
   past.sort((a, b) => b._end - a._end)
   const sorted = [...upcoming, ...past]
 
-  const inp = {
-    width: '100%', padding: '11px 14px',
-    border: '1.5px solid var(--border-input)', borderRadius: '12px',
-    fontSize: '14px', background: 'var(--input-bg)', color: 'var(--text-primary)',
-    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
-  }
   const isEditing = sheet && sheet !== 'add'
 
   return (
@@ -229,52 +223,52 @@ export default function Evenements({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet" onClick={ev => ev.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>
+            <h2 className="dialog-title mb-16">
               {isEditing ? "Modifier l'événement" : 'Nouvel événement'}
             </h2>
 
-            <div className="flex-col gap-12">
+            <div className="dialog-content">
               <div>
                 <label className="form-label">Nom *</label>
-                <input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder="Nom de l'événement" style={inp} />
+                <input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder="Nom de l'événement" className="form-input" />
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Dates *</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Début</div>
-                    <input type="date" value={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateDebut: e.target.value }))} style={inp} />
+                <label className="form-label">Dates *</label>
+                <div className="flex-center gap-10">
+                  <div className="flex-1">
+                    <div className="label-helper">Début</div>
+                    <input type="date" value={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateDebut: e.target.value }))} className="form-input" />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Fin</div>
-                    <input type="date" value={form.dateFin} min={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateFin: e.target.value }))} style={inp} />
+                  <div className="flex-1">
+                    <div className="label-helper">Fin</div>
+                    <input type="date" value={form.dateFin} min={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateFin: e.target.value }))} className="form-input" />
                   </div>
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Heures</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Début</div>
-                    <input type="time" value={form.heureDebut} onChange={e => setForm(p => ({ ...p, heureDebut: e.target.value }))} style={inp} />
+                <label className="form-label">Heures</label>
+                <div className="flex-center gap-10">
+                  <div className="flex-1">
+                    <div className="label-helper">Début</div>
+                    <input type="time" value={form.heureDebut} onChange={e => setForm(p => ({ ...p, heureDebut: e.target.value }))} className="form-input" />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Fin</div>
-                    <input type="time" value={form.heureFin} onChange={e => setForm(p => ({ ...p, heureFin: e.target.value }))} style={inp} />
+                  <div className="flex-1">
+                    <div className="label-helper">Fin</div>
+                    <input type="time" value={form.heureFin} onChange={e => setForm(p => ({ ...p, heureFin: e.target.value }))} className="form-input" />
                   </div>
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Lieu</label>
-                <input type="text" value={form.lieu} onChange={e => setForm(p => ({ ...p, lieu: e.target.value }))} placeholder="Salle, adresse..." style={inp} />
+                <label className="form-label">Lieu</label>
+                <input type="text" value={form.lieu} onChange={e => setForm(p => ({ ...p, lieu: e.target.value }))} placeholder="Salle, adresse..." className="form-input" />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem' }}>
-              <button onClick={closeSheet} style={{ flex: 1, padding: '13px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <div className="dialog-footer">
+              <button onClick={closeSheet} className="btn-secondary" style={{ flex: 1, padding: '13px' }}>
                 Annuler
               </button>
-              <button onClick={save} disabled={saving || !form.nom.trim() || !form.dateDebut} style={{ flex: 2, padding: '13px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim() || !form.dateDebut) ? 0.6 : 1 }}>
+              <button onClick={save} disabled={saving || !form.nom.trim() || !form.dateDebut} className="rounded-12 font-700 text-white border-none cursor-pointer text-14" style={{ flex: 2, padding: '13px', background: C, opacity: (saving || !form.nom.trim() || !form.dateDebut) ? 0.6 : 1 }}>
                 {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
               </button>
             </div>
@@ -286,15 +280,15 @@ export default function Evenements({ user, userData }) {
       {confirmDel && (
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title" style={{ marginBottom: '8px' }}>Supprimer cet événement ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <h3 className="dialog-title mb-8">Supprimer cet événement ?</h3>
+            <p className="text-13 text-secondary mb-16" style={{ margin: 0 }}>
               {confirmDel.nom} sera définitivement supprimé.
             </p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: '12px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setConfirmDel(null)} className="btn-secondary" style={{ flex: 1, padding: '12px' }}>
                 Annuler
               </button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={confirmDelete} className="rounded-12 font-700 text-white border-none cursor-pointer" style={{ flex: 1, padding: '12px', background: C }}>
                 Supprimer
               </button>
             </div>
