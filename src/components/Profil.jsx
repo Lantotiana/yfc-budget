@@ -121,42 +121,30 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
     setSaving(false)
   }
 
-  const inp = {
-    width: '100%',
-    padding: '11px 14px',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)',
-    marginBottom: '12px'
-  }
-
   const initiales = (nom || user?.email || '?').slice(0, 2).toUpperCase()
 
   return (
     <div className="page-container">
 
       <div style={{background:'var(--hero-bg)', padding:'20px 16px 32px'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'480px', margin:'0 auto'}}>
-          <button onClick={onBack} style={{background:'rgba(255,255,255,0.1)', border:'none', color:'white', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', fontSize:'13px', fontFamily:'inherit'}}>
+        <div className="flex-center gap-12" style={{maxWidth:'480px', margin:'0 auto'}}>
+          <button onClick={onBack} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
             ← Retour
           </button>
-          <h1 style={{fontSize:'16px', fontWeight:'700', color:'white', flex:1}}>Mon profil</h1>
+          <h1 className="flex-1 text-16 font-700 text-white">Mon profil</h1>
         </div>
 
-        <div style={{display:'flex', flexDirection:'column', alignItems:'center', marginTop:'20px'}}>
-          <div style={{position:'relative'}}>
+        <div className="flex-col-center mt-20">
+          <div className="relative">
             {photoPreview ? (
               <img
                 src={photoPreview}
                 alt="avatar"
-                style={{width:'80px', height:'80px', borderRadius:'50%', objectFit:'cover', border:'3px solid #5eead4'}}
+                className="w-80-h-80 rounded-50 object-cover flex-shrink-0"
+                style={{border:'3px solid #5eead4'}}
               />
             ) : (
-              <div style={{width:'80px', height:'80px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'24px', color:'#1a1040'}}>
+              <div className="w-80-h-80 rounded-50 flex-center font-700 text-24 flex-shrink-0" style={{background:'#5eead4', color:'#1a1040'}}>
                 {initiales}
               </div>
             )}
@@ -164,7 +152,8 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              style={{position:'absolute', bottom:0, right:0, width:'28px', height:'28px', borderRadius:'50%', background:'#5eead4', border:'2px solid #2d1f6e', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', padding:0}}
+              className="absolute flex-center rounded-50 flex-shrink-0 text-14 border-none cursor-pointer"
+              style={{bottom:0, right:0, width:'28px', height:'28px', background:'#5eead4', border:'2px solid #2d1f6e', padding:0}}
             >
               {uploading ? '⏳' : '📷'}
             </button>
@@ -174,74 +163,76 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
-              style={{display:'none'}}
+              className="none"
             />
           </div>
 
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            style={{marginTop:'12px', padding:'7px 16px', background:'rgba(94,234,212,0.15)', border:'1px solid rgba(94,234,212,0.3)', color:'#5eead4', borderRadius:'10px', cursor:'pointer', fontSize:'12px', fontWeight:'600', fontFamily:'inherit', opacity: uploading ? 0.7 : 1}}
+            className="rounded-10 text-12 font-600 mt-12"
+            style={{padding:'7px 16px', background:'rgba(94,234,212,0.15)', border:'1px solid rgba(94,234,212,0.3)', color:'#5eead4', cursor:'pointer', opacity: uploading ? 0.7 : 1}}
           >
             {uploading ? 'Upload en cours...' : 'Changer la photo'}
           </button>
 
-          <div style={{marginTop:'10px', display:'flex', alignItems:'center', gap:'6px'}}>
-            <span style={{fontSize:'20px', fontWeight:'700', color:'white'}}>{nom || user?.email}</span>
-            <div style={{width:'15px', height:'15px', borderRadius:'50%', background:'#5eead4', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+          <div className="flex-center gap-6 mt-10">
+            <span className="text-20 font-700 text-white">{nom || user?.email}</span>
+            <div className="w-15-h-15 rounded-50 flex-center flex-shrink-0" style={{background:'#5eead4'}}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                 <path d="M5 13l4 4L19 7" stroke="#1a1040" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
           </div>
-          <div style={{fontSize:'12px', color:'rgba(255,255,255,0.5)', marginTop:'2px'}}>{user?.email}</div>
+          <div className="text-12 text-white-50 mt-2">{user?.email}</div>
         </div>
       </div>
 
       <div style={{maxWidth:'480px', margin:'0 auto', padding:'1.25rem 1rem 2rem'}}>
 
         {message && (
-          <div style={{padding:'12px 16px', borderRadius:'12px', marginBottom:'1rem', fontSize:'13px', fontWeight:'500', background: messageType === 'success' ? '#d4f4ee' : '#fde8e8', color: messageType === 'success' ? '#0f766e' : '#be123c'}}>
+          <div className="rounded-12 mb-16 text-13 font-500" style={{padding:'12px 16px', background: messageType === 'success' ? '#d4f4ee' : '#fde8e8', color: messageType === 'success' ? '#0f766e' : '#be123c'}}>
             {message}
           </div>
         )}
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div className="card mb-16">
+          <div className="card-title">
             Informations personnelles
           </div>
 
           <label className="form-label">Nom complet</label>
-          <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." style={inp} />
+          <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." className="form-input mb-12" />
 
           <label className="form-label">Adresse email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{...inp, marginBottom:0}} />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="form-input" style={{marginBottom:0}} />
         </div>
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div className="card mb-16">
+          <div className="card-title">
             Changer le mot de passe
           </div>
 
           <label className="form-label">Nouveau mot de passe</label>
-          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Laisser vide pour ne pas changer" style={inp} />
+          <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Laisser vide pour ne pas changer" className="form-input mb-12" />
 
           <label className="form-label">Confirmer le nouveau mot de passe</label>
-          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom:0}} />
+          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••" className="form-input" style={{marginBottom:0}} />
         </div>
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1.25rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
+        <div className="card mb-16">
+          <div className="card-title">
             Confirmation
           </div>
           <label className="form-label">Mot de passe actuel (requis pour sauvegarder)</label>
-          <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom:0}} />
+          <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••" className="form-input" style={{marginBottom:0}} />
         </div>
 
         <button
           onClick={handleSave}
           disabled={saving || uploading}
-          style={{width:'100%', padding:'14px', fontWeight:'700', fontSize:'14px', cursor:'pointer', background:'var(--btn-primary-bg)', color:'white', border:'none', borderRadius:'14px', fontFamily:'inherit', opacity: saving || uploading ? 0.7 : 1}}
+          className="w-full rounded-14 font-700 text-14 text-white border-none cursor-pointer"
+          style={{padding:'14px', background:'var(--btn-primary-bg)', opacity: saving || uploading ? 0.7 : 1}}
         >
           {saving ? 'Enregistrement...' : 'Sauvegarder les modifications'}
         </button>
