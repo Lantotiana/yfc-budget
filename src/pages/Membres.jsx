@@ -90,45 +90,32 @@ export default function Membres({ user, userData }) {
     normalize(m.telephone).includes(term)
   )
 
-  const inp = {
-    width: '100%', padding: '11px 14px',
-    border: '1.5px solid var(--border-input)', borderRadius: '12px',
-    fontSize: '14px', background: 'var(--input-bg)', color: 'var(--text-primary)',
-    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
-  }
-
   const isEditing = sheet && sheet !== 'add'
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-body)', overflow: 'hidden' }}>
+    <div className="page-container">
 
       {/* Header */}
-      <div style={{ background: C, padding: '1rem 1rem 1.5rem', paddingTop: 'max(1rem, env(safe-area-inset-top))', flexShrink: 0 }}>
+      <div className="page-header" style={{ background: C }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '16px', fontFamily: 'inherit', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#fff' }}>Membres</h1>
-            <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
+            <h1 className="page-title">Membres</h1>
+            <p className="page-subtitle">
               {membres.length} membre{membres.length !== 1 ? 's' : ''}
             </p>
           </div>
           {membres.length > 0 && (
-            <button
-              onClick={exportExcel}
-              style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600', flexShrink: 0 }}
-            >
+            <button onClick={exportExcel} className="page-export-btn">
               <Download size={15} /> Exporter
             </button>
           )}
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', display: 'flex' }}>
+        <div className="search-wrapper">
+          <span className="search-icon">
             <Search size={15} />
           </span>
           <input
@@ -136,37 +123,22 @@ export default function Membres({ user, userData }) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher un membre..."
-            className="input-header"
-            style={{ width: '100%', padding: '10px 14px 10px 36px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+            className="search-input input-header"
           />
         </div>
       </div>
 
       {/* Liste */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', paddingBottom: '5rem' }}>
+      <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem', fontSize: '13px' }}>Chargement...</div>
+          <div className="empty-state">Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem', fontSize: '13px' }}>
+          <div className="empty-state">
             {search ? 'Aucun résultat' : 'Aucun membre enregistré'}
           </div>
         ) : filtered.map(m => (
-          <div
-            key={m.id}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '12px',
-              background: 'var(--card-bg)', borderRadius: '14px',
-              padding: '12px', marginBottom: '8px', cursor: 'pointer',
-              boxShadow: 'var(--card-shadow)',
-            }}
-            onClick={() => openEdit(m)}
-          >
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              background: `${C}18`, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: '700', fontSize: '15px', color: C,
-            }}>
+          <div key={m.id} className="list-item" onClick={() => openEdit(m)}>
+            <div className="list-item-avatar" style={{ background: `${C}18`, color: C }}>
               {(m.nom || '?')[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -229,14 +201,14 @@ export default function Membres({ user, userData }) {
                     value={form[f.key]}
                     onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
                     placeholder={f.placeholder}
-                    style={inp}
+                    className="form-input"
                   />
                 </div>
               ))}
 
               <div>
                 <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Taille T-shirt</label>
-                <select value={form.tailleTshirt} onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))} style={{ ...inp, cursor: 'pointer' }}>
+                <select value={form.tailleTshirt} onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))} className="form-input" style={{ cursor: 'pointer' }}>
                   <option value="">Non spécifiée</option>
                   {TAILLES_TSHIRT.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
