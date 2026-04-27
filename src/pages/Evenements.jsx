@@ -237,7 +237,7 @@ export default function Evenements({ user, userData }) {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Nom *</label>
+                <label className="form-label">Nom *</label>
                 <input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder="Nom de l'événement" style={inp} />
               </div>
               <div>

@@ -168,12 +168,12 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
 
           <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Nom complet</label>
+            <label className="form-label">Nom complet</label>
             <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom" style={inp} />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Email</label>
+            <label className="form-label">Email</label>
             <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
 
@@ -196,7 +196,7 @@ export default function Parametres({ user, userData, setUserData }) {
             { label: 'Confirmer le nouveau', val: confirmPwd, set: setConfirmPwd, show: showNew, toggleShow: null },
           ].map((f, i) => (
             <div key={i} style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{f.label}</label>
+              <label className="form-label">{f.label}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   type={f.show ? 'text' : 'password'}

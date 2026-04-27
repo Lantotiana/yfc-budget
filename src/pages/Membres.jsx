@@ -195,7 +195,7 @@ export default function Membres({ user, userData }) {
                 { key: 'adresse',   label: 'Adresse',   placeholder: 'Quartier, ville...' },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{f.label}</label>
+                  <label className="form-label">{f.label}</label>
                   <input
                     type={f.type || 'text'}
                     value={form[f.key]}

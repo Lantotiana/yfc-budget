@@ -134,14 +134,6 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
     marginBottom: '12px'
   }
 
-  const label = {
-    fontSize: '11px',
-    color: 'var(--text-secondary)',
-    fontWeight: '600',
-    display: 'block',
-    marginBottom: '4px'
-  }
-
   const initiales = (nom || user?.email || '?').slice(0, 2).toUpperCase()
 
   return (
@@ -219,10 +211,10 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
             Informations personnelles
           </div>
 
-          <label style={label}>Nom complet</label>
+          <label className="form-label">Nom complet</label>
           <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." style={inp} />
 
-          <label style={label}>Adresse email</label>
+          <label className="form-label">Adresse email</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{...inp, marginBottom:0}} />
         </div>
 
@@ -231,10 +223,10 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
             Changer le mot de passe
           </div>
 
-          <label style={label}>Nouveau mot de passe</label>
+          <label className="form-label">Nouveau mot de passe</label>
           <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Laisser vide pour ne pas changer" style={inp} />
 
-          <label style={label}>Confirmer le nouveau mot de passe</label>
+          <label className="form-label">Confirmer le nouveau mot de passe</label>
           <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom:0}} />
         </div>
 
@@ -242,7 +234,7 @@ export default function Profil({ user, userData, onBack, onUpdated }) {
           <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'1rem'}}>
             Confirmation
           </div>
-          <label style={label}>Mot de passe actuel (requis pour sauvegarder)</label>
+          <label className="form-label">Mot de passe actuel (requis pour sauvegarder)</label>
           <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="••••••" style={{...inp, marginBottom:0}} />
         </div>
 
