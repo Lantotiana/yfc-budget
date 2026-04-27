@@ -128,7 +128,7 @@ export default function Dashboard({ user, userData }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '2rem' }}>
 
       {/* Header avec cartes budget */}
-      <div style={{ background: C, padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+      <div style={{ background: C, padding: '1rem 1rem 1.25rem', paddingTop: 'max(1rem, env(safe-area-inset-top))', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
           <button
             onClick={() => navigate('/')}
