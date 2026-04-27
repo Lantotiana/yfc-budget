@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import * as XLSX from 'xlsx'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Search, X } from 'lucide-react'
@@ -134,8 +133,9 @@ export default function TransactionList({
     }
   }
 
-  function exportToExcel() {
+  async function exportToExcel() {
     if (!searched.length) return
+    const XLSX = await import('xlsx')
     const data = searched.map(t => ({
       Date: toDisplayDate(t.date),
       Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
