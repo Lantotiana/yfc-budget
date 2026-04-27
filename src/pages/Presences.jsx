@@ -161,7 +161,7 @@ export default function Presences({ user, userData }) {
   return (
     <div style={{minHeight:'100vh', background:'var(--bg-body)'}}>
       {/* Header */}
-      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.25rem', paddingTop:'max(1rem, env(safe-area-inset-top))'}}>
+      <div style={{background:'var(--hero-bg)', padding:'1rem 1rem 1.25rem', paddingTop:'max(1rem, env(safe-area-inset-top))', position:'sticky', top:0, zIndex:10}}>
         <div style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'1rem'}}>
           <button
             onClick={() => navigate('/')}
