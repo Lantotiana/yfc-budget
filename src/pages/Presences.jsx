@@ -146,11 +146,11 @@ export default function Presences({ user, userData }) {
 
       {/* Header */}
       <div className="page-header" style={{ background: C }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+        <div className="flex-center gap-10 mb-14">
           <button onClick={() => navigate('/')} className="page-back-btn">
             ‹
           </button>
-          <div style={{ flex: 1 }}>
+          <div className="flex-1">
             <h1 className="page-title">Présence Alimbavaka</h1>
             {selectedEvent && (
               <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>
@@ -161,7 +161,7 @@ export default function Presences({ user, userData }) {
           {selectedEvent && membres.length > 0 && (
             <button
               onClick={partager}
-              style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '10px', padding: '8px 12px', cursor: 'pointer', color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
+              className="rounded-10 flex-center gap-6 flex-shrink-0 text-white font-700 text-13 border-none cursor-pointer" style={{ background: 'rgba(255,255,255,0.18)', padding: '8px 12px', fontFamily: 'inherit' }}
             >
               <Share2 size={15} /> Partager
             </button>
@@ -169,14 +169,14 @@ export default function Presences({ user, userData }) {
         </div>
 
         {/* Event selector */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+        <div className="flex-center gap-8 mb-10">
           <select
             value={selectedEvent?.id || ''}
             onChange={e => {
               const evt = evenements.find(ev => ev.id === e.target.value)
               setSelectedEvent(evt || null)
             }}
-            style={{ flex: 1, padding: '10px 12px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}
+            className="flex-1 rounded-12 text-white text-13 border-none cursor-pointer" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.18)', fontFamily: 'inherit', outline: 'none' }}
           >
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
@@ -187,7 +187,7 @@ export default function Presences({ user, userData }) {
           </select>
           <button
             onClick={() => setShowNewEvent(true)}
-            style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '12px', padding: '10px 14px', cursor: 'pointer', color: '#fff', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', flexShrink: 0 }}
+            className="rounded-12 text-white text-13 font-700 border-none cursor-pointer flex-shrink-0" style={{ background: 'rgba(255,255,255,0.18)', padding: '10px 14px', fontFamily: 'inherit' }}
           >
             + Nouveau
           </button>
@@ -195,7 +195,7 @@ export default function Presences({ user, userData }) {
 
         {/* Barre de recherche */}
         {selectedEvent && membres.length > 0 && (
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.5)', display: 'flex' }}>
               <Search size={14} />
             </span>
