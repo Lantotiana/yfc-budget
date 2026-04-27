@@ -140,16 +140,16 @@ export default function Dashboard({ user, userData }) {
         </div>
 
         {/* Cartes budget */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="flex-center gap-10" style={{ width: '100%' }}>
           <div
             onClick={() => navigate('/budget')}
-            style={{ flex: 1, borderRadius: '14px', padding: '1rem', background: 'rgba(255,255,255,0.14)', cursor: 'pointer' }}
+            className="flex-1 rounded-14 cursor-pointer" style={{ padding: '1rem', background: 'rgba(255,255,255,0.14)' }}
           >
             <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>Solde total</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: solde >= 0 ? '#4ADE80' : '#FC8FAE', lineHeight: 1.1, marginBottom: '8px' }}>
               {solde < 0 ? '−' : ''}{fmt(aSolde)}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div className="flex-col" style={{ gap: '2px' }}>
               <div style={{ fontSize: '11px', fontWeight: '700', color: '#4ADE80' }}>↑ {fmt(aTotalEntrees)}</div>
               <div style={{ fontSize: '11px', fontWeight: '700', color: '#FC8FAE' }}>↓ {fmt(aTotalDepenses)}</div>
             </div>
@@ -160,7 +160,7 @@ export default function Dashboard({ user, userData }) {
             style={{ flex: 1, borderRadius: '14px', padding: '1rem', background: 'rgba(255,255,255,0.08)', cursor: 'pointer' }}
           >
             <div style={{ fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>Ce mois</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="flex-col gap-6">
               <div>
                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>Entrées</div>
                 <div style={{ fontSize: '14px', fontWeight: '700', color: '#4ADE80' }}>↑ {fmt(aMoisEntrees)}</div>
@@ -177,21 +177,17 @@ export default function Dashboard({ user, userData }) {
       {loading ? (
         <div className="text-center text-secondary text-13" style={{ padding: '3rem' }}>Chargement...</div>
       ) : (
-        <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '12px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1 }}>
+        <div className="flex-col gap-12" style={{ padding: '1rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1 }}>
 
           {/* Membres */}
           <div
             onClick={() => navigate('/membres')}
-            style={{
-              borderRadius: '16px', padding: '1.25rem', background: 'var(--card-bg)',
-              boxShadow: 'var(--card-shadow)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '16px',
-            }}
+            className="rounded-16 cursor-pointer flex-center gap-14" style={{ padding: '1.25rem', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)', alignItems: 'center' }}
           >
-            <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'rgba(47,128,237,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div className="icon-circle-52 flex-shrink-0" style={{ background: 'rgba(47,128,237,0.12)' }}>
               <Users size={26} color="#2F80ED" />
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>Membres</div>
               <div style={{ fontSize: '28px', fontWeight: '700', color: '#2F80ED', lineHeight: 1 }}>{aMembres}</div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '1px' }}>inscrits</div>
@@ -203,14 +199,10 @@ export default function Dashboard({ user, userData }) {
           {focusEvent && (
             <div
               onClick={() => navigate('/evenements')}
-              style={{
-                borderRadius: '16px', padding: '1.25rem', background: 'var(--card-bg)',
-                boxShadow: 'var(--card-shadow)', cursor: 'pointer',
-                opacity: focusIsUpcoming ? 1 : 0.85,
-              }}
+              className="rounded-16 cursor-pointer" style={{ padding: '1.25rem', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)', opacity: focusIsUpcoming ? 1 : 0.85 }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: focusIsUpcoming ? 'rgba(232,68,90,0.12)' : 'var(--input-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div className="flex-center gap-10 mb-10">
+                <div className="w-36-h-36 rounded-10 flex-center flex-shrink-0" style={{ background: focusIsUpcoming ? 'rgba(232,68,90,0.12)' : 'var(--input-bg)' }}>
                   <CalendarDays size={18} color={focusIsUpcoming ? '#E8445A' : 'var(--text-muted)'} />
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: '700', color: focusIsUpcoming ? '#E8445A' : 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
@@ -225,22 +217,22 @@ export default function Dashboard({ user, userData }) {
               <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px' }}>
                 {focusEvent.nom}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="flex-col gap-4">
                 {focusEvent.dateDebut && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <Calendar size={12} style={{ flexShrink: 0 }} />
+                  <div className="icon-label">
+                    <Calendar size={12} className="flex-shrink-0" />
                     {toDisplayDate(focusEvent.dateDebut)}{focusEvent.dateFin && focusEvent.dateFin !== focusEvent.dateDebut ? ` → ${toDisplayDate(focusEvent.dateFin)}` : ''}
                   </div>
                 )}
                 {focusEvent.heureDebut && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <Clock size={12} style={{ flexShrink: 0 }} />
+                  <div className="icon-label">
+                    <Clock size={12} className="flex-shrink-0" />
                     {focusEvent.heureDebut}{focusEvent.heureFin ? ` → ${focusEvent.heureFin}` : ''}
                   </div>
                 )}
                 {focusEvent.lieu && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <MapPin size={12} style={{ flexShrink: 0 }} />
+                  <div className="icon-label">
+                    <MapPin size={12} className="flex-shrink-0" />
                     {focusEvent.lieu}
                   </div>
                 )}
