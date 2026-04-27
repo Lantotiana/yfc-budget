@@ -117,110 +117,98 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
     XLSX.writeFile(wb, `YFC-${isEntree ? 'entrees' : 'depenses'}-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
-  const inp = {
-    width: '100%',
-    padding: '10px 12px',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '13px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)'
-  }
-
   return (
     <div className="page-container">
 
       <div style={{background:'var(--hero-bg)', padding:'20px 16px 24px'}}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px', maxWidth:'680px', margin:'0 auto'}}>
-          <button onClick={onBack} style={{background:'rgba(255,255,255,0.1)', border:'none', color:'white', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', fontSize:'13px', fontFamily:'inherit'}}>
+        <div className="flex-center gap-12" style={{maxWidth:'680px', margin:'0 auto'}}>
+          <button onClick={onBack} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
             ← Retour
           </button>
-          <h1 style={{fontSize:'16px', fontWeight:'700', color:'white', flex:1}}>
+          <h1 className="flex-1 text-16 font-700 text-white">
             {isEntree ? 'Toutes les entrées' : 'Toutes les dépenses'}
           </h1>
-          <button onClick={exportExcel} style={{background:'rgba(255,255,255,0.1)', border:'none', color:'white', borderRadius:'10px', padding:'8px 12px', cursor:'pointer', fontSize:'13px', fontFamily:'inherit'}}>
+          <button onClick={exportExcel} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
             Exporter
           </button>
         </div>
 
-        <div style={{maxWidth:'680px', margin:'16px auto 0', background:'rgba(255,255,255,0.08)', borderRadius:'14px', padding:'14px 16px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div className="flex-between rounded-14 p-14 m-0-auto-0 mt-16" style={{maxWidth:'680px', background:'rgba(255,255,255,0.08)'}}>
           <div>
-            <div style={{fontSize:'11px', color:'rgba(255,255,255,0.5)', marginBottom:'4px'}}>
+            <div className="text-11 text-white-50 mb-2">
               Total ({filtered.length} transaction{filtered.length > 1 ? 's' : ''})
             </div>
-            <div style={{fontSize:'22px', fontWeight:'700', color: isEntree ? '#5eead4' : '#fb9ea0'}}>
+            <div className="text-22 font-700" style={{color: isEntree ? '#5eead4' : '#fb9ea0'}}>
               {isEntree ? '+' : '−'}{fmt(total)}
             </div>
           </div>
-          <div style={{width:'44px', height:'44px', borderRadius:'50%', background: isEntree ? 'rgba(94,234,212,0.2)' : 'rgba(251,158,160,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:'700', color: isEntree ? '#5eead4' : '#fb9ea0'}}>
+          <div className="w-44-h-44 rounded-50 flex-center font-700 text-20" style={{background: isEntree ? 'rgba(94,234,212,0.2)' : 'rgba(251,158,160,0.2)', color: isEntree ? '#5eead4' : '#fb9ea0', flexShrink: 0}}>
             {isEntree ? '+' : '−'}
           </div>
         </div>
       </div>
 
-      <div style={{maxWidth:'680px', margin:'0 auto', padding:'1rem'}}>
+      <div className="m-auto-0" style={{maxWidth:'680px', padding:'1rem'}}>
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'16px', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'14px'}}>
+        <div className="card mb-16">
+          <div className="card-title">
             Évolution mensuelle
           </div>
-          <div style={{height:'200px', position:'relative'}}>
+          <div className="relative" style={{height:'200px'}}>
             {moisLabels.length === 0
-              ? <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'var(--text-secondary)', fontSize:'13px'}}>Aucune donnée</div>
+              ? <div className="flex-center h-full text-13 text-secondary">Aucune donnée</div>
               : <canvas ref={chartRef} />
             }
           </div>
         </div>
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'14px 16px', marginBottom:'1rem'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
+        <div className="card mb-16">
+          <div className="card-title">
             Filtrer par date
           </div>
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
+          <div className="form-row gap-10">
             <div>
-              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Du</label>
-              <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} style={inp} />
+              <label className="form-label">Du</label>
+              <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="form-input" />
             </div>
             <div>
-              <label style={{fontSize:'11px', color:'var(--text-secondary)', fontWeight:'600', display:'block', marginBottom:'4px'}}>Au</label>
-              <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} style={inp} />
+              <label className="form-label">Au</label>
+              <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="form-input" />
             </div>
           </div>
           {(dateDebut || dateFin) && (
-            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{marginTop:'10px', padding:'6px 12px', background:'var(--btn-secondary-bg)', border:'none', borderRadius:'8px', fontSize:'12px', color:'var(--text-secondary)', cursor:'pointer', fontFamily:'inherit'}}>
+            <button onClick={() => { setDateDebut(''); setDateFin('') }} className="btn-secondary text-12 mt-8" style={{padding:'6px 12px'}}>
               Réinitialiser
             </button>
           )}
         </div>
 
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'14px 16px'}}>
-          <div style={{fontSize:'10px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'12px'}}>
+        <div className="card">
+          <div className="card-title">
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
           </div>
 
           {filtered.length === 0 && (
-            <div style={{textAlign:'center', padding:'2rem', color:'var(--text-secondary)', fontSize:'13px'}}>
+            <div className="empty-state">
               Aucune transaction trouvée
             </div>
           )}
 
           {filtered.map(tx => (
-            <div key={tx.id} onClick={() => onEdit(tx)} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 0', borderBottom:'0.5px solid var(--border-input)', cursor:'pointer'}}>
-              <div style={{width:'34px', height:'34px', borderRadius:'10px', background:colorLight, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'700', color, flexShrink:0}}>
+            <div key={tx.id} onClick={() => onEdit(tx)} className="flex-center gap-10 p-12 border-b border-light cursor-pointer" style={{borderBottom:'0.5px solid var(--border-input)', paddingTop:'10px', paddingBottom:'10px'}}>
+              <div className="w-34-h-34 rounded-10 flex-center font-700 text-14 flex-shrink-0" style={{background:colorLight, color}}>
                 {isEntree ? '+' : '−'}
               </div>
-              <div style={{flex:1, minWidth:0}}>
-                <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{tx.motif}</div>
-                <div style={{fontSize:'11px', color:'var(--text-secondary)', marginTop:'2px'}}>
+              <div className="flex-1-min">
+                <div className="text-13 font-600 text-primary">{tx.motif}</div>
+                <div className="text-11 text-secondary mt-2">
                   {toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}
                 </div>
               </div>
-              <div style={{fontSize:'14px', fontWeight:'700', color, flexShrink:0}}>
+              <div className="font-700 text-14 flex-shrink-0" style={{color}}>
                 {isEntree ? '+' : '−'}{fmt(tx.montant)}
               </div>
-              <div style={{fontSize:'12px', color:'var(--text-muted)'}}>›</div>
+              <div className="text-12 text-muted">›</div>
             </div>
           ))}
         </div>

@@ -1005,8 +1005,10 @@ input:focus, select:focus {
 .h-90 { height: 90px; }
 
 .w-32-h-32 { width: 32px; height: 32px; }
+.w-34-h-34 { width: 34px; height: 34px; }
 .w-36-h-36 { width: 36px; height: 36px; }
 .w-42-h-42 { width: 42px; height: 42px; }
+.w-44-h-44 { width: 44px; height: 44px; }
 .w-52-h-52 { width: 52px; height: 52px; }
 .w-56-h-56 { width: 56px; height: 56px; }
 .w-64-h-64 { width: 64px; height: 64px; }
@@ -1015,6 +1017,8 @@ input:focus, select:focus {
 
 /* ====== SPACING UTILITIES ====== */
 .m-auto { margin: 0 auto; }
+.m-auto-0 { margin: 0 auto; }
+.m-0-auto-0 { margin: 0 auto 0; }
 .m-0-auto-16 { margin: 0 auto 16px; }
 .m-0-auto-24 { margin: 0 auto 24px; }
 
