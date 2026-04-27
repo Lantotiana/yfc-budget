@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Search, Trash2, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { toDisplayDate } from '../utils'
 const EMPTY = { nom: '', prenoms: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 
@@ -90,7 +91,7 @@ export default function Membres({ user, userData }) {
       'Email': m.email || '',
       'Adresse': m.adresse || '',
       'Taille T-shirt': m.tailleTshirt || '',
-      'Date d\'ajout': m.dateAjout || '',
+      'Date d\'ajout': toDisplayDate(m.dateAjout),
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()

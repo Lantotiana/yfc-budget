@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useTheme } from '../context/ThemeContext'
+import { toDisplayDate } from '../utils'
 import { Share2, Check, Search } from 'lucide-react'
 
 export default function Presences({ user, userData }) {
@@ -199,7 +200,7 @@ export default function Presences({ user, userData }) {
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
               <option key={ev.id} value={ev.id} style={{background:'#2d1f6e', color:'#fff'}}>
-                {ev.titre} — {ev.date}
+                {ev.titre} — {toDisplayDate(ev.date)}
               </option>
             ))}
           </select>
@@ -248,7 +249,7 @@ export default function Presences({ user, userData }) {
         ) : (
           <>
             <div style={{fontSize:'11px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'8px'}}>
-              {selectedEvent.titre} · {selectedEvent.date}
+              {selectedEvent.titre} · {toDisplayDate(selectedEvent.date)}
             </div>
             {filteredMembres.map(m => {
               const present = presences[m.id] === true

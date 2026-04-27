@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { Chart, registerables } from 'chart.js'
 import { useTheme } from '../context/ThemeContext'
+import { toDisplayDate } from '../utils'
 
 Chart.register(...registerables)
 
@@ -103,7 +104,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
   function exportExcel() {
     if (!filtered.length) return
     const data = filtered.map(t => ({
-      Date: t.date,
+      Date: toDisplayDate(t.date),
       Motif: t.motif,
       Montant: Number(t.montant),
       Note: t.note || ''
@@ -213,7 +214,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
               <div style={{flex:1, minWidth:0}}>
                 <div style={{fontSize:'13px', fontWeight:'600', color:'var(--text-primary)'}}>{tx.motif}</div>
                 <div style={{fontSize:'11px', color:'var(--text-secondary)', marginTop:'2px'}}>
-                  {tx.date}{tx.note ? ' · ' + tx.note : ''}
+                  {toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}
                 </div>
               </div>
               <div style={{fontSize:'14px', fontWeight:'700', color, flexShrink:0}}>

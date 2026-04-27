@@ -4,7 +4,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../auth'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
-import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users } from 'lucide-react'
+import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -12,9 +12,10 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  { path: '/budget',    Icon: Wallet,        label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
-  { path: '/presences', Icon: CalendarCheck, label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
-  { path: '/membres',   Icon: Users,         label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
+  { path: '/budget',      Icon: Wallet,        label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
+  { path: '/presences',   Icon: CalendarCheck, label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
+  { path: '/membres',     Icon: Users,         label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
+  { path: '/evenements',  Icon: CalendarDays,  label: 'Événements',           desc: 'Agenda & suivi des événements',   color: '#38bdf8' },
 ]
 
 export default function Home({ user, userData }) {

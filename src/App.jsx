@@ -10,6 +10,7 @@ import Budget from './pages/Budget'
 import Membres from './pages/Membres'
 import Presences from './pages/Presences'
 import Parametres from './pages/Parametres'
+import Evenements from './pages/Evenements'
 import './App.css'
 
 function ProtectedRoute({ user, children }) {
@@ -75,6 +76,11 @@ export default function App() {
         <Route path="/presences" element={
           <ProtectedRoute user={user}>
             <Presences user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/evenements" element={
+          <ProtectedRoute user={user}>
+            <Evenements user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/parametres" element={

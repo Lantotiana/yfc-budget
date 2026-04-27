@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Search, X } from 'lucide-react'
+import { toDisplayDate } from '../utils'
 
 const DEFAULT_MOTIFS = {
   entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
@@ -136,7 +137,7 @@ export default function TransactionList({
   function exportToExcel() {
     if (!searched.length) return
     const data = searched.map(t => ({
-      Date: t.date,
+      Date: toDisplayDate(t.date),
       Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
       Motif: t.motif,
       Montant: Number(t.montant),
@@ -217,7 +218,7 @@ export default function TransactionList({
             <div className={`tx-icon ${tx.type}`}>{tx.type === 'entree' ? '+' : '−'}</div>
             <div className="tx-info">
               <div className="tx-motif">{tx.motif}</div>
-              <div className="tx-date">{tx.date}{tx.note ? ' · ' + tx.note : ''}</div>
+              <div className="tx-date">{toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}</div>
             {tx.createdBy && (
                 <div className="tx-user">
                   {tx.createdBy.photoURL ? (
