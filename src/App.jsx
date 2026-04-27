@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -100,6 +101,7 @@ export default function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <SpeedInsights />
     </BrowserRouter>
   )
 }
