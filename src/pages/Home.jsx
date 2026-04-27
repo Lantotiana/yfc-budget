@@ -4,7 +4,7 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../auth'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
-import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays } from 'lucide-react'
+import { LogOut, Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -12,10 +12,11 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  { path: '/budget',      Icon: Wallet,        label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
-  { path: '/presences',   Icon: CalendarCheck, label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
-  { path: '/membres',     Icon: Users,         label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
-  { path: '/evenements',  Icon: CalendarDays,  label: 'Événements',           desc: 'Agenda & suivi des événements',   color: '#38bdf8' },
+  { path: '/dashboard',   Icon: LayoutDashboard, label: 'Tableau de bord',     desc: 'Budget, membres & événements',    color: '#a78bfa' },
+  { path: '/budget',      Icon: Wallet,          label: 'Budget',               desc: 'Entrées, dépenses & solde',       color: '#5eead4' },
+  { path: '/presences',   Icon: CalendarCheck,   label: 'Présence Alimbavaka',  desc: 'Suivi des présences aux cultes',  color: '#a78bfa' },
+  { path: '/membres',     Icon: Users,           label: 'Membres',              desc: 'Gestion de la liste des membres', color: '#fb923c' },
+  { path: '/evenements',  Icon: CalendarDays,    label: 'Événements',           desc: 'Agenda & suivi des événements',   color: '#38bdf8' },
 ]
 
 export default function Home({ user, userData }) {
@@ -98,28 +99,29 @@ export default function Home({ user, userData }) {
             onClick={() => navigate(m.path)}
             style={{
               display:'flex', alignItems:'center', gap:'16px',
-              background:'var(--card-bg)', border:'none', borderRadius:'16px',
+              background: m.gradient || 'var(--card-bg)',
+              border:'none', borderRadius:'16px',
               padding:'16px', cursor:'pointer', textAlign:'left', width:'100%',
-              boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
+              boxShadow: m.gradient ? '0 4px 16px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.06)',
             }}
           >
             <div style={{
               width:'52px', height:'52px', borderRadius:'14px',
-              background:`${m.color}18`,
+              background: m.gradient ? 'rgba(255,255,255,0.15)' : `${m.color}18`,
               display:'flex', alignItems:'center', justifyContent:'center',
               flexShrink:0,
             }}>
-              <m.Icon size={24} color={m.color} />
+              <m.Icon size={24} color={m.gradient ? '#fff' : m.color} />
             </div>
             <div style={{flex:1, minWidth:0}}>
-              <div style={{fontSize:'15px', fontWeight:'700', color:'var(--text-primary)', marginBottom:'2px'}}>
+              <div style={{fontSize:'15px', fontWeight:'700', color: m.gradient ? '#fff' : 'var(--text-primary)', marginBottom:'2px'}}>
                 {m.label}
               </div>
-              <div style={{fontSize:'12px', color:'var(--text-secondary)'}}>
+              <div style={{fontSize:'12px', color: m.gradient ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary)'}}>
                 {m.desc}
               </div>
             </div>
-            <ChevronRight size={18} color="var(--text-muted)" style={{flexShrink:0}} />
+            <ChevronRight size={18} color={m.gradient ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)'} style={{flexShrink:0}} />
           </button>
         ))}
       </div>

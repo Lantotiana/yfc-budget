@@ -11,6 +11,7 @@ import Membres from './pages/Membres'
 import Presences from './pages/Presences'
 import Parametres from './pages/Parametres'
 import Evenements from './pages/Evenements'
+import Dashboard from './pages/Dashboard'
 import './App.css'
 
 function ProtectedRoute({ user, children }) {
@@ -76,6 +77,11 @@ export default function App() {
         <Route path="/presences" element={
           <ProtectedRoute user={user}>
             <Presences user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute user={user}>
+            <Dashboard user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/evenements" element={
