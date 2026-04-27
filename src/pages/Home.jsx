@@ -23,64 +23,65 @@ export default function Home({ user, userData }) {
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-body)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-body)', paddingBottom: '3rem' }}>
 
-      {/* Header */}
+      {/* Header centré */}
       <div style={{
         background: 'var(--card-bg)',
-        padding: '1.25rem 1rem',
-        paddingTop: 'max(1.25rem, env(safe-area-inset-top))',
-        borderBottom: '1px solid var(--border-light)',
+        padding: '1rem 1rem 1.75rem',
+        paddingTop: 'max(1rem, env(safe-area-inset-top))',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            onClick={() => navigate('/parametres')}
-            style={{
-              width: '46px', height: '46px', borderRadius: '50%',
-              background: '#5B4FCF', flexShrink: 0, overflow: 'hidden',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontWeight: '700', fontSize: '15px', color: '#fff',
-              border: userData?.photoURL ? '2px solid #5B4FCF' : 'none',
-            }}
-          >
-            {userData?.photoURL
-              ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
-            }
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
-            <div style={{ fontSize: '19px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {prenom}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-            {user.email === ADMIN_EMAIL && (
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ background: 'rgba(91,79,207,0.1)', border: 'none', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer', color: '#5B4FCF', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit' }}
-              >
-                Admin
-              </button>
-            )}
+        {/* Boutons haut droite */}
+        <div style={{ position: 'absolute', top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {user.email === ADMIN_EMAIL && (
             <button
-              onClick={() => navigate('/parametres')}
-              style={{ background: 'var(--input-bg)', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowAdmin(true)}
+              style={{ background: 'rgba(91,79,207,0.1)', border: 'none', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer', color: '#5B4FCF', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit' }}
             >
-              <Settings size={18} />
+              Admin
             </button>
+          )}
+          <button
+            onClick={() => navigate('/parametres')}
+            style={{ background: 'var(--input-bg)', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Settings size={18} />
+          </button>
+        </div>
+
+        {/* Avatar centré */}
+        <div
+          onClick={() => navigate('/parametres')}
+          style={{
+            width: '76px', height: '76px', borderRadius: '50%',
+            background: '#5B4FCF', overflow: 'hidden',
+            cursor: 'pointer', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontWeight: '700', fontSize: '22px', color: '#fff',
+            border: '3px solid #5B4FCF',
+            marginTop: '1.5rem',
+          }}
+        >
+          {userData?.photoURL
+            ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
+          }
+        </div>
+
+        {/* Texte centré */}
+        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
+          <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+            {prenom}
           </div>
         </div>
       </div>
 
       {/* Module cards */}
       <div style={{ padding: '1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>
-          Modules
-        </div>
-
         {modules.map(m => (
           <button
             key={m.path}
@@ -116,13 +117,16 @@ export default function Home({ user, userData }) {
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Footer sticky bas */}
       <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
         textAlign: 'center',
-        padding: '0.5rem 1rem',
-        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+        padding: '0.6rem 1rem',
+        paddingBottom: 'max(0.6rem, env(safe-area-inset-bottom))',
         color: 'var(--text-muted)',
         fontSize: '11px',
+        background: 'var(--bg-body)',
+        borderTop: '1px solid var(--border-light)',
       }}>
         Young For Christ · Tanora ho an'i Kristy · {new Date().getFullYear()}
       </div>

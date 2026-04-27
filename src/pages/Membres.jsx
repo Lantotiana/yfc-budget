@@ -136,6 +136,7 @@ export default function Membres({ user, userData }) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher un membre..."
+            className="input-header"
             style={{ width: '100%', padding: '10px 14px 10px 36px', border: 'none', borderRadius: '12px', fontSize: '13px', background: 'rgba(255,255,255,0.18)', color: '#fff', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
