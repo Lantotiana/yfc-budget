@@ -51,24 +51,48 @@ export default function Login() {
     if (password.length < 6) { showMsg('Mot de passe trop court (minimum 6 caractères).'); return }
     setLoading(true)
     setMessage('')
+
+    // Étape 1 : créer le compte Auth
+    let cred
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password)
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        nom: nom.trim(),
-        email: email.trim(),
-        approuve: false,
-        dateInscription: new Date().toISOString().slice(0, 10)
-      })
-      setNomInscrit(nom.trim().split(' ')[0])
-      setLoading(false)
-      setInscriptionReussie(true)
-      signOut(auth)
+      cred = await createUserWithEmailAndPassword(auth, email, password)
     } catch(e) {
       if (e.code === 'auth/email-already-in-use') showMsg('Cet email est déjà utilisé.')
       else if (e.code === 'auth/weak-password') showMsg('Mot de passe trop court (minimum 6 caractères).')
       else showMsg('Erreur lors de la création du compte.')
       setLoading(false)
+      return
     }
+
+    // Étape 2 : écrire dans Firestore (3 tentatives)
+    const userData = {
+      nom: nom.trim(),
+      email: email.trim(),
+      approuve: false,
+      dateInscription: new Date().toISOString().slice(0, 10)
+    }
+    let firestoreOk = false
+    for (let i = 0; i < 3; i++) {
+      try {
+        await setDoc(doc(db, 'users', cred.user.uid), userData)
+        firestoreOk = true
+        break
+      } catch {
+        if (i < 2) await new Promise(r => setTimeout(r, 1200))
+      }
+    }
+
+    if (!firestoreOk) {
+      await signOut(auth)
+      showMsg('Compte créé mais erreur réseau. Réessayez de vous inscrire dans quelques instants.', false)
+      setLoading(false)
+      return
+    }
+
+    setNomInscrit(nom.trim().split(' ')[0])
+    setLoading(false)
+    setInscriptionReussie(true)
+    signOut(auth)
   }
 
  async function handleForgotPassword() {

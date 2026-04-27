@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { useTheme } from '../context/ThemeContext'
-import { Share2, Check } from 'lucide-react'
+import { Share2, Check, Search } from 'lucide-react'
 
 export default function Presences({ user, userData }) {
   const navigate = useNavigate()
@@ -18,6 +18,7 @@ export default function Presences({ user, userData }) {
   const [savingEvent, setSavingEvent] = useState(false)
   const [saving, setSaving] = useState(null) // membreId being saved
   const [copied, setCopied] = useState(false)
+  const [search, setSearch] = useState('')
 
   // Load events (most recent first)
   useEffect(() => {
@@ -98,6 +99,16 @@ export default function Presences({ user, userData }) {
   }
 
   const presentCount = membres.filter(m => presences[m.id] === true).length
+
+  function normSearch(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  }
+  const filteredMembres = search.trim()
+    ? membres.filter(m =>
+        normSearch(m.nom).includes(normSearch(search)) ||
+        normSearch(m.prenoms).includes(normSearch(search))
+      )
+    : membres
 
   function formatDateFR(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -199,6 +210,22 @@ export default function Presences({ user, userData }) {
             + Nouveau
           </button>
         </div>
+
+        {/* Search members */}
+        {selectedEvent && membres.length > 0 && (
+          <div style={{position:'relative', marginTop:'10px'}}>
+            <span style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'rgba(255,255,255,0.4)', display:'flex'}}>
+              <Search size={14} />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher un membre..."
+              style={{width:'100%', padding:'10px 14px 10px 34px', border:'none', borderRadius:'12px', fontSize:'13px', background:'rgba(255,255,255,0.12)', color:'#fff', fontFamily:'inherit', outline:'none', boxSizing:'border-box'}}
+            />
+          </div>
+        )}
       </div>
 
       {/* Copied toast */}
@@ -223,7 +250,7 @@ export default function Presences({ user, userData }) {
             <div style={{fontSize:'11px', fontWeight:'700', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:'8px'}}>
               {selectedEvent.titre} · {selectedEvent.date}
             </div>
-            {membres.map(m => {
+            {filteredMembres.map(m => {
               const present = presences[m.id] === true
               const isSaving = saving === m.id
               return (
