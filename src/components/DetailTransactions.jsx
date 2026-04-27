@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import * as XLSX from 'xlsx'
-import { Chart, registerables } from 'chart.js'
 import { useTheme } from '../context/ThemeContext'
 import { toDisplayDate } from '../utils'
-
-Chart.register(...registerables)
 
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
 
@@ -52,57 +48,66 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
 
   useEffect(() => {
     if (!chartRef.current) return
-    if (chartInstance.current) chartInstance.current.destroy()
+    let cancelled = false
 
-    chartInstance.current = new Chart(chartRef.current, {
-      type: 'bar',
-      data: {
-        labels: moisDisplay,
-        datasets: [{
-          label: isEntree ? 'Entrées' : 'Dépenses',
-          data: moisData,
-          backgroundColor: colorChart + '80',
-          borderColor: colorChart,
-          borderWidth: 2,
-          borderRadius: 8,
-          borderSkipped: false
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => fmt(ctx.raw)
-            }
-          }
+    ;(async () => {
+      const { Chart, registerables } = await import('chart.js')
+      if (cancelled || !chartRef.current) return
+      Chart.register(...registerables)
+      if (chartInstance.current) chartInstance.current.destroy()
+
+      chartInstance.current = new Chart(chartRef.current, {
+        type: 'bar',
+        data: {
+          labels: moisDisplay,
+          datasets: [{
+            label: isEntree ? 'Entrées' : 'Dépenses',
+            data: moisData,
+            backgroundColor: colorChart + '80',
+            borderColor: colorChart,
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
+          }]
         },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 11 }, color: '#9b8fb5' }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => fmt(ctx.raw)
+              }
+            }
           },
-          y: {
-            grid: { color: dark ? '#2a2460' : '#e8e4f4' },
-            ticks: {
-              font: { size: 11 },
-              color: '#9b8fb5',
-              callback: v => Number(v).toLocaleString('fr-FR')
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 }, color: '#9b8fb5' }
+            },
+            y: {
+              grid: { color: dark ? '#2a2460' : '#e8e4f4' },
+              ticks: {
+                font: { size: 11 },
+                color: '#9b8fb5',
+                callback: v => Number(v).toLocaleString('fr-FR')
+              }
             }
           }
         }
-      }
-    })
+      })
+    })()
 
     return () => {
+      cancelled = true
       if (chartInstance.current) chartInstance.current.destroy()
     }
   }, [type, transactions, dark])
 
-  function exportExcel() {
+  async function exportExcel() {
     if (!filtered.length) return
+    const XLSX = await import('xlsx')
     const data = filtered.map(t => ({
       Date: toDisplayDate(t.date),
       Motif: t.motif,
