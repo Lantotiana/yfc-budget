@@ -228,10 +228,10 @@ export default function Evenements({ user, userData }) {
 
       {/* Bottom sheet */}
       {sheet !== null && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }} onClick={closeSheet}>
-          <div style={{ width: '100%', background: 'var(--card-bg)', borderRadius: '20px 20px 0 0', padding: '1.5rem', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))', maxHeight: '90vh', overflowY: 'auto' }} onClick={ev => ev.stopPropagation()}>
-            <div style={{ width: '36px', height: '4px', background: 'var(--border-light)', borderRadius: '2px', margin: '0 auto 1.5rem' }} />
-            <h2 style={{ margin: '0 0 1.25rem', fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
+        <div className="bottom-sheet-overlay" onClick={closeSheet}>
+          <div className="bottom-sheet" onClick={ev => ev.stopPropagation()}>
+            <div className="bottom-sheet-handle" />
+            <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>
               {isEditing ? "Modifier l'événement" : 'Nouvel événement'}
             </h2>
 
@@ -286,13 +286,13 @@ export default function Evenements({ user, userData }) {
 
       {/* Confirmation suppression */}
       {confirmDel && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--card-bg)', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '320px', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>Supprimer cet événement ?</h3>
+        <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title" style={{ marginBottom: '8px' }}>Supprimer cet événement ?</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: '13px', color: 'var(--text-secondary)' }}>
               {confirmDel.nom} sera définitivement supprimé.
             </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="dialog-footer">
               <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: '12px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Annuler
               </button>

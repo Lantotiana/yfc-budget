@@ -675,3 +675,135 @@ input:focus, select:focus {
   margin-bottom: 10px;
   font-weight: 600;
 }
+
+/* ====== DIALOG & SHEET PATTERNS ====== */
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.dialog-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dialog-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.dialog-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+/* ====== BOTTOM SHEET ====== */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bottom-sheet {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.bottom-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-light);
+  border-radius: 2px;
+  margin: 0 auto 1.5rem;
+}
+
+/* ====== BUTTON VARIANTS ====== */
+.btn-danger {
+  padding: 6px 10px;
+  background: #fde8e8;
+  color: #be123c;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.btn-danger:active {
+  background: #fbced6;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* ====== AVATARS & BADGES ====== */
+.avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.badge-default {
+  background: var(--input-bg);
+  color: var(--text-muted);
+}
+
+.badge-success {
+  background: #E6FAF5;
+  color: #0D9370;
+}
+
+.badge-danger {
+  background: #FEF0F4;
+  color: #D63B5E;
+}

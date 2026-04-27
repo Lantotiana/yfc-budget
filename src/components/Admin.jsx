@@ -67,12 +67,12 @@ export default function Admin({ onClose }) {
   }
 
   return (
-    <div style={{position:'fixed', inset:0, background:'rgba(26,16,64,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200}}>
-      <div style={{background:'var(--card-bg)', borderRadius:'20px', padding:'1.5rem', width:'420px', maxHeight:'85vh', overflowY:'auto'}}>
+    <div className="modal-overlay">
+      <div className="modal" style={{width:'420px'}}>
 
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
-          <h2 style={{fontSize:'16px', fontWeight:'700', color:'var(--text-primary)'}}>Gestion des membres</h2>
-          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', display:'flex', alignItems:'center'}}><X size={18} /></button>
+        <div className="dialog-header">
+          <h2 className="dialog-title">Gestion des membres</h2>
+          <button onClick={onClose} className="dialog-close-btn"><X size={18} /></button>
         </div>
 
         <div style={{...sectionLabel, marginTop:0}}>
@@ -85,7 +85,7 @@ export default function Admin({ onClose }) {
           </div>
         ) : enAttente.map(u => (
           <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:pendingItemBg, borderRadius:'12px', marginBottom:'8px'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:pendingAvatarBg, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:pendingColor, flexShrink:0}}>
+            <div className="avatar-circle" style={{background:pendingAvatarBg, color:pendingColor}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
             <div style={{flex:1, minWidth:0}}>
@@ -103,7 +103,7 @@ export default function Admin({ onClose }) {
               </button>
               <button
                 onClick={() => supprimer(u.id)}
-                style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+                className="btn-danger"
               >
                 Refuser
               </button>
@@ -117,7 +117,7 @@ export default function Admin({ onClose }) {
 
         {approuves.map(u => (
           <div key={u.id} style={{display:'flex', alignItems:'center', gap:'10px', padding:'12px', background:'var(--surface-alt)', borderRadius:'12px', marginBottom:'8px'}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'50%', background:'var(--input-bg)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', color:'var(--text-primary)', flexShrink:0}}>
+            <div className="avatar-circle" style={{background:'var(--input-bg)', color:'var(--text-primary)'}}>
               {(u.nom || u.email || '?')[0].toUpperCase()}
             </div>
             <div style={{flex:1, minWidth:0}}>
@@ -126,7 +126,7 @@ export default function Admin({ onClose }) {
             </div>
             <button
               onClick={() => supprimer(u.id)}
-              style={{padding:'6px 10px', background:'#fde8e8', color:'#be123c', border:'none', borderRadius:'8px', cursor:'pointer', fontSize:'11px', fontWeight:'700', fontFamily:'inherit'}}
+              className="btn-danger"
             >
               Supprimer
             </button>
