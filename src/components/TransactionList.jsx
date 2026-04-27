@@ -154,36 +154,25 @@ export default function TransactionList({
     XLSX.writeFile(wb, `YFC-budget-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
-  const inp = {
-    width: '100%',
-    padding: '10px 12px',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '13px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)'
-  }
-
   return (
     <>
       <div className="card">
         <div className="card-title">Historique</div>
 
-        <div style={{position:'relative', marginBottom:'12px'}}>
+        <div className="tx-search-wrapper">
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher (motif, note, date, utilisateur)..."
-            style={{...inp, paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
+            className="tx-search-input"
+            style={{paddingLeft:'38px', paddingRight: search ? '38px' : '12px'}}
           />
-          <div style={{position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'var(--text-secondary)', display:'flex'}}><Search size={14} /></div>
+          <div className="tx-search-icon"><Search size={14} /></div>
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-secondary)', padding:'6px', display:'flex', alignItems:'center'}}
+              className="tx-search-clear"
             >
               <X size={14} />
             </button>
@@ -206,7 +195,7 @@ export default function TransactionList({
           <button className="btn-export" onClick={exportToExcel}>Exporter Excel</button>
         </div>
 
-        <div style={{fontSize:'11px', color:'var(--text-secondary)', marginBottom:'10px', fontWeight:'600'}}>
+        <div className="tx-count">
           {searched.length} transaction{searched.length > 1 ? 's' : ''}
           {searched.length > PAGE_SIZE && ` · Page ${page}/${totalPages}`}
         </div>
