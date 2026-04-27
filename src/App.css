@@ -932,17 +932,18 @@ input:focus, select:focus {
 .text-white { color: #fff; }
 
 .text-center { text-align: center; }
+.text-left { text-align: left; }
 
 /* ====== TEXT COLORS ====== */
 .text-success { color: #0D9370; }
 .text-danger { color: #D63B5E; }
 .text-teal { color: #5eead4; }
 
-.text-white-50 { color: rgba(255,255,255,0.5); }
-.text-white-45 { color: rgba(255,255,255,0.45); }
 .text-white-40 { color: rgba(255,255,255,0.4); }
-.text-white-65 { color: rgba(255,255,255,0.65); }
+.text-white-45 { color: rgba(255,255,255,0.45); }
+.text-white-50 { color: rgba(255,255,255,0.5); }
 .text-white-55 { color: rgba(255,255,255,0.55); }
+.text-white-65 { color: rgba(255,255,255,0.65); }
 
 /* ====== BACKGROUNDS ====== */
 .bg-primary { background: var(--btn-primary-bg); }
@@ -965,6 +966,7 @@ input:focus, select:focus {
 .rounded-12 { border-radius: 12px; }
 .rounded-14 { border-radius: 14px; }
 .rounded-16 { border-radius: 16px; }
+.rounded-18 { border-radius: 18px; }
 .rounded-20 { border-radius: 20px; }
 .rounded-50 { border-radius: 50%; }
 
@@ -1025,11 +1027,13 @@ input:focus, select:focus {
 .w-36-h-36 { width: 36px; height: 36px; }
 .w-42-h-42 { width: 42px; height: 42px; }
 .w-44-h-44 { width: 44px; height: 44px; }
+.w-48-h-48 { width: 48px; height: 48px; }
 .w-52-h-52 { width: 52px; height: 52px; }
 .w-56-h-56 { width: 56px; height: 56px; }
 .w-64-h-64 { width: 64px; height: 64px; }
 .w-80-h-80 { width: 80px; height: 80px; }
 .w-90-h-90 { width: 90px; height: 90px; }
+.w-h-full { width: 100%; height: 100%; }
 
 /* ====== SPACING UTILITIES ====== */
 .m-auto { margin: 0 auto; }
@@ -1039,7 +1043,7 @@ input:focus, select:focus {
 .m-0-auto-24 { margin: 0 auto 24px; }
 
 /* ====== LINE HEIGHT ====== */
-.leading-tight { line-height: 1; }
+.leading-tight { line-height: 1.2; }
 .leading-normal { line-height: 1.2; }
 .leading-relaxed { line-height: 1.5; }
 
@@ -1052,6 +1056,11 @@ input:focus, select:focus {
 .relative { position: relative; }
 .absolute { position: absolute; }
 .fixed { position: fixed; }
+
+.left-0 { left: 0; }
+.right-0 { right: 0; }
+.bottom-0 { bottom: 0; }
+.top-0 { top: 0; }
 
 /* ====== ICON CIRCLES ====== */
 .icon-circle-32 {

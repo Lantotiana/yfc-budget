@@ -26,67 +26,47 @@ export default function Home({ user, userData }) {
     <div className="page-container" style={{ paddingBottom: '3rem' }}>
 
       {/* Header Facebook style */}
-      <div style={{
-        background: 'var(--bg-body)',
-        paddingTop: 'env(safe-area-inset-top)',
-        position: 'relative',
-      }}>
+      <div style={{background: 'var(--bg-body)', paddingTop: 'env(safe-area-inset-top)', position: 'relative'}}>
         {/* Boutons haut droite */}
-        <div style={{ position: 'absolute', top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', display: 'flex', gap: '6px', alignItems: 'center', zIndex: 10 }}>
+        <div className="absolute flex-center gap-4" style={{ top: 'max(1rem, env(safe-area-inset-top))', right: '1rem', zIndex: 10 }}>
           {user.email === ADMIN_EMAIL && (
             <button
               onClick={() => setShowAdmin(true)}
-              style={{ background: 'transparent', border: '1.5px solid var(--input-bg)', borderRadius: '10px', padding: '9px 10px', cursor: 'pointer', color: 'var(--input-bg)', fontSize: '11px', fontWeight: '700', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className="rounded-10 border-input text-11 font-700 text-white border-none cursor-pointer flex-center"
+              style={{ padding: '9px 10px', borderColor: 'var(--input-bg)', borderStyle: 'solid', borderWidth: '1.5px', color: 'var(--input-bg)' }}
             >
               Admin
             </button>
           )}
           <button
             onClick={() => navigate('/parametres')}
-            style={{ background: 'transparent', border: 'none', borderRadius: '10px', padding: '9px', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="rounded-10 text-white border-none cursor-pointer flex-center"
+            style={{ padding: '9px' }}
           >
             <Settings size={18} />
           </button>
         </div>
 
         {/* Cover image */}
-        <div style={{
-          height: '110px',
-          background: 'linear-gradient(135deg, #5B4FCF 0%, #4338CA 100%)',
-          position: 'relative',
-        }} />
+        <div style={{height: '110px', background: 'linear-gradient(135deg, #5B4FCF 0%, #4338CA 100%)', position: 'relative'}} />
 
         {/* Avatar qui chevauche */}
-        <div style={{
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          paddingBottom: '1.5rem',
-          paddingTop: '-40px',
-          marginTop: '-50px',
-        }}>
+        <div className="relative flex-col-center" style={{paddingBottom: '1.5rem', paddingTop: '-40px', marginTop: '-50px'}}>
           <div
             onClick={() => navigate('/parametres')}
-            style={{
-              width: '90px', height: '90px', borderRadius: '50%',
-              background: '#5B4FCF', overflow: 'hidden',
-              cursor: 'pointer', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontWeight: '700', fontSize: '28px', color: '#fff',
-              border: '4px solid var(--card-bg)',
-              boxShadow: 'var(--card-shadow)',
-            }}
+            className="w-90-h-90 rounded-50 flex-center font-700 text-28 text-white cursor-pointer overflow-hidden flex-shrink-0"
+            style={{background: '#5B4FCF', border: '4px solid var(--card-bg)', boxShadow: 'var(--card-shadow)'}}
           >
             {userData?.photoURL
-              ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <img src={userData.photoURL} alt="avatar" className="w-h-full object-cover" />
               : (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
             }
           </div>
 
           {/* Texte centré */}
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '500' }}>Bonjour,</div>
-            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          <div className="text-center mt-16">
+            <div className="text-13 text-secondary font-500">Bonjour,</div>
+            <div className="text-24 font-700 text-primary leading-tight">
               {prenom}
             </div>
           </div>
@@ -99,29 +79,21 @@ export default function Home({ user, userData }) {
           <button
             key={m.path}
             onClick={() => navigate(m.path)}
+            className="flex-center gap-14 border-none rounded-18 p-16 cursor-pointer text-left w-full transition-opacity"
             style={{
-              display: 'flex', alignItems: 'center', gap: '14px',
               background: m.bg,
-              border: 'none', borderRadius: '18px',
-              padding: '16px', cursor: 'pointer', textAlign: 'left', width: '100%',
               boxShadow: `0 4px 18px ${m.bg}50`,
-              transition: 'opacity 0.15s',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '14px',
-              background: 'rgba(255,255,255,0.18)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
+            <div className="w-48-h-48 rounded-14 flex-center flex-shrink-0" style={{background: 'rgba(255,255,255,0.18)'}}>
               <m.Icon size={24} color="#fff" />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '2px' }}>
+            <div className="flex-1-min">
+              <div className="text-15 font-700 text-white mb-2">
                 {m.label}
               </div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>
+              <div className="text-12 text-white-65">
                 {m.desc}
               </div>
             </div>
@@ -131,16 +103,7 @@ export default function Home({ user, userData }) {
       </div>
 
       {/* Footer sticky bas */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        textAlign: 'center',
-        padding: '0.6rem 1rem',
-        paddingBottom: 'max(0.6rem, env(safe-area-inset-bottom))',
-        color: 'var(--text-muted)',
-        fontSize: '11px',
-        background: 'var(--bg-body)',
-        borderTop: '1px solid var(--border-light)',
-      }}>
+      <div className="fixed bottom-0 left-0 right-0 text-center text-11 text-muted" style={{padding: '0.6rem 1rem', paddingBottom: 'max(0.6rem, env(safe-area-inset-bottom))', background: 'var(--bg-body)', borderTop: '1px solid var(--border-light)'}}>
         Young For Christ · Tanora ho an'i Kristy · {new Date().getFullYear()}
       </div>
 
