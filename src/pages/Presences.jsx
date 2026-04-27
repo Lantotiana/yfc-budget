@@ -136,7 +136,7 @@ export default function Presences({ user, userData }) {
 
 
   return (
-    <div className="page-container">
+    <div className="page-container-locked">
 
       {/* Header */}
       <div className="page-header" style={{ background: C }}>

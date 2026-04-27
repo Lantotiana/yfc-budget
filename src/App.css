@@ -584,6 +584,15 @@ input:focus, select:focus {
   background: var(--bg-body);
 }
 
+/* Variante avec header verrouillé : seul le contenu scrolle */
+.page-container-locked {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-body);
+  overflow: hidden;
+}
+
 .page-header {
   flex-shrink: 0;
   padding: 1rem 1rem 1.5rem;

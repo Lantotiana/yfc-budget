@@ -93,7 +93,7 @@ export default function Membres({ user, userData }) {
   const isEditing = sheet && sheet !== 'add'
 
   return (
-    <div className="page-container">
+    <div className="page-container-locked">
 
       {/* Header */}
       <div className="page-header" style={{ background: C }}>
