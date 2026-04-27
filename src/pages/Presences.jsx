@@ -273,7 +273,6 @@ export default function Presences({ user, userData }) {
                     background: present ? '#5eead4' : 'var(--input-bg)',
                     display:'flex', alignItems:'center', justifyContent:'center',
                     transition: 'background 0.15s',
-                    display:'flex', alignItems:'center', justifyContent:'center',
                   }}>
                     {present ? <Check size={16} strokeWidth={3} color="#1a1040" /> : null}
                   </div>

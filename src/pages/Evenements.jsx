@@ -129,8 +129,6 @@ export default function Evenements({ user, userData }) {
     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   }
 
-  const inpHalf = { ...inp, width: 'calc(50% - 5px)' }
-
   const isEditing = sheet && sheet !== 'add'
 
   return (
