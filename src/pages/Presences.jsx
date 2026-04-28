@@ -64,6 +64,7 @@ export default function Presences({ user, userData }) {
         membreId: membre.id,
         membreNom: membre.nom,
         membrePrenoms: membre.prenoms || '',
+        membreNomPrefere: membre.nomPrefere || '',
         present: nowPresent,
         updatedAt: new Date().toISOString(),
       })
@@ -107,15 +108,19 @@ export default function Presences({ user, userData }) {
     })
   }
 
+  function displayName(m) {
+    return m.nomPrefere?.trim() || m.prenoms?.trim() || m.nom
+  }
+
   function buildRapport() {
     const dateFormatted = formatDateFR(selectedEvent.date)
     const presents = membres.filter(m => presences[m.id] === true)
     const absents  = membres.filter(m => presences[m.id] !== true)
     let t = `Présence ${selectedEvent.titre} — ${dateFormatted}\n\n`
     t += `Présents\n`
-    t += presents.length ? presents.map(m => m.prenoms || m.nom).join('\n') : 'Aucun'
+    t += presents.length ? presents.map(displayName).join('\n') : 'Aucun'
     t += `\n\nAbsents\n`
-    t += absents.length  ? absents.map(m => m.prenoms || m.nom).join('\n')  : 'Aucun'
+    t += absents.length  ? absents.map(displayName).join('\n')  : 'Aucun'
     t += `\n\nTotal : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${membres.length} membre${membres.length !== 1 ? 's' : ''}`
     return t
   }

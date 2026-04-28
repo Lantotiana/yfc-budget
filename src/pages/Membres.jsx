@@ -6,7 +6,7 @@ import { Search, Trash2, Download } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 
 const C = '#2F80ED'
-const EMPTY = { nom: '', prenoms: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
+const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 
 function normalize(s) {
@@ -34,7 +34,7 @@ export default function Membres({ user, userData }) {
 
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
-    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '' })
+    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '' })
     setSheet(m)
   }
   function closeSheet() { setSheet(null); setForm(EMPTY) }
@@ -45,14 +45,16 @@ export default function Membres({ user, userData }) {
     try {
       if (sheet === 'add') {
         await addDoc(collection(db, 'membres'), {
-          nom: form.nom.trim(), prenoms: form.prenoms.trim(), adresse: form.adresse.trim(),
-          telephone: form.telephone.trim(), email: form.email.trim(), tailleTshirt: form.tailleTshirt,
+          nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
+          adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
+          tailleTshirt: form.tailleTshirt,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
       } else {
         await updateDoc(doc(db, 'membres', sheet.id), {
-          nom: form.nom.trim(), prenoms: form.prenoms.trim(), adresse: form.adresse.trim(),
-          telephone: form.telephone.trim(), email: form.email.trim(), tailleTshirt: form.tailleTshirt,
+          nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
+          adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
+          tailleTshirt: form.tailleTshirt,
         })
       }
       closeSheet()
@@ -71,6 +73,7 @@ export default function Membres({ user, userData }) {
     const rows = membres.map(m => ({
       'Nom': m.nom || '',
       'Prénoms': m.prenoms || '',
+      'Nom préféré': m.nomPrefere || '',
       'Téléphone': m.telephone || '',
       'Email': m.email || '',
       'Adresse': m.adresse || '',
@@ -187,9 +190,41 @@ export default function Membres({ user, userData }) {
             </h2>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label className="form-label">Nom *</label>
+                <input
+                  type="text"
+                  value={form.nom}
+                  onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))}
+                  placeholder="Nom de famille"
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label className="form-label">Prénoms</label>
+                  <input
+                    type="text"
+                    value={form.prenoms}
+                    onChange={e => setForm(prev => ({ ...prev, prenoms: e.target.value }))}
+                    placeholder="Prénoms"
+                    className="form-input"
+                  />
+                </div>
+                <div>
+                  <label className="form-label">Nom préféré (optionnel)</label>
+                  <input
+                    type="text"
+                    value={form.nomPrefere}
+                    onChange={e => setForm(prev => ({ ...prev, nomPrefere: e.target.value }))}
+                    placeholder="Surnom..."
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
               {[
-                { key: 'nom',       label: 'Nom *',     placeholder: 'Nom de famille' },
-                { key: 'prenoms',   label: 'Prénoms',   placeholder: 'Prénoms' },
                 { key: 'telephone', label: 'Téléphone', placeholder: '034 xx xxx xx' },
                 { key: 'email',     label: 'Email',     placeholder: 'nom@email.com', type: 'email' },
                 { key: 'adresse',   label: 'Adresse',   placeholder: 'Quartier, ville...' },
@@ -207,7 +242,7 @@ export default function Membres({ user, userData }) {
               ))}
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Taille T-shirt</label>
+                <label className="form-label">Taille T-shirt</label>
                 <select value={form.tailleTshirt} onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))} className="form-input" style={{ cursor: 'pointer' }}>
                   <option value="">Non spécifiée</option>
                   {TAILLES_TSHIRT.map(t => <option key={t} value={t}>{t}</option>)}
