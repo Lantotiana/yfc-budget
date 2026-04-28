@@ -117,11 +117,11 @@ export default function Presences({ user, userData }) {
     const presents = membres.filter(m => presences[m.id] === true)
     const absents  = membres.filter(m => presences[m.id] !== true)
     let t = `Présence ${selectedEvent.titre} — ${dateFormatted}\n\n`
-    t += `Présents\n`
+    t += `✅ Présents\n`
     t += presents.length ? presents.map(displayName).join('\n') : 'Aucun'
-    t += `\n\nAbsents\n`
+    t += `\n\n❌ Absents\n`
     t += absents.length  ? absents.map(displayName).join('\n')  : 'Aucun'
-    t += `\n\nTotal : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${membres.length} membre${membres.length !== 1 ? 's' : ''}`
+    t += `\n\n👥 Total : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${membres.length} membre${membres.length !== 1 ? 's' : ''}`
     return t
   }
 
