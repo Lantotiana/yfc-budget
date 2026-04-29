@@ -1135,6 +1135,7 @@ input:focus, select:focus {
 
 /* ====== SPACING UTILITIES ====== */
 .m-auto { margin: 0 auto; }
+.mx-auto { margin-left: auto; margin-right: auto; }
 .m-0-auto-16 { margin: 0 auto 16px; }
 .m-0-auto-24 { margin: 0 auto 24px; }
 

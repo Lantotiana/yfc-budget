@@ -138,7 +138,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
           </button>
         </div>
 
-        <div className="flex-between rounded-14 p-14 m-auto mt-16" style={{maxWidth:'680px', background:'rgba(255,255,255,0.08)'}}>
+        <div className="flex-between rounded-14 p-14 mx-auto mt-16" style={{maxWidth:'680px', background:'rgba(255,255,255,0.08)'}}>
           <div>
             <div className="text-11 text-white-50 mb-2">
               Total ({filtered.length} transaction{filtered.length > 1 ? 's' : ''})
