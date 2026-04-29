@@ -199,8 +199,8 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
             </div>
           )}
 
-          {filtered.map(tx => (
-            <div key={tx.id} onClick={() => onEdit(tx)} className="flex-center gap-10 p-12 border-b border-light cursor-pointer" style={{borderBottom:'0.5px solid var(--border-input)', paddingTop:'10px', paddingBottom:'10px'}}>
+          {filtered.map((tx, i) => (
+            <div key={tx.id} onClick={() => onEdit(tx)} className="flex-center gap-10 cursor-pointer" style={{borderBottom: i < filtered.length - 1 ? '0.5px solid var(--border-input)' : 'none', padding:'10px 0'}}>
               <div className="w-34-h-34 rounded-10 flex-center font-700 text-14 flex-shrink-0" style={{background:colorLight, color}}>
                 {isEntree ? '+' : '−'}
               </div>
