@@ -155,7 +155,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
 
       <div style={{paddingTop:'0.75rem', borderTopLeftRadius:'20px', borderTopRightRadius:'20px', marginTop:'-1.5rem', background:'var(--bg-body)', position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'8px'}}>
 
-        <div className="card mb-16">
+        <div className="card">
           <div className="card-title">
             Évolution mensuelle
           </div>
@@ -167,7 +167,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
           </div>
         </div>
 
-        <div className="card mb-16">
+        <div className="card">
           <div className="card-title">
             Filtrer par date
           </div>
