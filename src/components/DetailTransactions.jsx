@@ -188,7 +188,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
           )}
         </div>
 
-        <div className="card">
+        <div className="card" style={{marginBottom:'16px'}}>
           <div className="card-title">
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
           </div>
