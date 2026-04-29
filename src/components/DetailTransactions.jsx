@@ -126,7 +126,7 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
     <div className="page-container">
 
       <div style={{background:'var(--hero-bg)', padding:'18px 16px 2.5rem'}}>
-        <div className="flex-center gap-12">
+        <div className="flex-center gap-12" style={{marginBottom:'16px'}}>
           <button onClick={onBack} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
             ← Retour
           </button>
@@ -137,23 +137,23 @@ export default function DetailTransactions({ type, transactions, onBack, onEdit 
             Exporter
           </button>
         </div>
-      </div>
 
-      <div style={{paddingTop:'0.75rem', borderTopLeftRadius:'20px', borderTopRightRadius:'20px', marginTop:'-1.5rem', background:'var(--bg-body)', position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'8px'}}>
-
-        <div style={{background:'var(--card-bg)', borderRadius:'16px', padding:'16px', display:'flex', justifyContent:'space-between', alignItems:'center', boxShadow:'var(--card-shadow)', margin:'8px 16px 0'}}>
+        <div style={{background:'rgba(255,255,255,0.14)', borderRadius:'14px', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
           <div>
-            <div style={{fontSize:'11px', fontWeight:'600', color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:'4px'}}>
+            <div style={{fontSize:'11px', color:'rgba(255,255,255,0.55)', fontWeight:'600', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:'4px'}}>
               Total ({filtered.length} transaction{filtered.length > 1 ? 's' : ''})
             </div>
-            <div style={{fontSize:'22px', fontWeight:'700', color: isEntree ? '#0D9370' : '#D63B5E'}}>
+            <div style={{fontSize:'22px', fontWeight:'700', color: isEntree ? '#4ADE80' : '#FC8FAE'}}>
               {isEntree ? '+' : '−'}{fmt(total)}
             </div>
           </div>
-          <div style={{width:'42px', height:'42px', borderRadius:'50%', background: isEntree ? '#E6FAF5' : '#FEF0F4', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:'700', color: isEntree ? '#0D9370' : '#D63B5E'}}>
+          <div style={{width:'42px', height:'42px', borderRadius:'50%', background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:'700', color:'#fff'}}>
             {isEntree ? '+' : '−'}
           </div>
         </div>
+      </div>
+
+      <div style={{paddingTop:'0.75rem', borderTopLeftRadius:'20px', borderTopRightRadius:'20px', marginTop:'-1.5rem', background:'var(--bg-body)', position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'8px'}}>
 
         <div className="card mb-16">
           <div className="card-title">
