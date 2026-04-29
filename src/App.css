@@ -1242,6 +1242,11 @@ input:focus, select:focus {
   box-sizing: border-box;
 }
 
+.login-input:focus {
+  background: rgba(255,255,255,0.2);
+  outline: none;
+}
+
 .login-input::placeholder {
   color: rgba(255,255,255,0.4);
 }
