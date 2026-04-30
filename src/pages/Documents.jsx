@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../firebase'
+import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { Upload, Download, Trash2, FileText, File, Eye, X } from 'lucide-react'
 
 const C = '#7C3AED'
-const CLOUD_NAME = 'dtthz84ie'
-const UPLOAD_PRESET = 'yfc_documents'
 const MAX_SIZE_MB = 20
 
 function fmtSize(bytes) {
@@ -55,24 +54,26 @@ export default function Documents({ user, userData }) {
     setUploading(true)
     setUploadProgress('Envoi en cours...')
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('upload_preset', UPLOAD_PRESET)
+      const storageRef = ref(storage, `documents/${Date.now()}_${file.name}`)
+      const task = uploadBytesResumable(storageRef, file)
 
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,
-        { method: 'POST', body: fd }
-      )
-      const data = await res.json()
+      await new Promise((resolve, reject) => {
+        task.on('state_changed',
+          snap => {
+            const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100)
+            setUploadProgress(`Envoi en cours... ${pct}%`)
+          },
+          reject,
+          resolve
+        )
+      })
 
-      if (!data.secure_url) {
-        const msg = data.error?.message || JSON.stringify(data)
-        throw new Error(msg)
-      }
+      const url = await getDownloadURL(task.snapshot.ref)
 
       await addDoc(collection(db, 'documents'), {
         nom: file.name,
-        url: data.secure_url,
+        url,
+        storagePath: task.snapshot.ref.fullPath,
         taille: file.size,
         type: file.type,
         uploadedAt: new Date().toISOString(),
@@ -89,6 +90,11 @@ export default function Documents({ user, userData }) {
 
   async function handleDelete() {
     if (!confirmDel) return
+    try {
+      if (confirmDel.storagePath) {
+        await deleteObject(ref(storage, confirmDel.storagePath))
+      }
+    } catch {}
     await deleteDoc(doc(db, 'documents', confirmDel.id))
     setConfirmDel(null)
   }
