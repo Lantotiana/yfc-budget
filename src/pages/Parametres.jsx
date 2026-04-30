@@ -10,8 +10,8 @@ import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 
 const C = '#F5A623'
-const CLOUDINARY_CLOUD = 'dvtyebpmr'
-const CLOUDINARY_PRESET = 'yfc_avatars'
+const CLOUDINARY_CLOUD = 'dtthz84ie'
+const CLOUDINARY_PRESET = 'yfc_profiles'
 
 export default function Parametres({ user, userData, setUserData }) {
   const navigate = useNavigate()
