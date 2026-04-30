@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
-import { Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
+import { Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard, FolderOpen } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -10,11 +10,12 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  { path: '/dashboard',  Icon: LayoutDashboard, label: 'Tableau de bord',    desc: 'Budget, membres & événements',   bg: '#4338CA' },
-  { path: '/budget',     Icon: Wallet,          label: 'Budget YFC',          desc: 'Entrées, dépenses & solde',      bg: '#5B4FCF' },
-  { path: '/presences',  Icon: CalendarCheck,   label: 'Présence Alimbavaka', desc: 'Suivi des présences aux cultes', bg: '#2EC4A9' },
-  { path: '/membres',    Icon: Users,           label: 'Membres',             desc: 'Gestion de la liste des membres',bg: '#2F80ED' },
-  { path: '/evenements', Icon: CalendarDays,    label: 'Événements',          desc: 'Agenda & suivi des événements',  bg: '#E8445A' },
+  { path: '/dashboard',  Icon: LayoutDashboard, label: 'Tableau de bord',          desc: 'Budget, membres & événements',   bg: '#4338CA' },
+  { path: '/budget',     Icon: Wallet,          label: 'Budget YFC',                desc: 'Entrées, dépenses & solde',      bg: '#5B4FCF' },
+  { path: '/presences',  Icon: CalendarCheck,   label: 'Présence Alimbavaka',       desc: 'Suivi des présences aux cultes', bg: '#2EC4A9' },
+  { path: '/membres',    Icon: Users,           label: 'Membres',                   desc: 'Gestion de la liste des membres',bg: '#2F80ED' },
+  { path: '/evenements', Icon: CalendarDays,    label: 'Événements',                desc: 'Agenda & suivi des événements',  bg: '#E8445A' },
+  { path: '/documents',  Icon: FolderOpen,      label: 'Documents indispensables',  desc: 'Fichiers & ressources partagés', bg: '#7C3AED' },
 ]
 
 export default function Home({ user, userData }) {

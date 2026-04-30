@@ -13,6 +13,7 @@ import Presences from './pages/Presences'
 import Parametres from './pages/Parametres'
 import Evenements from './pages/Evenements'
 import Dashboard from './pages/Dashboard'
+import Documents from './pages/Documents'
 import './App.css'
 
 function ProtectedRoute({ user, children }) {
@@ -97,6 +98,11 @@ export default function App() {
               userData={userData}
               setUserData={setUserData}
             />
+          </ProtectedRoute>
+        } />
+        <Route path="/documents" element={
+          <ProtectedRoute user={user}>
+            <Documents user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
