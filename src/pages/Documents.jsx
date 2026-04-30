@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Upload, Download, Trash2, FileText, File } from 'lucide-react'
+import { Upload, Download, Trash2, FileText, File, Eye, X } from 'lucide-react'
 
 const C = '#7C3AED'
 const CLOUD_NAME = 'dtthz84ie'
@@ -15,10 +15,12 @@ function fmtSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' Mo'
 }
 
+function canPreview(type) {
+  return type === 'application/pdf' || type?.startsWith('image/')
+}
+
 function FileIcon({ type }) {
-  const isImage = type?.startsWith('image/')
-  const isPdf = type === 'application/pdf'
-  const Icon = isImage || isPdf ? FileText : File
+  const Icon = type === 'application/pdf' || type?.startsWith('image/') ? FileText : File
   return <Icon size={20} />
 }
 
@@ -30,6 +32,7 @@ export default function Documents({ user, userData }) {
   const [uploadProgress, setUploadProgress] = useState('')
   const [confirmDel, setConfirmDel] = useState(null)
   const [error, setError] = useState('')
+  const [preview, setPreview] = useState(null) // { url, nom, type }
 
   useEffect(() => {
     const q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'))
@@ -92,8 +95,7 @@ export default function Documents({ user, userData }) {
 
   function formatDate(iso) {
     if (!iso) return ''
-    const d = new Date(iso)
-    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
   return (
@@ -115,26 +117,19 @@ export default function Documents({ user, userData }) {
           >
             <Upload size={15} /> {uploading ? 'Envoi...' : 'Ajouter'}
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            style={{ display: 'none' }}
-            onChange={handleUpload}
-          />
+          <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
         </div>
       </div>
 
       {/* Content */}
       <div style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '2rem' }}>
 
-        {/* Toast erreur */}
         {error && (
           <div style={{ margin: '8px 16px 0', padding: '12px 14px', background: '#FEF0F4', borderRadius: '12px', color: '#D63B5E', fontSize: '13px', fontWeight: '600' }}>
             {error}
           </div>
         )}
 
-        {/* Progress upload */}
         {uploading && uploadProgress && (
           <div style={{ margin: '8px 16px 0', padding: '12px 14px', background: `${C}15`, borderRadius: '12px', color: C, fontSize: '13px', fontWeight: '600' }}>
             {uploadProgress}
@@ -156,16 +151,10 @@ export default function Documents({ user, userData }) {
                   borderBottom: i < documents.length - 1 ? '0.5px solid var(--border-input)' : 'none',
                 }}
               >
-                {/* Icône */}
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
-                  background: `${C}15`, color: C,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: `${C}15`, color: C, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <FileIcon type={doc.type} />
                 </div>
 
-                {/* Infos */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {doc.nom}
@@ -175,7 +164,15 @@ export default function Documents({ user, userData }) {
                   </div>
                 </div>
 
-                {/* Boutons */}
+                {canPreview(doc.type) && (
+                  <button
+                    onClick={() => setPreview(doc)}
+                    style={{ background: `${C}15`, border: 'none', borderRadius: '8px', padding: '7px 9px', cursor: 'pointer', color: C, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                  >
+                    <Eye size={15} />
+                  </button>
+                )}
+
                 <a
                   href={doc.url}
                   download={doc.nom}
@@ -185,6 +182,7 @@ export default function Documents({ user, userData }) {
                 >
                   <Download size={15} />
                 </a>
+
                 <button
                   onClick={() => setConfirmDel(doc)}
                   style={{ background: 'var(--del-btn-bg)', border: 'none', borderRadius: '8px', padding: '7px 9px', cursor: 'pointer', color: '#D63B5E', display: 'flex', alignItems: 'center', flexShrink: 0 }}
@@ -196,6 +194,55 @@ export default function Documents({ user, userData }) {
           </div>
         )}
       </div>
+
+      {/* Visualiseur */}
+      {preview && (
+        <div
+          onClick={() => setPreview(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', flexDirection: 'column' }}
+        >
+          {/* Barre titre */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'rgba(0,0,0,0.6)', flexShrink: 0 }}
+          >
+            <div style={{ flex: 1, fontSize: '13px', fontWeight: '600', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {preview.nom}
+            </div>
+            <a
+              href={preview.url}
+              download={preview.nom}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#fff', opacity: 0.7, display: 'flex', padding: '6px' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <Download size={18} />
+            </a>
+            <button
+              onClick={() => setPreview(null)}
+              style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.7, cursor: 'pointer', display: 'flex', padding: '6px' }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Contenu */}
+          <div onClick={e => e.stopPropagation()} style={{ flex: 1, overflow: 'hidden' }}>
+            {preview.type?.startsWith('image/') ? (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                <img src={preview.url} alt={preview.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+              </div>
+            ) : (
+              <iframe
+                src={preview.url}
+                title={preview.nom}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Confirmation suppression */}
       {confirmDel && (
