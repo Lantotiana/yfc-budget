@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/fire
 import emailjs from '@emailjs/browser'
 import { useTheme } from '../context/ThemeContext'
 import { X } from 'lucide-react'
+import { createNotification } from '../notifications'
 
 const EMAILJS_SERVICE_ID = 'service_q55ivrp'
 const EMAILJS_TEMPLATE_ID = 'template_wgibd9k'
@@ -26,6 +27,13 @@ export default function Admin({ onClose }) {
     setSending(u.id)
     try {
       await updateDoc(doc(db, 'users', u.id), { approuve: true })
+      await createNotification({
+        type: 'admin',
+        titre: 'Utilisateur approuvé',
+        detail: u.nom || u.email,
+        cible: u.id,
+        route: '/',
+      })
 
       await emailjs.send(
         EMAILJS_SERVICE_ID,
@@ -45,7 +53,15 @@ export default function Admin({ onClose }) {
 
   async function supprimer(id) {
     if (window.confirm('Supprimer cet utilisateur ?')) {
+      const user = users.find(u => u.id === id)
       await deleteDoc(doc(db, 'users', id))
+      await createNotification({
+        type: 'admin',
+        titre: 'Utilisateur supprimé',
+        detail: user?.nom || user?.email || '',
+        cible: id,
+        route: '/',
+      })
     }
   }
 

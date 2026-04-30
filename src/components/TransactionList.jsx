@@ -3,6 +3,7 @@ import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Search, X, Download, Share2 } from 'lucide-react'
 import { toDisplayDate } from '../utils'
+import { createNotification } from '../notifications'
 
 const DEFAULT_MOTIFS = {
   entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
@@ -123,6 +124,13 @@ export default function TransactionList({
       motif: motifFinal,
       note: editNote
     })
+    await createNotification({
+      type: 'budget',
+      titre: 'Transaction modifiée',
+      detail: `${motifFinal} - ${fmt(editMontant)}`,
+      cible: motifFinal,
+      route: '/budget',
+    })
     setSaving(false)
     closeEdit()
   }
@@ -130,6 +138,13 @@ export default function TransactionList({
   async function handleDelete() {
     if (window.confirm('Supprimer cette transaction ?')) {
       await deleteDoc(doc(db, 'transactions', selected.id))
+      await createNotification({
+        type: 'budget',
+        titre: 'Transaction supprimée',
+        detail: `${selected.motif} - ${fmt(selected.montant)}`,
+        cible: selected.motif,
+        route: '/budget',
+      })
       closeEdit()
     }
   }

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import Admin from '../components/Admin'
+import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
-import { Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard, FolderOpen } from 'lucide-react'
+import { Bell, Settings, ChevronRight, Wallet, CalendarCheck, Users, CalendarDays, LayoutDashboard, FolderOpen } from 'lucide-react'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -22,8 +24,21 @@ export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const [showAdmin, setShowAdmin] = useState(false)
   const [exitToast, setExitToast] = useState(false)
+  const [notifCount, setNotifCount] = useState(0)
   const exitReady = useRef(false)
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(20))
+    return onSnapshot(q, snap => {
+      const unread = snap.docs.filter(d => {
+        const readBy = d.data().readBy || []
+        return !readBy.includes(user.uid)
+      })
+      setNotifCount(unread.length)
+    }, () => setNotifCount(0))
+  }, [user?.uid])
 
   useEffect(() => {
     window.history.pushState({ yfc: 'home' }, '')
@@ -63,9 +78,21 @@ export default function Home({ user, userData }) {
             </button>
           )}
           <button
+            onClick={() => navigate('/notifications')}
+            className="home-icon-btn"
+            aria-label="Notifications"
+          >
+            <Bell size={18} />
+            {notifCount > 0 && (
+              <span className="home-notification-badge">
+                {notifCount > 9 ? '9+' : notifCount}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => navigate('/parametres')}
-            className="rounded-10 text-white cursor-pointer flex-center"
-            style={{ background: 'transparent', border: 'none', padding: '9px' }}
+            className="home-icon-btn"
+            aria-label="Parametres"
           >
             <Settings size={18} />
           </button>

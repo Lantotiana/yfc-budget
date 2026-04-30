@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Trash2, MapPin, Clock, Calendar } from 'lucide-react'
 import { toDisplayDate } from '../utils'
+import { createNotification } from '../notifications'
 
 const C = '#E8445A'
 const EMPTY = { nom: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', lieu: '' }
@@ -89,8 +90,25 @@ export default function Evenements({ user, userData }) {
         heureFin: form.heureFin,
         lieu: form.lieu.trim(),
       }
-      if (sheet === 'add') await addDoc(collection(db, 'evenements_agenda'), data)
-      else await updateDoc(doc(db, 'evenements_agenda', sheet.id), data)
+      if (sheet === 'add') {
+        await addDoc(collection(db, 'evenements_agenda'), data)
+        await createNotification({
+          type: 'evenement',
+          titre: 'Nouvel événement créé',
+          detail: `${data.nom} - ${toDisplayDate(data.dateDebut)}`,
+          cible: data.nom,
+          route: '/evenements',
+        })
+      } else {
+        await updateDoc(doc(db, 'evenements_agenda', sheet.id), data)
+        await createNotification({
+          type: 'evenement',
+          titre: 'Événement modifié',
+          detail: `${data.nom} - ${toDisplayDate(data.dateDebut)}`,
+          cible: data.nom,
+          route: '/evenements',
+        })
+      }
       closeSheet()
     } catch(e) { console.error(e) }
     setSaving(false)
@@ -99,6 +117,13 @@ export default function Evenements({ user, userData }) {
   async function confirmDelete() {
     if (!confirmDel) return
     await deleteDoc(doc(db, 'evenements_agenda', confirmDel.id))
+    await createNotification({
+      type: 'evenement',
+      titre: 'Événement supprimé',
+      detail: confirmDel.nom || '',
+      cible: confirmDel.nom || '',
+      route: '/evenements',
+    })
     setConfirmDel(null)
   }
 

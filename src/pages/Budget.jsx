@@ -5,6 +5,7 @@ import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from '
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
+import { createNotification } from '../notifications'
 
 const C = '#5B4FCF'
 
@@ -62,10 +63,24 @@ export default function Budget({ user, userData }) {
 
   async function addTransaction(tx) {
     await addDoc(collection(db, 'transactions'), tx)
+    await createNotification({
+      type: 'budget',
+      titre: tx.type === 'entree' ? 'Nouvelle entrée budget' : 'Nouvelle dépense budget',
+      detail: `${tx.motif} - ${fmt(tx.montant)}`,
+      cible: tx.motif,
+      route: '/budget',
+    })
   }
 
   async function deleteTransaction(tx) {
     await deleteDoc(doc(db, 'transactions', tx.id))
+    await createNotification({
+      type: 'budget',
+      titre: 'Transaction supprimée',
+      detail: `${tx.motif} - ${fmt(tx.montant)}`,
+      cible: tx.motif,
+      route: '/budget',
+    })
   }
 
   const months = [...new Set(transactions.map(t => t.date?.slice(0,7)))].filter(Boolean).sort().reverse()

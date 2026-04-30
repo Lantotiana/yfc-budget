@@ -7,6 +7,7 @@ import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 
 import { doc, updateDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
+import { createNotification } from '../notifications'
 
 const C = '#F5A623'
 const CLOUDINARY_CLOUD = 'dvtyebpmr'
@@ -41,6 +42,13 @@ export default function Parametres({ user, userData, setUserData }) {
     try {
       await updateDoc(doc(db, 'users', user.uid), { nom: nom.trim(), photoURL })
       setUserData(prev => ({ ...prev, nom: nom.trim(), photoURL }))
+      await createNotification({
+        type: 'profil',
+        titre: 'Profil mis à jour',
+        detail: nom.trim(),
+        cible: user.uid,
+        route: '/parametres',
+      })
       flash('Profil mis à jour !')
     } catch { flash('Erreur lors de la sauvegarde.', false) }
     setSaving(false)
@@ -60,6 +68,13 @@ export default function Parametres({ user, userData, setUserData }) {
         setPhotoURL(data.secure_url)
         await updateDoc(doc(db, 'users', user.uid), { photoURL: data.secure_url })
         setUserData(prev => ({ ...prev, photoURL: data.secure_url }))
+        await createNotification({
+          type: 'profil',
+          titre: 'Photo de profil modifiée',
+          detail: userData?.nom || user.email,
+          cible: user.uid,
+          route: '/parametres',
+        })
         flash('Photo mise à jour !')
       } else { flash('Erreur upload photo.', false) }
     } catch { flash('Erreur upload photo.', false) }
@@ -75,6 +90,13 @@ export default function Parametres({ user, userData, setUserData }) {
       await reauthenticateWithCredential(auth.currentUser, cred)
       await updatePassword(auth.currentUser, newPwd)
       setOldPwd(''); setNewPwd(''); setConfirmPwd('')
+      await createNotification({
+        type: 'profil',
+        titre: 'Mot de passe modifié',
+        detail: userData?.nom || user.email,
+        cible: user.uid,
+        route: '/parametres',
+      })
       flash('Mot de passe modifié !')
     } catch(e) {
       if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {

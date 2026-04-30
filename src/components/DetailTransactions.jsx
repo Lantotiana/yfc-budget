@@ -4,6 +4,7 @@ import { toDisplayDate } from '../utils'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { X } from 'lucide-react'
+import { createNotification } from '../notifications'
 
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
 
@@ -76,6 +77,13 @@ export default function DetailTransactions({ type, transactions, onBack }) {
       motif: motifFinal,
       note: editNote
     })
+    await createNotification({
+      type: 'budget',
+      titre: 'Transaction modifiée',
+      detail: `${motifFinal} - ${fmt(editMontant)}`,
+      cible: motifFinal,
+      route: '/budget',
+    })
     setSaving(false)
     closeEdit()
   }
@@ -83,6 +91,13 @@ export default function DetailTransactions({ type, transactions, onBack }) {
   async function handleDelete() {
     if (window.confirm('Supprimer cette transaction ?')) {
       await deleteDoc(doc(db, 'transactions', selected.id))
+      await createNotification({
+        type: 'budget',
+        titre: 'Transaction supprimée',
+        detail: `${selected.motif} - ${fmt(selected.montant)}`,
+        cible: selected.motif,
+        route: '/budget',
+      })
       closeEdit()
     }
   }

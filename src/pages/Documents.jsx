@@ -4,6 +4,7 @@ import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { Upload, Download, Trash2, FileText, File, X } from 'lucide-react'
+import { createNotification } from '../notifications'
 
 const C = '#7C3AED'
 const MAX_SIZE_MB = 20
@@ -67,6 +68,13 @@ export default function Documents({ user, userData }) {
         uploadedAt: new Date().toISOString(),
         uploadedBy: userData?.nom || user.email,
       })
+      await createNotification({
+        type: 'document',
+        titre: 'Document ajouté',
+        detail: file.name,
+        cible: file.name,
+        route: '/documents',
+      })
       setUploadProgress('')
     } catch(e) {
       setError(e.message || 'Erreur lors de l\'envoi.')
@@ -84,6 +92,13 @@ export default function Documents({ user, userData }) {
       }
     } catch {}
     await deleteDoc(doc(db, 'documents', confirmDel.id))
+    await createNotification({
+      type: 'document',
+      titre: 'Document supprimé',
+      detail: confirmDel.nom || '',
+      cible: confirmDel.nom || '',
+      route: '/documents',
+    })
     setConfirmDel(null)
   }
 

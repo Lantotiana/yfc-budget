@@ -3,6 +3,7 @@ import { collection, addDoc, deleteDoc, doc, onSnapshot, getDoc } from 'firebase
 import { db } from '../firebase'
 import { auth } from '../auth'
 import { X } from 'lucide-react'
+import { createNotification } from '../notifications'
 
 export default function TransactionForm({ onAdd }) {
   const [type, setType] = useState('entree')
@@ -78,11 +79,25 @@ export default function TransactionForm({ onAdd }) {
   async function addMotif() {
     if (!newMotif.trim()) return
     await addDoc(collection(db, 'motifs'), { name: newMotif.trim(), type })
+    await createNotification({
+      type: 'budget',
+      titre: 'Motif ajouté',
+      detail: newMotif.trim(),
+      cible: newMotif.trim(),
+      route: '/budget',
+    })
     setNewMotif('')
   }
 
   async function deleteMotif(m) {
     await deleteDoc(doc(db, 'motifs', m.id))
+    await createNotification({
+      type: 'budget',
+      titre: 'Motif supprimé',
+      detail: m.name,
+      cible: m.name,
+      route: '/budget',
+    })
   }
 
   return (

@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { toDisplayDate } from '../utils'
 import { Share2, Search } from 'lucide-react'
+import { createNotification } from '../notifications'
 
 const C = '#2EC4A9'
 
@@ -68,6 +69,13 @@ export default function Presences({ user, userData }) {
         present: nowPresent,
         updatedAt: new Date().toISOString(),
       })
+      await createNotification({
+        type: 'presence',
+        titre: nowPresent ? 'Présence marquée' : 'Présence retirée',
+        detail: `${membre.nom} ${membre.prenoms || ''} - ${selectedEvent.titre}`,
+        cible: membre.nom,
+        route: '/presences',
+      })
       setPresences(prev => ({ ...prev, [membre.id]: nowPresent }))
     } catch(e) { console.error(e) }
     setSaving(null)
@@ -81,6 +89,13 @@ export default function Presences({ user, userData }) {
         titre: newEventForm.titre.trim(),
         date: newEventForm.date,
         createdAt: new Date().toISOString(),
+      })
+      await createNotification({
+        type: 'presence',
+        titre: 'Nouveau culte créé',
+        detail: `${newEventForm.titre.trim()} - ${toDisplayDate(newEventForm.date)}`,
+        cible: newEventForm.titre.trim(),
+        route: '/presences',
       })
       setSelectedEvent({ id: ref.id, titre: newEventForm.titre.trim(), date: newEventForm.date })
       setShowNewEvent(false)

@@ -14,6 +14,7 @@ import Parametres from './pages/Parametres'
 import Evenements from './pages/Evenements'
 import Dashboard from './pages/Dashboard'
 import Documents from './pages/Documents'
+import Notifications from './pages/Notifications'
 import './App.css'
 
 function ScrollToTop() {
@@ -110,6 +111,11 @@ export default function App() {
         <Route path="/documents" element={
           <ProtectedRoute user={user}>
             <Documents user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/notifications" element={
+          <ProtectedRoute user={user}>
+            <Notifications user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />

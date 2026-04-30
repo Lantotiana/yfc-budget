@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Search, Trash2, Download } from 'lucide-react'
 import { toDisplayDate } from '../utils'
+import { createNotification } from '../notifications'
 
 const C = '#2F80ED'
 const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
@@ -50,11 +51,25 @@ export default function Membres({ user, userData }) {
           tailleTshirt: form.tailleTshirt,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
+        await createNotification({
+          type: 'membre',
+          titre: 'Nouveau membre ajouté',
+          detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
+          cible: form.nom.trim(),
+          route: '/membres',
+        })
       } else {
         await updateDoc(doc(db, 'membres', sheet.id), {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
+        })
+        await createNotification({
+          type: 'membre',
+          titre: 'Membre modifié',
+          detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
+          cible: form.nom.trim(),
+          route: '/membres',
         })
       }
       closeSheet()
@@ -65,6 +80,13 @@ export default function Membres({ user, userData }) {
   async function confirmDelete() {
     if (!confirmDel) return
     await deleteDoc(doc(db, 'membres', confirmDel.id))
+    await createNotification({
+      type: 'membre',
+      titre: 'Membre supprimé',
+      detail: `${confirmDel.nom || ''} ${confirmDel.prenoms || ''}`.trim(),
+      cible: confirmDel.nom || '',
+      route: '/membres',
+    })
     setConfirmDel(null)
   }
 
