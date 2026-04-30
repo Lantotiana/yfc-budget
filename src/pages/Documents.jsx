@@ -62,7 +62,10 @@ export default function Documents({ user, userData }) {
       )
       const data = await res.json()
 
-      if (!data.secure_url) throw new Error('Upload échoué')
+      if (!data.secure_url) {
+        const msg = data.error?.message || JSON.stringify(data)
+        throw new Error(msg)
+      }
 
       await addDoc(collection(db, 'documents'), {
         nom: file.name,
@@ -73,9 +76,9 @@ export default function Documents({ user, userData }) {
         uploadedBy: userData?.nom || user.email,
       })
       setUploadProgress('')
-    } catch {
-      setError('Erreur lors de l\'envoi. Réessayez.')
-      setTimeout(() => setError(''), 3000)
+    } catch(e) {
+      setError(e.message || 'Erreur lors de l\'envoi.')
+      setTimeout(() => setError(''), 6000)
       setUploadProgress('')
     }
     setUploading(false)
