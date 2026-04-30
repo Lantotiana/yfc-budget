@@ -235,7 +235,7 @@ export default function Documents({ user, userData }) {
               </div>
             ) : (
               <iframe
-                src={preview.url}
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(preview.url)}&embedded=true`}
                 title={preview.nom}
                 style={{ width: '100%', height: '100%', border: 'none' }}
               />
