@@ -60,7 +60,7 @@ export default function Documents({ user, userData }) {
       fd.append('upload_preset', UPLOAD_PRESET)
 
       const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,
         { method: 'POST', body: fd }
       )
       const data = await res.json()
