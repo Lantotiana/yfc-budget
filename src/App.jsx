@@ -104,7 +104,7 @@ function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
-  const baseVisible = Boolean(user && location.pathname !== '/' && location.pathname !== '/login')
+  const baseVisible = Boolean(user && location.pathname !== '/login')
   const visible = baseVisible && !modalOpen
 
   useEffect(() => {
