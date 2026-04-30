@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
-import { Upload, Download, Trash2, FileText, File, Eye, X } from 'lucide-react'
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { Upload, Download, Trash2, FileText, File, X } from 'lucide-react'
 
 const C = '#7C3AED'
 const MAX_SIZE_MB = 20
@@ -55,25 +55,13 @@ export default function Documents({ user, userData }) {
     setUploadProgress('Envoi en cours...')
     try {
       const storageRef = ref(storage, `documents/${Date.now()}_${file.name}`)
-      const task = uploadBytesResumable(storageRef, file)
-
-      await new Promise((resolve, reject) => {
-        task.on('state_changed',
-          snap => {
-            const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100)
-            setUploadProgress(`Envoi en cours... ${pct}%`)
-          },
-          reject,
-          resolve
-        )
-      })
-
-      const url = await getDownloadURL(task.snapshot.ref)
+      const snapshot = await uploadBytes(storageRef, file)
+      const url = await getDownloadURL(snapshot.ref)
 
       await addDoc(collection(db, 'documents'), {
         nom: file.name,
         url,
-        storagePath: task.snapshot.ref.fullPath,
+        storagePath: snapshot.ref.fullPath,
         taille: file.size,
         type: file.type,
         uploadedAt: new Date().toISOString(),
@@ -157,11 +145,17 @@ export default function Documents({ user, userData }) {
                   borderBottom: i < documents.length - 1 ? '0.5px solid var(--border-input)' : 'none',
                 }}
               >
-                <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: `${C}15`, color: C, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div
+                  onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
+                  style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: `${C}15`, color: C, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
+                >
                   <FileIcon type={doc.type} />
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
+                  style={{ flex: 1, minWidth: 0, cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
+                >
                   <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {doc.nom}
                   </div>
@@ -169,15 +163,6 @@ export default function Documents({ user, userData }) {
                     {fmtSize(doc.taille)} · {formatDate(doc.uploadedAt)}
                   </div>
                 </div>
-
-                {canPreview(doc.type) && (
-                  <button
-                    onClick={() => setPreview(doc)}
-                    style={{ background: `${C}15`, border: 'none', borderRadius: '8px', padding: '7px 9px', cursor: 'pointer', color: C, display: 'flex', alignItems: 'center', flexShrink: 0 }}
-                  >
-                    <Eye size={15} />
-                  </button>
-                )}
 
                 <a
                   href={doc.url}
@@ -241,7 +226,7 @@ export default function Documents({ user, userData }) {
               </div>
             ) : (
               <iframe
-                src={`https://docs.google.com/gview?url=${encodeURIComponent(preview.url)}&embedded=true`}
+                src={preview.url}
                 title={preview.nom}
                 style={{ width: '100%', height: '100%', border: 'none' }}
               />
