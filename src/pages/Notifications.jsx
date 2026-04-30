@@ -126,7 +126,7 @@ export default function Notifications({ user }) {
         </div>
       </div>
 
-      <div style={{ padding: '1rem', paddingBottom: '2rem' }}>
+      <div className="scroll-bottom-safe" style={{ padding: '1rem', paddingBottom: '2rem' }}>
         {loading ? (
           <div className="empty-state">Chargement...</div>
         ) : notifications.length === 0 ? (

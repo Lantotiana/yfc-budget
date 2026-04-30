@@ -131,7 +131,7 @@ export default function Documents({ user, userData }) {
       </div>
 
       {/* Content */}
-      <div style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '2rem' }}>
+      <div className="scroll-bottom-safe" style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '2rem' }}>
 
         {error && (
           <div style={{ margin: '8px 16px 0', padding: '12px 14px', background: '#FEF0F4', borderRadius: '12px', color: '#D63B5E', fontSize: '13px', fontWeight: '600' }}>

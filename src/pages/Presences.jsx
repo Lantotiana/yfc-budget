@@ -226,7 +226,7 @@ export default function Presences({ user, userData }) {
       )}
 
       {/* Liste membres */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', paddingBottom: '2rem' }}>
+      <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '1rem', paddingBottom: '2rem' }}>
         {!selectedEvent ? (
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
             Créez un culte pour commencer le suivi des présences.

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
+import { CalendarCheck, CalendarDays, FolderOpen, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -26,6 +27,130 @@ function ScrollToTop() {
 function ProtectedRoute({ user, children }) {
   if (!user) return <Navigate to="/login" replace />
   return children
+}
+
+function getBackTarget(pathname) {
+  if (pathname === '/') return null
+  if (pathname === '/budget/entrees' || pathname === '/budget/depenses') return '/budget'
+  return '/'
+}
+
+function BackNavigationGuard({ user }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [exitToast, setExitToast] = useState(false)
+  const exitReady = useRef(false)
+
+  useEffect(() => {
+    if (!user || location.pathname === '/login') return
+
+    window.history.pushState(
+      { yfcBackGuard: true, pathname: location.pathname },
+      '',
+      window.location.href
+    )
+
+    function onPop() {
+      const target = getBackTarget(location.pathname)
+
+      if (target) {
+        navigate(target, { replace: true })
+        return
+      }
+
+      if (exitReady.current) {
+        setExitToast(false)
+        exitReady.current = false
+        return
+      }
+
+      exitReady.current = true
+      setExitToast(true)
+      window.history.pushState(
+        { yfcBackGuard: true, pathname: location.pathname },
+        '',
+        window.location.href
+      )
+      setTimeout(() => {
+        exitReady.current = false
+        setExitToast(false)
+      }, 2000)
+    }
+
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [location.pathname, navigate, user])
+
+  if (!exitToast) return null
+
+  return (
+    <div className="toast" style={{ color: '#fff' }}>
+      Appuie encore sur retour pour quitter
+    </div>
+  )
+}
+
+const bottomNavItems = [
+  { path: '/', label: 'Accueil', Icon: HomeIcon, color: '#5B4FCF' },
+  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard, color: '#4338CA' },
+  { path: '/budget', label: 'Budget', Icon: Wallet, color: '#5B4FCF' },
+  { path: '/presences', label: 'Présences', Icon: CalendarCheck, color: '#2EC4A9' },
+  { path: '/membres', label: 'Membres', Icon: Users, color: '#2F80ED' },
+  { path: '/evenements', label: 'Events', Icon: CalendarDays, color: '#E8445A' },
+  { path: '/documents', label: 'Docs', Icon: FolderOpen, color: '#7C3AED' },
+]
+
+function BottomNav({ user }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [modalOpen, setModalOpen] = useState(false)
+  const baseVisible = Boolean(user && location.pathname !== '/' && location.pathname !== '/login')
+  const visible = baseVisible && !modalOpen
+
+  useEffect(() => {
+    function syncModalState() {
+      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay')))
+    }
+
+    syncModalState()
+    const observer = new MutationObserver(syncModalState)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (visible) document.body.setAttribute('data-bottom-nav', 'true')
+    else document.body.removeAttribute('data-bottom-nav')
+
+    return () => document.body.removeAttribute('data-bottom-nav')
+  }, [visible])
+
+  if (!visible) return null
+
+  return (
+    <nav className="bottom-nav" aria-label="Navigation principale">
+      {bottomNavItems.map(item => {
+        const active = item.path === '/'
+          ? location.pathname === '/'
+          : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+        return (
+          <button
+            key={item.path}
+            type="button"
+            className={`bottom-nav-item${active ? ' active' : ''}`}
+            style={{ '--bottom-nav-active': item.color }}
+            onClick={() => navigate(item.path)}
+            aria-label={item.label}
+          >
+            <span className="bottom-nav-icon">
+              <item.Icon size={19} />
+            </span>
+            <span className="bottom-nav-label">{item.label}</span>
+          </button>
+        )
+      })}
+    </nav>
+  )
 }
 
 export default function App() {
@@ -67,6 +192,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <BackNavigationGuard user={user} />
+      <BottomNav user={user} />
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={
@@ -75,6 +202,11 @@ export default function App() {
           </ProtectedRoute>
         } />
         <Route path="/budget" element={
+          <ProtectedRoute user={user}>
+            <Budget user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/budget/:detailType" element={
           <ProtectedRoute user={user}>
             <Budget user={user} userData={userData} />
           </ProtectedRoute>

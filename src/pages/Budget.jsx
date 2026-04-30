@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import TransactionForm from '../components/TransactionForm'
@@ -15,34 +15,13 @@ function fmt(n) {
 
 export default function Budget({ user, userData }) {
   const navigate = useNavigate()
+  const { detailType } = useParams()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
-  const [showDetail, setShowDetail] = useState(null)
   const [editTx, setEditTx] = useState(null)
-  const detailPushed = useRef(false)
-
-  useEffect(() => {
-    if (!showDetail) return
-    window.history.pushState({ yfc: 'detail' }, '')
-    detailPushed.current = true
-
-    function onPop() {
-      detailPushed.current = false
-      setShowDetail(null)
-    }
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [showDetail])
-
-  function closeDetail() {
-    setShowDetail(null)
-    if (detailPushed.current) {
-      detailPushed.current = false
-      window.history.back()
-    }
-  }
+  const showDetail = detailType === 'entrees' ? 'entree' : detailType === 'depenses' ? 'depense' : null
 
   useEffect(() => {
     setLoading(true)
@@ -99,8 +78,8 @@ export default function Budget({ user, userData }) {
     <DetailTransactions
       type={showDetail}
       transactions={transactions}
-      onBack={closeDetail}
-      onEdit={tx => { setEditTx(tx); setShowDetail(null) }}
+      onBack={() => navigate('/budget', { replace: true })}
+      onEdit={tx => { setEditTx(tx); navigate('/budget', { replace: true }) }}
     />
   )
 
@@ -120,14 +99,14 @@ export default function Budget({ user, userData }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           <div
-            onClick={() => setShowDetail('entree')}
+            onClick={() => navigate('/budget/entrees')}
             style={{ background: 'rgba(255,255,255,0.14)', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
           >
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>Entrées</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#4ADE80' }}>{fmt(allEntrees)}</div>
           </div>
           <div
-            onClick={() => setShowDetail('depense')}
+            onClick={() => navigate('/budget/depenses')}
             style={{ background: 'rgba(255,255,255,0.14)', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
           >
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>Dépenses</div>
@@ -136,7 +115,7 @@ export default function Budget({ user, userData }) {
         </div>
       </div>
 
-      <div style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="scroll-bottom-safe" style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* Solde */}
         <div style={{
           background: 'var(--card-bg)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px', padding: '16px',

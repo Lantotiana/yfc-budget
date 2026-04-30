@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Trash2, MapPin, Clock, Calendar } from 'lucide-react'
+import { Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 
@@ -156,11 +156,20 @@ export default function Evenements({ user, userData }) {
               {evenements.length} événement{evenements.length !== 1 ? 's' : ''}
             </p>
           </div>
+          <button
+            onClick={openAdd}
+            className="page-export-btn"
+            aria-label="Ajouter un événement"
+            title="Ajouter un événement"
+            style={{ width: '38px', height: '36px', padding: 0, justifyContent: 'center' }}
+          >
+            <Plus size={17} />
+          </button>
         </div>
       </div>
 
       {/* Liste */}
-      <div style={{ padding: '1rem' }}>
+      <div className="scroll-bottom-safe" style={{ padding: '1rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem', fontSize: '13px' }}>Chargement...</div>
         ) : sorted.length === 0 ? (
@@ -228,20 +237,6 @@ export default function Evenements({ user, userData }) {
           )
         })}
       </div>
-
-      {/* FAB */}
-      <button
-        onClick={openAdd}
-        style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem',
-          width: '54px', height: '54px', borderRadius: '50%',
-          background: C, color: '#fff', border: 'none', fontSize: '24px',
-          cursor: 'pointer', boxShadow: `0 6px 20px ${C}55`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
-        }}
-      >
-        +
-      </button>
 
       {/* Bottom sheet */}
       {sheet !== null && (

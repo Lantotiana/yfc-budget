@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Search, Trash2, Download } from 'lucide-react'
+import { Plus, Search, Trash2, Download } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 
@@ -132,6 +132,15 @@ export default function Membres({ user, userData }) {
               {membres.length} membre{membres.length !== 1 ? 's' : ''}
             </p>
           </div>
+          <button
+            onClick={openAdd}
+            className="page-export-btn"
+            aria-label="Ajouter un membre"
+            title="Ajouter un membre"
+            style={{ width: '38px', height: '36px', padding: 0, justifyContent: 'center' }}
+          >
+            <Plus size={17} />
+          </button>
           {membres.length > 0 && (
             <button onClick={exportExcel} className="page-export-btn">
               <Download size={15} /> Exporter
@@ -186,20 +195,6 @@ export default function Membres({ user, userData }) {
           </div>
         ))}
       </div>
-
-      {/* FAB */}
-      <button
-        onClick={openAdd}
-        style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem',
-          width: '54px', height: '54px', borderRadius: '50%',
-          background: C, color: '#fff', border: 'none', fontSize: '24px',
-          cursor: 'pointer', boxShadow: `0 6px 20px ${C}60`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
-        }}
-      >
-        +
-      </button>
 
       {/* Bottom sheet */}
       {sheet !== null && (

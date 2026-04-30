@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import Admin from '../components/Admin'
@@ -23,9 +23,7 @@ const modules = [
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const [showAdmin, setShowAdmin] = useState(false)
-  const [exitToast, setExitToast] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
-  const exitReady = useRef(false)
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   useEffect(() => {
@@ -39,27 +37,6 @@ export default function Home({ user, userData }) {
       setNotifCount(unread.length)
     }, () => setNotifCount(0))
   }, [user?.uid])
-
-  useEffect(() => {
-    window.history.pushState({ yfc: 'home' }, '')
-
-    function onPop() {
-      if (exitReady.current) {
-        setExitToast(false)
-        return
-      }
-      exitReady.current = true
-      setExitToast(true)
-      window.history.pushState({ yfc: 'home' }, '')
-      setTimeout(() => {
-        exitReady.current = false
-        setExitToast(false)
-      }, 2000)
-    }
-
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [])
 
   return (
     <div className="page-container" style={{ paddingBottom: '3rem' }}>
