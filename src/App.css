@@ -1512,22 +1512,43 @@ input:focus, select:focus {
   height: 60px;
   padding: 6px;
   border-radius: 23px;
-  background: color-mix(in srgb, var(--card-bg) 46%, transparent);
+  background: rgba(255,255,255,0.24);
   border: 1px solid rgba(255,255,255,0.34);
   box-shadow:
     0 18px 48px rgba(26,26,46,0.22),
     inset 0 1px 0 rgba(255,255,255,0.35),
     inset 0 -1px 0 rgba(26,26,46,0.06);
-  backdrop-filter: blur(34px) saturate(1.75);
-  -webkit-backdrop-filter: blur(34px) saturate(1.75);
+  overflow: hidden;
+  isolation: isolate;
   z-index: 90;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
+.bottom-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(42px) saturate(1.9);
+  -webkit-backdrop-filter: blur(42px) saturate(1.9);
+}
+
+.bottom-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.24)),
+    rgba(255,255,255,0.10);
+  pointer-events: none;
+}
+
 [data-theme="dark"] .bottom-nav {
-  background: rgba(30,30,52,0.46);
+  background: rgba(30,30,52,0.22);
   border-color: rgba(255,255,255,0.12);
   box-shadow:
     0 18px 48px rgba(0,0,0,0.42),
@@ -1535,19 +1556,37 @@ input:focus, select:focus {
     inset 0 -1px 0 rgba(0,0,0,0.20);
 }
 
+[data-theme="dark"] .bottom-nav::before {
+  background: rgba(30,30,52,0.28);
+}
+
+[data-theme="dark"] .bottom-nav::after {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10), rgba(30,30,52,0.20)),
+    rgba(30,30,52,0.16);
+}
+
 @media (max-width: 640px) {
-  .bottom-nav {
-    background: rgba(255,255,255,0.42);
-    backdrop-filter: blur(42px) saturate(1.9);
-    -webkit-backdrop-filter: blur(42px) saturate(1.9);
+  .bottom-nav::before {
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(58px) saturate(2.15);
+    -webkit-backdrop-filter: blur(58px) saturate(2.15);
   }
 
-  [data-theme="dark"] .bottom-nav {
-    background: rgba(30,30,52,0.42);
+  .bottom-nav::after {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.16)),
+      rgba(255,255,255,0.06);
+  }
+
+  [data-theme="dark"] .bottom-nav::before {
+    background: rgba(30,30,52,0.18);
   }
 }
 
 .bottom-nav-item {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   height: 48px;
   border: none;
