@@ -91,13 +91,13 @@ function BackNavigationGuard({ user }) {
 }
 
 const bottomNavItems = [
-  { path: '/', label: 'Accueil', Icon: HomeIcon, color: '#5B4FCF' },
-  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard, color: '#4338CA' },
-  { path: '/budget', label: 'Budget', Icon: Wallet, color: '#5B4FCF' },
-  { path: '/presences', label: 'Présences', Icon: CalendarCheck, color: '#2EC4A9' },
-  { path: '/membres', label: 'Membres', Icon: Users, color: '#2F80ED' },
-  { path: '/evenements', label: 'Events', Icon: CalendarDays, color: '#E8445A' },
-  { path: '/documents', label: 'Docs', Icon: FolderOpen, color: '#7C3AED' },
+  { path: '/', label: 'Accueil', Icon: HomeIcon },
+  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard },
+  { path: '/budget', label: 'Budget', Icon: Wallet },
+  { path: '/presences', label: 'Présences', Icon: CalendarCheck },
+  { path: '/membres', label: 'Membres', Icon: Users },
+  { path: '/evenements', label: 'Events', Icon: CalendarDays },
+  { path: '/documents', label: 'Docs', Icon: FolderOpen },
 ]
 
 function BottomNav({ user }) {
@@ -138,7 +138,7 @@ function BottomNav({ user }) {
             key={item.path}
             type="button"
             className={`bottom-nav-item${active ? ' active' : ''}`}
-            style={{ '--bottom-nav-active': item.color }}
+            style={{ '--bottom-nav-active': 'var(--amber)' }}
             onClick={() => navigate(item.path)}
             aria-label={item.label}
           >

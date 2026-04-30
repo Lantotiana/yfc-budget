@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { Bell, CalendarCheck, FileText, Settings, UserRound, Wallet } from 'lucide-react'
-
-const C = '#5B4FCF'
+import { useTheme } from '../context/ThemeContext'
 
 const typeIcon = {
   budget: Wallet,
@@ -74,6 +73,7 @@ function groupLabel(iso) {
 
 export default function Notifications({ user }) {
   const navigate = useNavigate()
+  const { C } = useTheme()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -110,50 +110,49 @@ export default function Notifications({ user }) {
   }, [notifications])
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ background: C, paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-        <div className="flex-center gap-10">
-          <button onClick={() => navigate('/')} className="page-back-btn">‹</button>
-          <div className="flex-1">
-            <h1 className="page-title">Notifications</h1>
-            <p className="page-subtitle">
-              {notifications.length} activité{notifications.length !== 1 ? 's' : ''} récente{notifications.length !== 1 ? 's' : ''}
-            </p>
+    <div className="page-container-locked sin" style={{ background: C.bg }}>
+
+      {/* Header */}
+      <div style={{ padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Notifications</div>
+          <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
+            {notifications.length} activité{notifications.length !== 1 ? 's' : ''} récente{notifications.length !== 1 ? 's' : ''}
           </div>
-          <div className="w-36-h-36 rounded-12 flex-center" style={{ background: 'rgba(255,255,255,0.18)', color: '#fff' }}>
-            <Bell size={18} />
-          </div>
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: 12, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Bell size={18} />
         </div>
       </div>
 
-      <div className="scroll-bottom-safe" style={{ padding: '1rem', paddingBottom: '2rem' }}>
+      <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div className="empty-state">Chargement...</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>Chargement...</div>
         ) : notifications.length === 0 ? (
-          <div className="empty-state">
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>
             Aucune notification pour le moment.
           </div>
         ) : Object.entries(grouped).map(([label, items]) => (
-          <div key={label} className="mb-16">
-            <div className="card-title" style={{ margin: '0 0 8px' }}>{label}</div>
+          <div key={label} style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 8px' }}>{label}</div>
             {items.map(notif => {
               const Icon = typeIcon[notif.type] || Bell
               return (
                 <button
                   key={notif.id}
                   onClick={() => notif.route && navigate(notif.route)}
-                  className="notification-item"
                   type="button"
+                  style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 14, padding: '13px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                 >
-                  <div className="notification-icon">
-                    <Icon size={18} />
+                  <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={16} />
                   </div>
-                  <div className="flex-1-min text-left">
-                    <div className="notification-title">{cleanText(notif.titre)}</div>
-                    {notif.detail && <div className="notification-detail">{cleanText(notif.detail)}</div>}
-                    <div className="notification-meta">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 2 }}>{cleanText(notif.titre)}</div>
+                    {notif.detail && <div style={{ fontSize: 12, color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanText(notif.detail)}</div>}
+                    <div style={{ fontSize: 11, color: C.t3, marginTop: 4, display: 'flex', gap: 6 }}>
                       <span>{cleanText(notif.actor?.nom) || 'Utilisateur'}</span>
-                      <span>•</span>
+                      <span>·</span>
                       <span>{formatTime(notif.createdAt)}</span>
                     </div>
                   </div>

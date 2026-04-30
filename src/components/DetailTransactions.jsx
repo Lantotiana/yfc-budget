@@ -18,7 +18,7 @@ function fmt(n) {
 }
 
 export default function DetailTransactions({ type, transactions, onBack }) {
-  const { dark } = useTheme()
+  const { C, dark } = useTheme()
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
   const chartRef = useRef(null)
@@ -103,9 +103,9 @@ export default function DetailTransactions({ type, transactions, onBack }) {
   }
 
   const isEntree = type === 'entree'
-  const color = isEntree ? '#0f766e' : '#be123c'
-  const colorLight = isEntree ? '#d4f4ee' : '#fde8e8'
-  const colorChart = isEntree ? '#5eead4' : '#fb9ea0'
+  const color = isEntree ? C.teal : C.coral
+  const colorLight = isEntree ? C.tealD : C.coralD
+  const colorChart = isEntree ? C.teal : C.coral
 
   const allOfType = transactions.filter(t => t.type === type)
 
@@ -211,55 +211,57 @@ export default function DetailTransactions({ type, transactions, onBack }) {
 
   return (
     <>
-    <div className="page-container">
+    <div className="sin" style={{ minHeight: '100vh', background: C.bg }}>
 
-      <div style={{background:'var(--hero-bg)', padding:'18px 16px 2.5rem'}}>
-        <div className="flex-center gap-12" style={{marginBottom:'16px'}}>
-          <button onClick={onBack} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
+      {/* Header */}
+      <div className="f1" style={{ padding: '20px 20px 0', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onBack} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             ← Retour
           </button>
-          <h1 className="flex-1 text-16 font-700 text-white">
-            {isEntree ? 'Toutes les entrées' : 'Toutes les dépenses'}
-          </h1>
-          <button onClick={exportExcel} className="rounded-10 text-13 text-white border-none cursor-pointer bg-white-10 flex-shrink-0" style={{padding:'8px 12px'}}>
-            Exporter
-          </button>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>
+            {isEntree ? 'Entrées' : 'Dépenses'}
+          </div>
         </div>
+        <button onClick={exportExcel} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          Exporter
+        </button>
+      </div>
 
-        <div style={{background:'rgba(255,255,255,0.14)', borderRadius:'14px', padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+      {/* Total tile */}
+      <div className="f2" style={{ padding: '0 20px 16px' }}>
+        <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{fontSize:'11px', color:'rgba(255,255,255,0.55)', fontWeight:'600', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:'4px'}}>
-              Total ({filtered.length} transaction{filtered.length > 1 ? 's' : ''})
+            <div style={{ fontSize: 11, color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>
+              Total · {filtered.length} transaction{filtered.length > 1 ? 's' : ''}
             </div>
-            <div style={{fontSize:'22px', fontWeight:'700', color: isEntree ? '#4ADE80' : '#FC8FAE'}}>
+            <div style={{ fontSize: 24, fontWeight: 700, color }}>
               {isEntree ? '+' : '−'}{fmt(total)}
             </div>
           </div>
-          <div style={{width:'42px', height:'42px', borderRadius:'50%', background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:'700', color:'#fff'}}>
+          <div style={{ width: 42, height: 42, borderRadius: 14, background: colorLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color }}>
             {isEntree ? '+' : '−'}
           </div>
         </div>
       </div>
 
-      <div style={{paddingTop:'0.75rem', borderTopLeftRadius:'20px', borderTopRightRadius:'20px', marginTop:'-1.5rem', background:'var(--bg-body)', position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:'8px'}}>
+      <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 20px', paddingBottom: '2rem' }}>
 
-        <div className="card">
-          <div className="card-title">
-            Évolution mensuelle
-          </div>
-          <div className="relative" style={{height:'200px'}}>
+        {/* Graphique */}
+        <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Évolution mensuelle</div>
+          <div style={{ position: 'relative', height: 200 }}>
             {moisLabels.length === 0
-              ? <div className="flex-center h-full text-13 text-secondary">Aucune donnée</div>
+              ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: C.t2 }}>Aucune donnée</div>
               : <canvas ref={chartRef} />
             }
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-title">
-            Filtrer par date
-          </div>
-          <div className="form-row gap-10">
+        {/* Filtre date */}
+        <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Filtrer par date</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label className="form-label">Du</label>
               <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="form-input" />
@@ -270,43 +272,43 @@ export default function DetailTransactions({ type, transactions, onBack }) {
             </div>
           </div>
           {(dateDebut || dateFin) && (
-            <button onClick={() => { setDateDebut(''); setDateFin('') }} className="btn-secondary text-12 mt-8" style={{padding:'6px 12px'}}>
+            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{ marginTop: 10, padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
               Réinitialiser
             </button>
           )}
         </div>
 
-        <div className="card" style={{marginBottom:'16px'}}>
-          <div className="card-title">
+        {/* Liste */}
+        <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
           </div>
 
           {filtered.length === 0 && (
-            <div className="empty-state">
-              Aucune transaction trouvée
-            </div>
+            <div style={{ textAlign: 'center', color: C.t2, padding: '1rem', fontSize: 13 }}>Aucune transaction trouvée</div>
           )}
 
           {filtered.map((tx, i) => (
-            <div key={tx.id} onClick={() => openEdit(tx)} className="flex-center gap-10 cursor-pointer" style={{borderBottom: i < filtered.length - 1 ? '0.5px solid var(--border-input)' : 'none', padding:'10px 0'}}>
-              <div className="w-34-h-34 rounded-10 flex-center font-700 text-14 flex-shrink-0" style={{background:colorLight, color}}>
+            <div key={tx.id} onClick={() => openEdit(tx)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', borderBottom: i < filtered.length - 1 ? `1px solid ${C.bord}` : 'none', padding: '11px 0' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: colorLight, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14 }}>
                 {isEntree ? '+' : '−'}
               </div>
-              <div className="flex-1-min">
-                <div className="text-13 font-600 text-primary">{tx.motif}</div>
-                <div className="text-11 text-secondary mt-2">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.t1 }}>{tx.motif}</div>
+                <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
                   {toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}
                 </div>
               </div>
-              <div className="font-700 text-14 flex-shrink-0" style={{color}}>
+              <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0, color }}>
                 {isEntree ? '+' : '−'}{fmt(tx.montant)}
               </div>
-              <div className="text-12 text-muted">›</div>
+              <div style={{ fontSize: 12, color: C.t3 }}>›</div>
             </div>
           ))}
         </div>
       </div>
     </div>
+
     {selected && (
       <div className="modal-overlay">
         <div className="modal">
@@ -316,24 +318,24 @@ export default function DetailTransactions({ type, transactions, onBack }) {
           </div>
 
           {selected.createdBy && (
-            <div className="flex-center gap-10 p-12 rounded-12 mb-14" style={{background:'var(--surface-alt)'}}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, marginBottom: 14, background: C.surf2 }}>
               {selected.createdBy.photoURL ? (
-                <img src={selected.createdBy.photoURL} alt="" className="w-32-h-32 rounded-50 object-cover flex-shrink-0" style={{border:'2px solid #5eead4'}} />
+                <img src={selected.createdBy.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${C.teal}` }} />
               ) : (
-                <div className="w-32-h-32 rounded-50 flex-center flex-shrink-0 font-700 text-13" style={{background:'#2d1f6e', color:'#5eead4'}}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, background: C.tealD, color: C.teal }}>
                   {(selected.createdBy.nom || '?').charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="flex-1-min">
-                <div className="text-10 text-secondary font-600 mb-2" style={{textTransform:'uppercase', letterSpacing:'.05em'}}>Ajouté par</div>
-                <div className="text-13 font-700 text-primary text-ellipsis">{selected.createdBy.nom}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 10, color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Ajouté par</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.createdBy.nom}</div>
               </div>
             </div>
           )}
 
           <div className="type-toggle mb-14">
-            <button onClick={() => handleChangeType('entree')} className="type-btn" style={{background: editType==='entree' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='entree' ? '#5eead4' : 'var(--text-secondary)'}}>+ Entrée</button>
-            <button onClick={() => handleChangeType('depense')} className="type-btn" style={{background: editType==='depense' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='depense' ? '#fb9ea0' : 'var(--text-secondary)'}}>− Dépense</button>
+            <button onClick={() => handleChangeType('entree')} className="type-btn" style={{ background: editType==='entree' ? C.tealD : 'transparent', color: editType==='entree' ? C.teal : C.t2 }}>+ Entrée</button>
+            <button onClick={() => handleChangeType('depense')} className="type-btn" style={{ background: editType==='depense' ? C.coralD : 'transparent', color: editType==='depense' ? C.coral : C.t2 }}>− Dépense</button>
           </div>
 
           <div className="form-row gap-10 mb-10">
@@ -366,10 +368,10 @@ export default function DetailTransactions({ type, transactions, onBack }) {
             <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" />
           </div>
 
-          <button onClick={handleSave} disabled={saving} className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none mb-8" style={{padding:'12px', background:'var(--btn-primary-bg)', opacity: saving ? 0.7 : 1}}>
+          <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1, marginBottom: 8 }}>
             {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
-          <button onClick={handleDelete} className="btn-danger w-full" style={{padding:'12px', fontSize:'14px', fontWeight:'700'}}>
+          <button onClick={handleDelete} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>
             Supprimer la transaction
           </button>
         </div>

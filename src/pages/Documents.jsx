@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { Upload, Download, Trash2, FileText, File, X } from 'lucide-react'
 import { createNotification } from '../notifications'
-
-const C = '#7C3AED'
+import { useTheme } from '../context/ThemeContext'
 const MAX_SIZE_MB = 20
 
 function fmtSize(bytes) {
@@ -25,7 +23,7 @@ function FileIcon({ type }) {
 }
 
 export default function Documents({ user, userData }) {
-  const navigate = useNavigate()
+  const { C } = useTheme()
   const fileRef = useRef()
   const [documents, setDocuments] = useState([])
   const [uploading, setUploading] = useState(false)
@@ -108,61 +106,57 @@ export default function Documents({ user, userData }) {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container sin" style={{ background: C.bg, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
 
       {/* Header */}
-      <div className="page-header" style={{ background: C, padding: '18px 16px 2.5rem' }}>
-        <div className="flex-center gap-12">
-          <button onClick={() => navigate('/')} className="page-back-btn">‹</button>
-          <div className="flex-1">
-            <h1 className="page-title">Documents</h1>
-            <p className="page-subtitle">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
-          </div>
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="header-btn-sm"
-            style={{ background: 'rgba(255,255,255,0.2)', opacity: uploading ? 0.6 : 1 }}
-          >
-            <Upload size={15} /> {uploading ? 'Envoi...' : 'Ajouter'}
-          </button>
-          <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
+      <div className="f1" style={{ padding: '20px 20px 0', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
+          <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>
         </div>
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.violet, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
+        >
+          <Upload size={14} /> {uploading ? 'Envoi...' : 'Ajouter'}
+        </button>
+        <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
       </div>
 
       {/* Content */}
-      <div className="scroll-bottom-safe" style={{ paddingTop: '0.75rem', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', marginTop: '-1.5rem', background: 'var(--bg-body)', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '2rem' }}>
+      <div className="f2 scroll-bottom-safe" style={{ padding: '0 20px' }}>
 
         {error && (
-          <div style={{ margin: '8px 16px 0', padding: '12px 14px', background: '#FEF0F4', borderRadius: '12px', color: '#D63B5E', fontSize: '13px', fontWeight: '600' }}>
+          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.coralD, borderRadius: 12, color: C.coral, fontSize: 13, fontWeight: 600 }}>
             {error}
           </div>
         )}
 
         {uploading && uploadProgress && (
-          <div style={{ margin: '8px 16px 0', padding: '12px 14px', background: `${C}15`, borderRadius: '12px', color: C, fontSize: '13px', fontWeight: '600' }}>
+          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.violetD, borderRadius: 12, color: C.violet, fontSize: 13, fontWeight: 600 }}>
             {uploadProgress}
           </div>
         )}
 
         {documents.length === 0 && !uploading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
             Aucun document. Appuyez sur « Ajouter » pour en uploader un.
           </div>
         ) : (
-          <div className="card" style={{ margin: '8px 16px 0' }}>
+          <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, overflow: 'hidden' }}>
             {documents.map((doc, i) => (
               <div
                 key={doc.id}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px 0',
-                  borderBottom: i < documents.length - 1 ? '0.5px solid var(--border-input)' : 'none',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '13px 16px',
+                  borderBottom: i < documents.length - 1 ? `1px solid ${C.bord}` : 'none',
                 }}
               >
                 <div
                   onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
-                  style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: `${C}15`, color: C, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
+                  style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
                 >
                   <FileIcon type={doc.type} />
                 </div>
@@ -171,10 +165,10 @@ export default function Documents({ user, userData }) {
                   onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
                   style={{ flex: 1, minWidth: 0, cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
                 >
-                  <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {doc.nom}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
                     {fmtSize(doc.taille)} · {formatDate(doc.uploadedAt)}
                   </div>
                 </div>
@@ -184,16 +178,16 @@ export default function Documents({ user, userData }) {
                   download={doc.nom}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ background: `${C}15`, border: 'none', borderRadius: '8px', padding: '7px 9px', cursor: 'pointer', color: C, display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}
+                  style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', color: C.t2, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}
                 >
-                  <Download size={15} />
+                  <Download size={14} />
                 </a>
 
                 <button
                   onClick={() => setConfirmDel(doc)}
-                  style={{ background: 'var(--del-btn-bg)', border: 'none', borderRadius: '8px', padding: '7px 9px', cursor: 'pointer', color: '#D63B5E', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                  style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', color: C.coral, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >
-                  <Trash2 size={15} />
+                  <Trash2 size={14} />
                 </button>
               </div>
             ))}
@@ -207,12 +201,11 @@ export default function Documents({ user, userData }) {
           onClick={() => setPreview(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', flexDirection: 'column' }}
         >
-          {/* Barre titre */}
           <div
             onClick={e => e.stopPropagation()}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'rgba(0,0,0,0.6)', flexShrink: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(0,0,0,0.6)', flexShrink: 0 }}
           >
-            <div style={{ flex: 1, fontSize: '13px', fontWeight: '600', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {preview.nom}
             </div>
             <a
@@ -220,24 +213,23 @@ export default function Documents({ user, userData }) {
               download={preview.nom}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: '#fff', opacity: 0.7, display: 'flex', padding: '6px' }}
+              style={{ color: '#fff', opacity: 0.7, display: 'flex', padding: 6 }}
               onClick={e => e.stopPropagation()}
             >
               <Download size={18} />
             </a>
             <button
               onClick={() => setPreview(null)}
-              style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.7, cursor: 'pointer', display: 'flex', padding: '6px' }}
+              style={{ background: 'none', border: 'none', color: '#fff', opacity: 0.7, cursor: 'pointer', display: 'flex', padding: 6 }}
             >
               <X size={20} />
             </button>
           </div>
 
-          {/* Contenu */}
           <div onClick={e => e.stopPropagation()} style={{ flex: 1, overflow: 'hidden' }}>
             {preview.type?.startsWith('image/') ? (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                <img src={preview.url} alt={preview.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+                <img src={preview.url} alt={preview.nom} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8 }} />
               </div>
             ) : (
               <iframe
@@ -254,15 +246,15 @@ export default function Documents({ user, userData }) {
       {confirmDel && (
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title" style={{ marginBottom: '8px' }}>Supprimer ce document ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce document ?</h3>
+            <p style={{ margin: '0 0 1.5rem', fontSize: 13, color: C.t2 }}>
               « {confirmDel.nom} » sera définitivement supprimé.
             </p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: '12px', border: '1.5px solid var(--border-input)', borderRadius: '12px', background: 'transparent', color: 'var(--text-secondary)', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Annuler
               </button>
-              <button onClick={handleDelete} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '12px', background: '#E8445A', color: '#fff', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={handleDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Supprimer
               </button>
             </div>

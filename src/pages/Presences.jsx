@@ -1,20 +1,17 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, setDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { toDisplayDate } from '../utils'
 import { Share2, Search } from 'lucide-react'
 import { createNotification } from '../notifications'
-
-const C = '#2EC4A9'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Presences({ user, userData }) {
-  const navigate = useNavigate()
+  const { C } = useTheme()
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [presences, setPresences] = useState({})
-  const [loadingPresences, setLoadingPresences] = useState(false)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0,10) })
   const [savingEvent, setSavingEvent] = useState(false)
@@ -40,7 +37,6 @@ export default function Presences({ user, userData }) {
 
   useEffect(() => {
     if (!selectedEvent) return
-    setLoadingPresences(true)
     const q = query(collection(db, 'presences'))
     const unsub = onSnapshot(q, snap => {
       const map = {}
@@ -49,7 +45,6 @@ export default function Presences({ user, userData }) {
         if (data.eventId === selectedEvent.id) map[data.membreId] = data.present
       })
       setPresences(map)
-      setLoadingPresences(false)
     })
     return () => unsub()
   }, [selectedEvent])
@@ -156,99 +151,81 @@ export default function Presences({ user, userData }) {
 
 
   return (
-    <div className="page-container-locked">
+    <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div className="page-header" style={{ background: C }}>
-        <div className="flex-center gap-10 mb-14">
-          <button onClick={() => navigate('/')} className="page-back-btn">
-            ‹
-          </button>
-          <div className="flex-1">
-            <h1 className="page-title">Présence Alimbavaka</h1>
+      <div style={{ padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, background: C.bg, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
             {selectedEvent && (
-              <p className="page-subtitle">
+              <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
                 {presentCount} / {membres.length} présent{presentCount !== 1 ? 's' : ''}
-              </p>
+              </div>
             )}
           </div>
           {selectedEvent && membres.length > 0 && (
-            <button onClick={partager} className="header-btn-sm">
-              <Share2 size={15} /> Partager
+            <button onClick={partager} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+              <Share2 size={13} /> {copied ? 'Copié !' : 'Partager'}
             </button>
           )}
         </div>
 
         {/* Event selector */}
-        <div className="flex-center gap-8 mb-10">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <select
             value={selectedEvent?.id || ''}
-            onChange={e => {
-              const evt = evenements.find(ev => ev.id === e.target.value)
-              setSelectedEvent(evt || null)
-            }}
-            className="header-select"
+            onChange={e => { const evt = evenements.find(ev => ev.id === e.target.value); setSelectedEvent(evt || null) }}
+            style={{ flex: 1, padding: '10px 12px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 13, outline: 'none' }}
           >
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
-              <option key={ev.id} value={ev.id} style={{ background: '#1a8a7a', color: '#fff' }}>
-                {ev.titre} — {toDisplayDate(ev.date)}
-              </option>
+              <option key={ev.id} value={ev.id}>{ev.titre} — {toDisplayDate(ev.date)}</option>
             ))}
           </select>
-          <button onClick={() => setShowNewEvent(true)} className="header-btn">
+          <button onClick={() => setShowNewEvent(true)} style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
             + Nouveau
           </button>
         </div>
 
         {/* Barre de recherche */}
         {selectedEvent && membres.length > 0 && (
-          <div className="relative">
-            <span className="header-search-icon">
-              <Search size={14} />
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}>
+              <Search size={16} />
             </span>
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher un membre..."
-              className="header-search-input"
+              style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 14, outline: 'none' }}
             />
+          </div>
+        )}
+
+        {/* Barre de progression */}
+        {selectedEvent && membres.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 5, background: `linear-gradient(90deg, ${C.teal}, ${C.violet})`, width: `${Math.round((presentCount / membres.length) * 100)}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1)' }} />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Toast copié */}
-      {copied && (
-        <div className="toast" style={{ color: C }}>
-          Rapport copié !
-        </div>
-      )}
-
       {/* Liste membres */}
-      <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '1rem', paddingBottom: '2rem' }}>
+      <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
         {!selectedEvent ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
             Créez un culte pour commencer le suivi des présences.
           </div>
         ) : membres.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem 1rem', fontSize: '13px' }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
             Aucun membre enregistré. Ajoutez des membres dans le module Membres.
           </div>
         ) : (
           <>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>
-              {selectedEvent.titre} · {toDisplayDate(selectedEvent.date)}
-            </div>
-
-            {/* Badge présents */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: `${C}18`, borderRadius: '20px', padding: '5px 12px', marginBottom: '12px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: C }} />
-              <span style={{ fontSize: '12px', fontWeight: '700', color: C }}>
-                {presentCount} présent{presentCount !== 1 ? 's' : ''} sur {membres.length}
-              </span>
-            </div>
-
             {filteredMembres.map(m => {
               const present = presences[m.id] === true
               const isSaving = saving === m.id
@@ -257,49 +234,23 @@ export default function Presences({ user, userData }) {
                   key={m.id}
                   onClick={() => !isSaving && togglePresence(m)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    background: 'var(--card-bg)',
-                    borderRadius: '14px', padding: '12px 14px', marginBottom: '8px',
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    background: present ? `${C.teal}0D` : C.surf,
+                    border: `1px solid ${present ? C.teal + '40' : C.bord}`,
+                    borderRadius: 16, padding: '12px 14px', marginBottom: 8,
                     cursor: isSaving ? 'wait' : 'pointer',
-                    boxShadow: 'var(--card-shadow)',
-                    border: present ? `1.5px solid ${C}50` : '1.5px solid transparent',
-                    transition: 'border-color 0.15s',
-                    opacity: isSaving ? 0.6 : 1,
+                    transition: 'all .2s', opacity: isSaving ? 0.6 : 1,
                   }}
                 >
-                  {/* Avatar */}
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
-                    background: present ? `${C}18` : 'var(--input-bg)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: '700', fontSize: '14px',
-                    color: present ? C : 'var(--text-secondary)',
-                  }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 14, flexShrink: 0, background: present ? C.tealD : C.surf2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: present ? C.teal : C.t2 }}>
                     {(m.nom || '?')[0].toUpperCase()}
                   </div>
-
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                      {m.nom} {m.prenoms}
-                    </div>
-                    {m.telephone && (
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '1px' }}>{m.telephone}</div>
-                    )}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+                    {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{m.telephone}</div>}
                   </div>
-
-                  {/* Checkbox droite */}
-                  <div style={{
-                    width: '26px', height: '26px', borderRadius: '8px', flexShrink: 0,
-                    background: present ? C : 'var(--input-bg)',
-                    border: present ? 'none' : '2px solid var(--border-input)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'background 0.15s',
-                  }}>
-                    {present && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
+                  <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .25s cubic-bezier(.34,1.56,.64,1)', transform: present ? 'scale(1)' : 'scale(0.9)' }}>
+                    {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                   </div>
                 </div>
               )
@@ -314,43 +265,19 @@ export default function Presences({ user, userData }) {
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
             <h2 className="dialog-title mb-16">Nouveau culte</h2>
-
             <div className="dialog-content">
               <div>
                 <label className="form-label">Titre *</label>
-                <input
-                  type="text"
-                  value={newEventForm.titre}
-                  onChange={e => setNewEventForm(p => ({ ...p, titre: e.target.value }))}
-                  placeholder="Ex: Culte du dimanche"
-                  className="form-input"
-                />
+                <input type="text" value={newEventForm.titre} onChange={e => setNewEventForm(p => ({ ...p, titre: e.target.value }))} placeholder="Ex: Culte du dimanche" className="form-input" />
               </div>
               <div>
                 <label className="form-label">Date</label>
-                <input
-                  type="date"
-                  value={newEventForm.date}
-                  onChange={e => setNewEventForm(p => ({ ...p, date: e.target.value }))}
-                  className="form-input"
-                />
+                <input type="date" value={newEventForm.date} onChange={e => setNewEventForm(p => ({ ...p, date: e.target.value }))} className="form-input" />
               </div>
             </div>
-
             <div className="dialog-footer">
-              <button
-                onClick={() => setShowNewEvent(false)}
-                className="btn-secondary"
-                style={{ flex: 1, padding: '13px' }}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={createEvent}
-                disabled={savingEvent || !newEventForm.titre.trim()}
-                className="rounded-12 font-700 text-white border-none cursor-pointer"
-                style={{ flex: 2, padding: '13px', background: C, opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
-              >
+              <button onClick={() => setShowNewEvent(false)} className="btn-secondary" style={{ flex: 1, padding: '13px' }}>Annuler</button>
+              <button onClick={createEvent} disabled={savingEvent || !newEventForm.titre.trim()} style={{ flex: 2, padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}>
                 {savingEvent ? 'Création...' : 'Créer le culte'}
               </button>
             </div>

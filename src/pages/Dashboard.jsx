@@ -1,48 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays, Users } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Users } from 'lucide-react'
 import { db } from '../firebase'
 import { toDisplayDate } from '../utils'
-
-const C = '#4338CA'
+import { useTheme } from '../context/ThemeContext'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
 }
 
-function DashboardStat({ label, value, sub, color, icon }) {
+function StatCard({ label, value, col, colD, Icon }) {
+  const { C } = useTheme()
   return (
-    <div style={{
-      flex: 1,
-      minWidth: 0,
-      borderRadius: '18px',
-      padding: '14px',
-      background: 'rgba(255,255,255,0.94)',
-      boxShadow: '0 16px 34px rgba(51,43,120,0.14)',
-      color: '#24223A',
-    }}>
-      <div className="flex-between mb-10">
-        <div className="rounded-50 flex-center" style={{ width: '28px', height: '28px', background: `${color}18`, color }}>
-          {icon}
-        </div>
-        <ArrowRight size={15} color="#B7B3D1" />
+    <div style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
+      <div style={{ width: 30, height: 30, borderRadius: 10, background: colD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+        <Icon size={14} color={col} />
       </div>
-      <div style={{ fontSize: '11px', color: '#6F6A8F', fontWeight: 600, marginBottom: '3px' }}>{label}</div>
-      <div style={{ fontSize: '18px', fontWeight: 700, color, lineHeight: 1.1 }}>{value}</div>
-      <div style={{ fontSize: '10px', color: '#9A96B5', marginTop: '4px' }}>{sub}</div>
-      <div style={{ height: '22px', marginTop: '8px', borderRadius: '10px', overflow: 'hidden' }}>
-        <svg viewBox="0 0 120 24" width="100%" height="24" preserveAspectRatio="none">
-          <path d="M0 17 C18 22 25 5 42 11 S70 26 88 12 S108 4 120 9" fill="none" stroke={color} strokeWidth="2" opacity=".55" />
-          <path d="M0 24 L0 17 C18 22 25 5 42 11 S70 26 88 12 S108 4 120 9 L120 24 Z" fill={color} opacity=".08" />
-        </svg>
-      </div>
+      <div style={{ fontSize: 11, color: C.t2, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: col, letterSpacing: '-.5px' }}>{value}</div>
     </div>
   )
 }
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { C } = useTheme()
   const [transactions, setTransactions] = useState([])
   const [membres, setMembres] = useState([])
   const [evenements, setEvenements] = useState([])
@@ -72,6 +55,7 @@ export default function Dashboard() {
   const totalDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
   const solde = totalEntrees - totalDepenses
   const recentTransactions = transactions.slice(0, 5)
+
   const { upcomingCount, finishedCount } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
     return evenements.reduce((acc, e) => {
@@ -82,104 +66,85 @@ export default function Dashboard() {
   }, [evenements])
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      padding: '0 0 calc(74px + env(safe-area-inset-bottom))',
-      background: 'linear-gradient(180deg, #F6CBD7 0%, #F8E8EC 34%, var(--bg-body) 68%)',
-    }}>
-      <div style={{
-        maxWidth: '520px',
-        margin: '0 auto',
-        background: 'var(--bg-body)',
-        overflow: 'hidden',
+    <div className="sin" style={{ minHeight: '100vh', background: C.bg, padding: '0 0 calc(86px + env(safe-area-inset-bottom))' }}>
+      {/* Hero solde */}
+      <div className="f1" style={{
+        padding: '28px 20px 36px',
+        paddingTop: 'max(28px, env(safe-area-inset-top))',
+        textAlign: 'center',
+        borderBottom: `1px solid ${C.bord}`,
+        background: `linear-gradient(180deg, ${C.amberD.replace('0.13','0.08').replace('0.12','0.08')} 0%, transparent 100%)`,
       }}>
-        <div style={{
-          position: 'relative',
-          minHeight: '248px',
-          padding: '20px 18px 80px',
-          paddingTop: 'max(20px, env(safe-area-inset-top))',
-          color: '#fff',
-          background: `linear-gradient(160deg, ${C} 0%, #5B4FCF 62%, #6C5CE7 100%)`,
-          overflow: 'hidden',
-        }}>
-          <div className="text-center" style={{ position: 'relative', zIndex: 1, marginTop: '28px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, opacity: 0.78 }}>Budget</div>
-            <div style={{ fontSize: '33px', lineHeight: 1.05, fontWeight: 750, marginTop: '5px' }}>
-              {solde < 0 ? '-' : ''}{fmt(Math.abs(solde))}
-            </div>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '.1em', opacity: 0.55, marginTop: '7px' }}>
-              SOLDE TOTAL
-            </div>
-          </div>
+        <div style={{ fontSize: 11, color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
+        <div style={{ fontSize: 42, fontWeight: 700, color: C.t1, letterSpacing: '-2px', lineHeight: 1 }}>
+          {solde < 0 ? '-' : ''}{fmt(Math.abs(solde)).replace(' Ar', '')}
+          <span style={{ fontSize: 18, fontWeight: 500, color: C.t2, marginLeft: 6 }}>Ar</span>
+        </div>
+      </div>
+
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+        {/* Entrées / Dépenses */}
+        <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <StatCard label="Entrées"  value={fmt(totalEntrees)}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} />
+          <StatCard label="Dépenses" value={fmt(totalDepenses)} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} />
         </div>
 
-        <div style={{ position: 'relative', padding: '0 16px 18px', marginTop: '-72px' }}>
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '18px' }}>
-            <DashboardStat
-              label="Entrées"
-              value={fmt(totalEntrees)}
-              sub="total reçu"
-              color="#2EC4A9"
-              icon={<ArrowDownLeft size={15} />}
-            />
-            <DashboardStat
-              label="Dépenses"
-              value={fmt(totalDepenses)}
-              sub="total sorti"
-              color="#E8445A"
-              icon={<ArrowUpRight size={15} />}
-            />
-          </div>
+        {/* Membres / Événements */}
+        <div className="f3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <button onClick={() => navigate('/membres')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
+            <div style={{ width: 30, height: 30, borderRadius: 10, background: C.violetD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+              <Users size={14} color={C.violet} />
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}>{membres.length}</div>
+            <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Membres</div>
+            <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>total inscrits</div>
+          </button>
+          <button onClick={() => navigate('/evenements')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
+            <div style={{ width: 30, height: 30, borderRadius: 10, background: C.amberD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+              <CalendarDays size={14} color={C.amber} />
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}>{upcomingCount}</div>
+            <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Événements</div>
+            <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
+          </button>
+        </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
-            <button onClick={() => navigate('/membres')} className="border-none text-left cursor-pointer" style={{ borderRadius: '16px', padding: '14px', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)' }}>
-              <Users size={20} color="#2F80ED" />
-              <div className="text-20 font-700 text-primary mt-8">{membres.length}</div>
-              <div className="text-11 text-secondary">membres</div>
-            </button>
-            <button onClick={() => navigate('/evenements')} className="border-none text-left cursor-pointer" style={{ borderRadius: '16px', padding: '14px', background: 'var(--card-bg)', boxShadow: 'var(--card-shadow)' }}>
-              <CalendarDays size={20} color="#E8445A" />
-              <div className="text-20 font-700 text-primary mt-8">{upcomingCount}</div>
-              <div className="text-11 text-secondary">{upcomingCount} à venir · {finishedCount} terminés</div>
-            </button>
-          </div>
-
-          <div className="flex-between mb-12">
-            <div className="text-14 font-700 text-primary">Transactions récentes</div>
-            <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer text-11 font-700" style={{ color: '#5B4FCF' }}>
+        {/* Transactions récentes */}
+        <div className="f4">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
+            <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 12, color: C.amber, fontWeight: 500 }}>
               Voir tout
             </button>
           </div>
 
           {loading ? (
-            <div className="empty-state">Chargement...</div>
+            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 13 }}>Chargement...</div>
           ) : recentTransactions.length === 0 ? (
-            <div className="empty-state">Aucune transaction</div>
+            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 13 }}>Aucune transaction</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {recentTransactions.map(tx => {
-                const isEntree = tx.type === 'entree'
-                return (
-                  <button
-                    key={tx.id}
-                    onClick={() => navigate('/budget')}
-                    className="border-none text-left cursor-pointer"
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', background: 'transparent' }}
-                  >
-                    <div className="rounded-14 flex-center flex-shrink-0" style={{ width: '38px', height: '38px', background: isEntree ? '#E6FAF5' : '#FEF0F4', color: isEntree ? '#0D9370' : '#D63B5E' }}>
-                      {isEntree ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
-                    </div>
-                    <div className="flex-1-min">
-                      <div className="text-13 font-600 text-primary text-ellipsis">{tx.motif || 'Transaction'}</div>
-                      <div className="text-11 text-secondary">{toDisplayDate(tx.date)}</div>
-                    </div>
-                    <div className="text-13 font-700" style={{ color: isEntree ? '#0D9370' : '#D63B5E' }}>
-                      {isEntree ? '+' : '-'} {fmt(tx.montant)}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+            recentTransactions.map(tx => {
+              const isEntree = tx.type === 'entree'
+              return (
+                <button
+                  key={tx.id}
+                  onClick={() => navigate('/budget')}
+                  className="border-none text-left cursor-pointer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, marginBottom: 8, width: '100%' }}
+                >
+                  <div style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0, background: isEntree ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isEntree ? <ArrowDownLeft size={16} color={C.teal} /> : <ArrowUpRight size={16} color={C.coral} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
+                    <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
+                    {isEntree ? '+' : '-'}{fmt(tx.montant)}
+                  </div>
+                </button>
+              )
+            })
           )}
         </div>
       </div>

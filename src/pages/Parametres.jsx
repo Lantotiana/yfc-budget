@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
@@ -9,13 +8,11 @@ import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 
-const C = '#F5A623'
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
 
 export default function Parametres({ user, userData, setUserData }) {
-  const navigate = useNavigate()
-  const { dark, toggle } = useTheme()
+  const { dark, toggle, C } = useTheme()
   const fileRef = useRef()
 
   const [nom, setNom] = useState(userData?.nom || '')
@@ -108,39 +105,34 @@ export default function Parametres({ user, userData, setUserData }) {
 
   const inp = {
     width: '100%', padding: '11px 14px',
-    border: '1.5px solid var(--border-input)', borderRadius: '12px',
-    fontSize: '14px', background: 'var(--input-bg)', color: 'var(--text-primary)',
+    border: `1.5px solid ${C.bord2}`, borderRadius: 12,
+    fontSize: 14, background: C.surf2, color: C.t1,
     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   }
 
   const section = {
-    background: 'var(--card-bg)', borderRadius: '16px', padding: '1.25rem',
-    marginBottom: '12px', boxShadow: 'var(--card-shadow)',
+    background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16,
+    padding: '1.25rem', marginBottom: 12,
   }
 
   const sectionLabel = {
-    fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)',
-    textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '14px',
+    fontSize: 11, fontWeight: 700, color: C.t3,
+    textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14,
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div className="page-header" style={{ background: C, paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={() => navigate('/')} className="page-back-btn">
-            ‹
-          </button>
-          <h1 className="page-title" style={{ flex: 1 }}>Paramètres</h1>
-        </div>
+      <div style={{ padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
       </div>
 
-      <div style={{ padding: '1rem', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+      <div className="page-content" style={{ padding: '16px 20px', paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
 
         {/* Flash */}
         {msg.text && (
-          <div style={{ padding: '10px 14px', borderRadius: '12px', marginBottom: '12px', fontSize: '13px', fontWeight: '600', background: msg.ok ? '#E6FAF5' : '#FEF0F4', color: msg.ok ? '#0D9370' : '#D63B5E' }}>
+          <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 13, fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
             {msg.text}
           </div>
         )}
@@ -150,14 +142,14 @@ export default function Parametres({ user, userData, setUserData }) {
           <div style={sectionLabel}>Apparence</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>Mode sombre</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '1px' }}>{dark ? 'Activé' : 'Désactivé'}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>Mode sombre</div>
+              <div style={{ fontSize: 12, color: C.t2, marginTop: 1 }}>{dark ? 'Activé' : 'Désactivé'}</div>
             </div>
             <button
               onClick={toggle}
-              style={{ width: '52px', height: '28px', borderRadius: '14px', border: 'none', cursor: 'pointer', padding: 0, background: dark ? C : 'var(--border-input)', position: 'relative', transition: 'background 0.2s' }}
+              style={{ width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', padding: 0, background: dark ? C.amber : C.bord2, position: 'relative', transition: 'background 0.2s' }}
             >
-              <span style={{ position: 'absolute', top: '3px', left: dark ? '27px' : '3px', width: '22px', height: '22px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s', display: 'block' }} />
+              <span style={{ position: 'absolute', top: 3, left: dark ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', display: 'block' }} />
             </button>
           </div>
         </div>
@@ -166,11 +158,10 @@ export default function Parametres({ user, userData, setUserData }) {
         <div style={section}>
           <div style={sectionLabel}>Profil</div>
 
-          {/* Avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div
               onClick={() => fileRef.current?.click()}
-              style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--input-bg)', overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '20px', color: 'var(--text-primary)', flexShrink: 0, border: `2px solid ${C}` }}
+              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, color: C.t1, flexShrink: 0, border: `2px solid ${C.amber}` }}
             >
               {uploadingPhoto ? '...' : photoURL
                 ? <img src={photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -178,10 +169,10 @@ export default function Parametres({ user, userData, setUserData }) {
               }
             </div>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '2px' }}>Photo de profil</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 2 }}>Photo de profil</div>
               <button
                 onClick={() => fileRef.current?.click()}
-                style={{ fontSize: '12px', color: C, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: '600' }}
+                style={{ fontSize: 12, color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
               >
                 {uploadingPhoto ? 'Envoi en cours...' : 'Modifier la photo'}
               </button>
@@ -189,12 +180,12 @@ export default function Parametres({ user, userData, setUserData }) {
             <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
           </div>
 
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: 12 }}>
             <label className="form-label">Nom complet</label>
             <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom" style={inp} />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: 16 }}>
             <label className="form-label">Email</label>
             <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
@@ -202,7 +193,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={saveProfile}
             disabled={saving || !nom.trim()}
-            style={{ width: '100%', padding: '13px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
           >
             {saving ? 'Enregistrement...' : 'Sauvegarder le profil'}
           </button>
@@ -217,7 +208,7 @@ export default function Parametres({ user, userData, setUserData }) {
             { label: 'Nouveau mot de passe', val: newPwd,     set: setNewPwd,     show: showNew, toggleShow: () => setShowNew(p => !p) },
             { label: 'Confirmer le nouveau', val: confirmPwd, set: setConfirmPwd, show: showNew, toggleShow: null },
           ].map((f, i) => (
-            <div key={i} style={{ marginBottom: '12px' }}>
+            <div key={i} style={{ marginBottom: 12 }}>
               <label className="form-label">{f.label}</label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -225,12 +216,12 @@ export default function Parametres({ user, userData, setUserData }) {
                   value={f.val}
                   onChange={e => f.set(e.target.value)}
                   placeholder="••••••"
-                  style={{ ...inp, paddingRight: f.toggleShow ? '44px' : '14px' }}
+                  style={{ ...inp, paddingRight: f.toggleShow ? 44 : 14 }}
                 />
                 {f.toggleShow && (
                   <button
                     onClick={f.toggleShow}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, display: 'flex', alignItems: 'center' }}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.t3, padding: 0, display: 'flex', alignItems: 'center' }}
                   >
                     {f.show ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -242,7 +233,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={savePassword}
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
-            style={{ width: '100%', padding: '13px', border: 'none', borderRadius: '12px', background: C, color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
           >
             {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
           </button>
@@ -251,7 +242,7 @@ export default function Parametres({ user, userData, setUserData }) {
         {/* Déconnexion */}
         <button
           onClick={() => signOut(auth)}
-          style={{ width: '100%', padding: '13px', border: '1.5px solid rgba(232,68,90,0.3)', borderRadius: '12px', background: 'rgba(232,68,90,0.06)', color: '#E8445A', fontWeight: '700', fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{ width: '100%', padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
         >
           Se déconnecter
         </button>

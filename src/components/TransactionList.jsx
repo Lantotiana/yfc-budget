@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { Search, X, Download, Share2 } from 'lucide-react'
@@ -38,6 +39,7 @@ export default function TransactionList({
   transactions, months, filterMonth, filterType,
   onFilterMonth, onFilterType, onDelete, allTransactions = []
 }) {
+  const { C } = useTheme()
   const [selected, setSelected] = useState(null)
   const [editType, setEditType] = useState('entree')
   const [editDate, setEditDate] = useState('')
@@ -421,10 +423,10 @@ export default function TransactionList({
                     src={selected.createdBy.photoURL}
                     alt=""
                     className="w-32-h-32 rounded-50 object-cover flex-shrink-0"
-                    style={{border:'2px solid #5eead4'}}
+                    style={{border:`2px solid ${C.teal}`}}
                   />
                 ) : (
-                  <div className="w-32-h-32 rounded-50 flex-center flex-shrink-0 font-700 text-13" style={{background:'#2d1f6e', color:'#5eead4'}}>
+                  <div className="w-32-h-32 rounded-50 flex-center flex-shrink-0 font-700 text-13" style={{background:C.tealD, color:C.teal}}>
                     {(selected.createdBy.nom || '?').charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -443,10 +445,10 @@ export default function TransactionList({
             )}
 
             <div className="type-toggle mb-14">
-              <button onClick={() => handleChangeType('entree')} className="type-btn" style={{background: editType==='entree' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='entree' ? '#5eead4' : 'var(--text-secondary)'}}>
+              <button onClick={() => handleChangeType('entree')} className="type-btn" style={{background: editType==='entree' ? C.tealD : 'transparent', color: editType==='entree' ? C.teal : C.t2}}>
                 + Entrée
               </button>
-              <button onClick={() => handleChangeType('depense')} className="type-btn" style={{background: editType==='depense' ? 'var(--btn-primary-bg)' : 'transparent', color: editType==='depense' ? '#fb9ea0' : 'var(--text-secondary)'}}>
+              <button onClick={() => handleChangeType('depense')} className="type-btn" style={{background: editType==='depense' ? C.coralD : 'transparent', color: editType==='depense' ? C.coral : C.t2}}>
                 − Dépense
               </button>
             </div>
