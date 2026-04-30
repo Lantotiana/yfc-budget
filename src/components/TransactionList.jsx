@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { Search, X } from 'lucide-react'
+import { Search, X, Download, Share2 } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 
 const DEFAULT_MOTIFS = {
@@ -35,7 +35,7 @@ function fuzzyMatch(text, query) {
 
 export default function TransactionList({
   transactions, months, filterMonth, filterType,
-  onFilterMonth, onFilterType, onDelete
+  onFilterMonth, onFilterType, onDelete, allTransactions = []
 }) {
   const [selected, setSelected] = useState(null)
   const [editType, setEditType] = useState('entree')
@@ -47,6 +47,7 @@ export default function TransactionList({
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [shareFeedback, setShareFeedback] = useState('')
 
   const currentMonth = new Date().toISOString().slice(0, 7)
   const [hasInit, setHasInit] = useState(false)
@@ -135,23 +136,155 @@ export default function TransactionList({
 
   async function exportToExcel() {
     if (!searched.length) return
-    const XLSX = await import('xlsx')
-    const data = searched.map(t => ({
-      Date: toDisplayDate(t.date),
-      Type: t.type === 'entree' ? 'Entrée' : 'Dépense',
-      Motif: t.motif,
-      Montant: Number(t.montant),
-      Note: t.note || '',
-      'Ajouté par': t.createdBy?.nom || '—'
-    }))
-    const totalEntrees = searched.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
-    const totalDepenses = searched.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
-    data.push({}, { Motif: 'TOTAL ENTRÉES', Montant: totalEntrees }, { Motif: 'TOTAL DÉPENSES', Montant: totalDepenses }, { Motif: 'SOLDE', Montant: totalEntrees - totalDepenses })
-    const ws = XLSX.utils.json_to_sheet(data)
-    ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 15 }, { wch: 30 }, { wch: 20 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Historique')
-    XLSX.writeFile(wb, `YFC-budget-${new Date().toISOString().slice(0,10)}.xlsx`)
+
+    const ExcelJS = await import('exceljs')
+    const entrees  = searched.filter(t => t.type === 'entree')
+    const depenses = searched.filter(t => t.type === 'depense')
+    const totalEntrees  = entrees.reduce((s, t)  => s + Number(t.montant || 0), 0)
+    const totalDepenses = depenses.reduce((s, t) => s + Number(t.montant || 0), 0)
+    const solde = totalEntrees - totalDepenses
+
+    const periodLabel = filterMonth
+      ? `${MONTHS[parseInt(filterMonth.split('-')[1]) - 1]} ${filterMonth.split('-')[0]}`
+      : 'Toutes périodes'
+
+    const wb = new ExcelJS.Workbook()
+    wb.creator = 'YFC Budget'
+    const ws = wb.addWorksheet('Budget YFC')
+    ws.columns = [{ width: 14 }, { width: 26 }, { width: 32 }, { width: 22 }, { width: 20 }]
+    const NC = 5
+
+    function sc(cell, { bg, fg = 'FFFFFFFF', bold = false, size = 11, hAlign = 'left', numFmt = null } = {}) {
+      if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
+      cell.font = { bold, size, color: { argb: fg } }
+      cell.alignment = { vertical: 'middle', horizontal: hAlign }
+      if (numFmt) cell.numFmt = numFmt
+    }
+
+    function addBanner(text, bg, fg = 'FFFFFFFF', size = 13, bold = true) {
+      const row = ws.addRow([text, '', '', '', ''])
+      ws.mergeCells(`A${row.number}:E${row.number}`)
+      row.height = bold ? 30 : 22
+      sc(row.getCell(1), { bg, fg, bold, size, hAlign: 'center' })
+    }
+
+    function addColHeaders(bg) {
+      const row = ws.addRow(['Date', 'Motif', 'Note', 'Ajouté par', 'Montant (Ar)'])
+      row.height = 20
+      for (let c = 1; c <= NC; c++)
+        sc(row.getCell(c), { bg, bold: true, size: 10, hAlign: c === NC ? 'right' : 'left' })
+    }
+
+    function addDataRow(tx, bg) {
+      const row = ws.addRow([toDisplayDate(tx.date), tx.motif || '', tx.note || '', tx.createdBy?.nom || '—', Number(tx.montant || 0)])
+      row.height = 19
+      for (let c = 1; c <= NC; c++)
+        sc(row.getCell(c), { bg, fg: 'FF1F2937', size: 10, hAlign: c === NC ? 'right' : 'left', numFmt: c === NC ? '#,##0' : null })
+    }
+
+    function addTotalRow(label, amount, bg) {
+      const row = ws.addRow([label, '', '', '', amount])
+      ws.mergeCells(`A${row.number}:D${row.number}`)
+      row.height = 26
+      sc(row.getCell(1), { bg, bold: true, size: 12, hAlign: 'right' })
+      for (let c = 2; c <= 4; c++) row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
+      sc(row.getCell(5), { bg, bold: true, size: 12, hAlign: 'right', numFmt: '#,##0' })
+    }
+
+    // Titre
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    addBanner('Budget YFC — Young For Christ', 'FF5B4FCF', 'FFFFFFFF', 14)
+    addBanner(`Exporté le ${dateStr}  •  ${periodLabel}`, 'FFE8E4FB', 'FF4338CA', 10, false)
+    ws.addRow([])
+
+    // Entrées
+    addBanner(`ENTRÉES  (${entrees.length} transaction${entrees.length !== 1 ? 's' : ''})`, 'FF16A34A')
+    addColHeaders('FF166534')
+    if (entrees.length === 0) {
+      const r = ws.addRow(['Aucune entrée', '', '', '', ''])
+      ws.mergeCells(`A${r.number}:E${r.number}`)
+      sc(r.getCell(1), { bg: 'FFFAFAFA', fg: 'FF9CA3AF', hAlign: 'center' })
+    }
+    entrees.forEach(tx => addDataRow(tx, 'FFF0FDF4'))
+    addTotalRow('TOTAL ENTRÉES', totalEntrees, 'FF15803D')
+    ws.addRow([])
+
+    // Dépenses
+    addBanner(`DÉPENSES  (${depenses.length} transaction${depenses.length !== 1 ? 's' : ''})`, 'FFDC2626')
+    addColHeaders('FF991B1B')
+    if (depenses.length === 0) {
+      const r = ws.addRow(['Aucune dépense', '', '', '', ''])
+      ws.mergeCells(`A${r.number}:E${r.number}`)
+      sc(r.getCell(1), { bg: 'FFFAFAFA', fg: 'FF9CA3AF', hAlign: 'center' })
+    }
+    depenses.forEach(tx => addDataRow(tx, 'FFFEF2F2'))
+    addTotalRow('TOTAL DÉPENSES', totalDepenses, 'FFB91C1C')
+    ws.addRow([])
+
+    // Solde
+    const soldeBg = solde >= 0 ? 'FF0D9370' : 'FFD63B5E'
+    const soldeRow = ws.addRow(['SOLDE', '', '', '', solde])
+    ws.mergeCells(`A${soldeRow.number}:D${soldeRow.number}`)
+    soldeRow.height = 34
+    sc(soldeRow.getCell(1), { bg: soldeBg, bold: true, size: 14, hAlign: 'right' })
+    for (let c = 2; c <= 4; c++) soldeRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: soldeBg } }
+    sc(soldeRow.getCell(5), { bg: soldeBg, bold: true, size: 14, hAlign: 'right', numFmt: '#,##0' })
+
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `YFC-budget-${new Date().toISOString().slice(0, 10)}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function shareReport() {
+    const base = filterMonth
+      ? allTransactions.filter(t => t.date?.startsWith(filterMonth))
+      : allTransactions
+    const entrees  = base.filter(t => t.type === 'entree')
+    const depenses = base.filter(t => t.type === 'depense')
+    const totalEntrees  = entrees.reduce((s, t)  => s + Number(t.montant || 0), 0)
+    const totalDepenses = depenses.reduce((s, t) => s + Number(t.montant || 0), 0)
+    const solde = totalEntrees - totalDepenses
+
+    const periodLabel = filterMonth
+      ? `${MONTHS[parseInt(filterMonth.split('-')[1]) - 1]} ${filterMonth.split('-')[0]}`
+      : 'toutes périodes'
+
+    const fmtAr = n => Number(n).toLocaleString('fr-FR') + ' Ar'
+
+    const lines = [
+      `📊 *Rapport Budget YFC*`,
+      `🗓️ Mois de ${periodLabel}`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `💚 *ENTRÉES* (${entrees.length})`,
+      ...entrees.map(t => `  • ${t.motif} — ${fmtAr(t.montant)}`),
+      entrees.length === 0 ? '  Aucune entrée' : '',
+      `📥 *Total entrées : ${fmtAr(totalEntrees)}*`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `🔴 *DÉPENSES* (${depenses.length})`,
+      ...depenses.map(t => `  • ${t.motif} — ${fmtAr(t.montant)}`),
+      depenses.length === 0 ? '  Aucune dépense' : '',
+      `📤 *Total dépenses : ${fmtAr(totalDepenses)}*`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━`,
+      `${solde >= 0 ? '✅' : '⚠️'} *Solde actuel : ${solde < 0 ? '−' : ''}${fmtAr(Math.abs(solde))}*`,
+    ].filter(l => l !== undefined)
+
+    const text = lines.join('\n')
+
+    if (navigator.share) {
+      await navigator.share({ text })
+    } else {
+      await navigator.clipboard.writeText(text)
+      setShareFeedback('Copié !')
+      setTimeout(() => setShareFeedback(''), 2500)
+    }
   }
 
   return (
@@ -192,7 +325,14 @@ export default function TransactionList({
             <option value="entree">Entrées</option>
             <option value="depense">Dépenses</option>
           </select>
-          <button className="btn-export" onClick={exportToExcel}>Exporter Excel</button>
+          <div style={{ gridColumn: 'span 2', display: 'flex', gap: '8px' }}>
+            <button className="btn-export" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#16A34A', color: '#fff', border: 'none' }} onClick={exportToExcel}>
+              <Download size={14} /> Exporter Excel
+            </button>
+            <button className="btn-export" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={shareReport}>
+              <Share2 size={14} /> {shareFeedback || 'Partager'}
+            </button>
+          </div>
         </div>
 
         <div className="tx-count">
