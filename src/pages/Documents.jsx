@@ -5,7 +5,7 @@ import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from '
 import { Upload, Download, Trash2, FileText, File } from 'lucide-react'
 
 const C = '#7C3AED'
-const CLOUD_NAME = 'dvtyebpmr'
+const CLOUD_NAME = '848fe882-5a36-43c8-8688-86a0d74dedd9'
 const UPLOAD_PRESET = 'yfc_documents'
 const MAX_SIZE_MB = 20
 
