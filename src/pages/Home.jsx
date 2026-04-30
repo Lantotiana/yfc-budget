@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
@@ -21,7 +21,30 @@ const modules = [
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const [showAdmin, setShowAdmin] = useState(false)
+  const [exitToast, setExitToast] = useState(false)
+  const exitReady = useRef(false)
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
+
+  useEffect(() => {
+    window.history.pushState({ yfc: 'home' }, '')
+
+    function onPop() {
+      if (exitReady.current) {
+        setExitToast(false)
+        return
+      }
+      exitReady.current = true
+      setExitToast(true)
+      window.history.pushState({ yfc: 'home' }, '')
+      setTimeout(() => {
+        exitReady.current = false
+        setExitToast(false)
+      }, 2000)
+    }
+
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   return (
     <div className="page-container" style={{ paddingBottom: '3rem' }}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
@@ -20,6 +20,28 @@ export default function Budget({ user, userData }) {
   const [filterType, setFilterType] = useState('')
   const [showDetail, setShowDetail] = useState(null)
   const [editTx, setEditTx] = useState(null)
+  const detailPushed = useRef(false)
+
+  useEffect(() => {
+    if (!showDetail) return
+    window.history.pushState({ yfc: 'detail' }, '')
+    detailPushed.current = true
+
+    function onPop() {
+      detailPushed.current = false
+      setShowDetail(null)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [showDetail])
+
+  function closeDetail() {
+    setShowDetail(null)
+    if (detailPushed.current) {
+      detailPushed.current = false
+      window.history.back()
+    }
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -62,7 +84,7 @@ export default function Budget({ user, userData }) {
     <DetailTransactions
       type={showDetail}
       transactions={transactions}
-      onBack={() => setShowDetail(null)}
+      onBack={closeDetail}
       onEdit={tx => { setEditTx(tx); setShowDetail(null) }}
     />
   )

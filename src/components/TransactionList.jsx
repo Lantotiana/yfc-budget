@@ -325,14 +325,12 @@ export default function TransactionList({
             <option value="entree">Entrées</option>
             <option value="depense">Dépenses</option>
           </select>
-          <div style={{ gridColumn: 'span 2', display: 'flex', gap: '8px' }}>
-            <button className="btn-export" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#16A34A', color: '#fff', border: 'none' }} onClick={exportToExcel}>
-              <Download size={14} /> Exporter Excel
-            </button>
-            <button className="btn-export" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={shareReport}>
-              <Share2 size={14} /> {shareFeedback || 'Partager'}
-            </button>
-          </div>
+          <button className="btn-export" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={shareReport}>
+            <Share2 size={14} /> {shareFeedback || 'Partager'}
+          </button>
+          <button className="btn-export" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#16A34A', color: '#fff', border: 'none' }} onClick={exportToExcel}>
+            <Download size={14} /> Exporter Excel
+          </button>
         </div>
 
         <div className="tx-count">
