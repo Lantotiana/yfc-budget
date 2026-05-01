@@ -439,29 +439,21 @@ body {
   z-index: 1000;
   overflow: hidden;
   background: #38bdf8;
-  opacity: 0;
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  transition: opacity .22s ease, transform .26s ease;
-  contain: paint;
-  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
 .verse-modal.open {
-  opacity: 1;
+  transform: translateX(0);
   pointer-events: auto;
-  transform: translateX(0) translateZ(0);
 }
 
-.verse-modal.closed {
-  opacity: 0;
+.verse-modal.open.closing {
+  transform: translateX(100%);
   pointer-events: none;
-}
-
-.verse-modal.closing {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-36px) translateZ(0);
 }
 
 .verse-modal.night {
