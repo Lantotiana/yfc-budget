@@ -51,6 +51,13 @@ function BackNavigationGuard({ user }) {
     )
 
     function onPop(e) {
+      // Used when we programmatically call history.back() (e.g. closing verse modal)
+      // and don't want the Home "press back twice" toast.
+      if (document.body.hasAttribute('data-ignore-next-pop')) {
+        document.body.removeAttribute('data-ignore-next-pop')
+        return
+      }
+
       // If the verse fullscreen modal is open, Home.jsx handles Back to close it.
       if (document.body.hasAttribute('data-verse-modal-open')) return
       if (document.querySelector('.verse-modal.open')) return

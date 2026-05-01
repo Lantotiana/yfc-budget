@@ -178,6 +178,7 @@ export default function Home({ user, userData }) {
       setVerseClosing(false)
       if (verseHistoryPushed) {
         setVerseHistoryPushed(false)
+        document.body.setAttribute('data-ignore-next-pop', 'true')
         window.history.back()
       }
     }, 260)
