@@ -5,6 +5,8 @@ import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
 
+const hero = '/hero.webp'
+
 export default function Login() {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
@@ -155,7 +157,7 @@ export default function Login() {
 }
 
   if (inscriptionReussie) return (
-    <div className="login-page">
+    <div className="login-page login-centered">
       <div className="login-container">
         <div className="mb-16">
           <div className="success-icon">
@@ -212,7 +214,7 @@ export default function Login() {
   )
 
   if (showForgot) return (
-    <div className="login-page">
+    <div className="login-page login-centered">
       <div className="login-container" style={{ maxWidth: '360px' }}>
 
         <div className="text-center mb-16">
@@ -281,24 +283,20 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="login-container" style={{ maxWidth: '360px' }}>
-
-        <div className="text-center mb-16">
-          <div className="w-56-h-56 rounded-50 m-0-auto-16 overflow-hidden">
-            <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
+      <div className="login-shell">
+        <div className="login-hero" style={{ backgroundImage: `url(${hero})` }}>
+          <div className="login-hero-overlay" />
+          <div className="login-hero-inner">
+            <p className="login-hero-subtitle">Young For Christ</p>
+            <h1 className="login-hero-title">
+              YFC app
+              <span className="login-verified-badge" aria-label="Vérifié" />
+            </h1>
           </div>
-          <div className="login-eyebrow mb-8">
-            Tanora ho an'i Kristy
-          </div>
-          <h1 className="text-28 font-700 text-white leading-tight mb-8">
-            Gestion<br/><span style={{color:'#5eead4'}}>Budget</span>
-          </h1>
-          <p className="text-13" style={{color:'rgba(255,255,255,0.4)'}}>
-            Finances de l'association YFC
-          </p>
         </div>
 
-        <div className="rounded-20 p-12" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="login-container" style={{ maxWidth: '360px' }}>
+          <div className="rounded-20 p-12 login-form-card">
 
           <div className="login-tab-row">
             <button onClick={() => { setMode('login'); setMessage('') }} className={`login-tab ${mode === 'login' ? 'login-tab-active' : ''}`}>
@@ -363,6 +361,7 @@ export default function Login() {
             {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   )

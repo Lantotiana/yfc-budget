@@ -29,26 +29,19 @@ function ProtectedRoute({ user, children }) {
   return children
 }
 
-function getBackTarget(pathname) {
-  if (pathname === '/') return null
-  if (pathname.startsWith('/budget/entrees') || pathname.startsWith('/budget/depenses')) return '/budget'
-  return '/'
-}
-
 function BackNavigationGuard({ user }) {
   const location = useLocation()
-  const navigate = useNavigate()
   const [exitToast, setExitToast] = useState(false)
   const exitReady = useRef(false)
 
   useEffect(() => {
     if (!user || location.pathname === '/login') return
 
-    window.history.pushState(
-      { yfcBackGuard: true, pathname: location.pathname },
-      '',
-      window.location.href
-    )
+    // "Double back to exit" should ONLY apply on Home.
+    // Everywhere else, we let the browser/React Router history behave naturally.
+    if (location.pathname === '/' && !window.history.state?.yfcBackGuardHome) {
+      window.history.pushState({ yfcBackGuardHome: true }, '', window.location.href)
+    }
 
     function onPop(e) {
       // Used when we programmatically call history.back() (e.g. closing verse modal)
@@ -62,27 +55,33 @@ function BackNavigationGuard({ user }) {
       if (document.body.hasAttribute('data-verse-modal-open')) return
       if (document.querySelector('.verse-modal.open')) return
 
-      const target = getBackTarget(location.pathname)
+      // Only handle the Home exit toast when we're *currently* on "/".
+      // Important: on a real Back press, the URL may already have changed,
+      // so read from window.location, not a possibly-stale React closure.
+      const currentPath = window.location.pathname
+      if (currentPath !== '/') return
 
-      if (target) {
-        navigate(target, { replace: true })
+      // If we just landed on the Home "guard" entry (e.g. coming back from Budget),
+      // we should NOT show the exit toast. The next Back will pop to the base Home
+      // entry, and *that* is what we treat as the "first back on Home".
+      if (e?.state?.yfcBackGuardHome) {
+        setExitToast(false)
+        exitReady.current = false
         return
       }
 
       if (exitReady.current) {
         setExitToast(false)
         exitReady.current = false
+        // Allow the Back to proceed (PWA may exit, browser may go back).
         return
       }
 
+      // First Back on Home: show toast and keep user on Home by pushing a guard entry.
       exitReady.current = true
       setExitToast(true)
-      window.history.pushState(
-        { yfcBackGuard: true, pathname: location.pathname },
-        '',
-        window.location.href
-      )
-      setTimeout(() => {
+      window.history.pushState({ yfcBackGuardHome: true }, '', window.location.href)
+      window.setTimeout(() => {
         exitReady.current = false
         setExitToast(false)
       }, 2000)
@@ -90,7 +89,7 @@ function BackNavigationGuard({ user }) {
 
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [location.pathname, navigate, user])
+  }, [location.pathname, user])
 
   if (!exitToast) return null
 
@@ -232,8 +231,8 @@ export default function App() {
   }, [])
 
   if (authLoading) return (
-    <div style={{display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', background:'var(--bg-body)', color:'#5eead4', fontSize:'14px', fontWeight:'600'}}>
-      Chargement...
+    <div className="app-loader-screen" aria-label="Chargement">
+      <div className="app-loader-icon" />
     </div>
   )
 

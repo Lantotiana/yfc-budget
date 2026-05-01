@@ -112,6 +112,8 @@ export default function Home({ user, userData }) {
   useEffect(() => {
     function onPopState(e) {
       if (!verseOpen) return
+      // Ensure the global Back guard doesn't show the Home exit toast for this Back press.
+      document.body.setAttribute('data-ignore-next-pop', 'true')
       // Intercept Back while verse is open so the global Back guard doesn't show the Home exit toast.
       if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation()
       if (typeof e.stopPropagation === 'function') e.stopPropagation()
