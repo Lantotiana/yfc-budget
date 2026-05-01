@@ -94,10 +94,6 @@ export default function Home({ user, userData }) {
     return () => clearInterval(timer)
   }, [])
 
-  useEffect(() => {
-    document.body.style.overflow = verseOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [verseOpen])
 
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
@@ -279,8 +275,7 @@ export default function Home({ user, userData }) {
         </div>
       </div>
 
-      {verseOpen && (
-        <div className={`verse-modal${isNight ? ' night' : ''}`}>
+      <div className={`verse-modal${isNight ? ' night' : ''}${verseOpen ? ' open' : ''}`}>
           <div className="daily-sky">
             <div className="daily-stars" />
             <div className="daily-sun" />
@@ -305,7 +300,6 @@ export default function Home({ user, userData }) {
             </div>
           </div>
         </div>
-      )}
 
 {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>

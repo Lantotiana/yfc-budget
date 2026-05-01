@@ -439,13 +439,21 @@ body {
   z-index: 1000;
   overflow: hidden;
   background: #38bdf8;
-  animation: verseModalIn .22s ease-out both;
   contain: paint;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  will-change: transform, opacity;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .22s ease-out, visibility .22s ease-out;
+}
+
+.verse-modal.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .verse-modal.night {
@@ -707,8 +715,8 @@ body {
 }
 
 @keyframes verseModalIn {
-  from { opacity: 0; transform: translateY(6px) translateZ(0); }
-  to   { opacity: 1; transform: translateY(0) translateZ(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes popupFloatIn {
