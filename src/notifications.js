@@ -1,6 +1,9 @@
 import { auth } from './auth'
 import { db } from './firebase'
-import { addDoc, collection, doc, getDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, getDocs, limit, orderBy, query, writeBatch } from 'firebase/firestore'
+
+const NOTIFICATION_RESET_THRESHOLD = 150
+const NOTIFICATION_DELETE_COUNT = 100
 
 async function getActor() {
   const user = auth.currentUser
@@ -41,7 +44,26 @@ export async function createNotification({ type, titre, detail = '', cible = '',
       createdAt: new Date().toISOString(),
       readBy: [],
     })
+    await cleanupOldNotifications()
   } catch (err) {
     console.warn('Notification non enregistree', err)
   }
+}
+
+async function cleanupOldNotifications() {
+  const notificationsRef = collection(db, 'notifications')
+  const oldestQuery = query(
+    notificationsRef,
+    orderBy('createdAt', 'asc'),
+    limit(NOTIFICATION_RESET_THRESHOLD)
+  )
+  const snap = await getDocs(oldestQuery)
+
+  if (snap.size < NOTIFICATION_RESET_THRESHOLD) return
+
+  const batch = writeBatch(db)
+  snap.docs.slice(0, NOTIFICATION_DELETE_COUNT).forEach(notificationDoc => {
+    batch.delete(notificationDoc.ref)
+  })
+  await batch.commit()
 }

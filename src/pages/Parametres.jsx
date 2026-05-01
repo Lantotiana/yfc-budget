@@ -1,12 +1,13 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
-import { doc, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
+import { sameEmail } from '../utils/access'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
@@ -19,6 +20,7 @@ export default function Parametres({ user, userData, setUserData }) {
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoURL, setPhotoURL] = useState(userData?.photoURL || '')
+  const [memberRole, setMemberRole] = useState({ staff: false, staffRole: '' })
   const [msg, setMsg] = useState({ text: '', ok: true })
 
   const [oldPwd, setOldPwd] = useState('')
@@ -32,6 +34,18 @@ export default function Parametres({ user, userData, setUserData }) {
     setMsg({ text, ok })
     setTimeout(() => setMsg({ text: '', ok: true }), 3000)
   }
+
+  useEffect(() => {
+    if (!user?.email) return
+    const unsub = onSnapshot(collection(db, 'membres'), snap => {
+      const member = snap.docs.map(d => d.data()).find(m => sameEmail(m.email, user.email))
+      setMemberRole({
+        staff: member?.staff === true,
+        staffRole: member?.staffRole || '',
+      })
+    })
+    return () => unsub()
+  }, [user?.email])
 
   async function saveProfile() {
     if (!nom.trim()) return
@@ -120,6 +134,8 @@ export default function Parametres({ user, userData, setUserData }) {
     textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14,
   }
 
+  const roleLabel = memberRole.staffRole || (memberRole.staff ? 'Staff sans rôle attribué' : 'Membre')
+
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
@@ -188,6 +204,11 @@ export default function Parametres({ user, userData, setUserData }) {
           <div style={{ marginBottom: 16 }}>
             <label className="form-label">Email</label>
             <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label className="form-label">Rôle</label>
+            <input type="text" value={roleLabel} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
 
           <button
