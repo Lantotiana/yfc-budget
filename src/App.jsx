@@ -110,12 +110,12 @@ function BottomNav({ user }) {
 
   useEffect(() => {
     function syncModalState() {
-      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay, .verse-modal')))
+      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay')) || document.body.hasAttribute('data-verse-modal-open'))
     }
 
     syncModalState()
     const observer = new MutationObserver(syncModalState)
-    observer.observe(document.body, { childList: true, subtree: true })
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
     return () => observer.disconnect()
   }, [location.pathname])
 
@@ -136,7 +136,7 @@ function BottomNav({ user }) {
     }
 
     function isInteractiveTarget(target) {
-      return target?.closest?.('input, textarea, select, [contenteditable="true"], .modal-overlay, .bottom-sheet-overlay, .verse-modal')
+      return target?.closest?.('input, textarea, select, [contenteditable="true"], .modal-overlay, .bottom-sheet-overlay') || document.body.hasAttribute('data-verse-modal-open')
     }
 
     function onTouchStart(e) {

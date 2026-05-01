@@ -439,6 +439,22 @@ body {
   z-index: 1000;
   overflow: hidden;
   background: #38bdf8;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .24s ease;
+  contain: paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.verse-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.verse-modal.closed {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .verse-modal.night {
@@ -2571,7 +2587,8 @@ input:focus, select:focus {
 }
 
 body:has(.bottom-sheet-overlay) .bottom-nav,
-body:has(.modal-overlay) .bottom-nav {
+body:has(.modal-overlay) .bottom-nav,
+body[data-verse-modal-open] .bottom-nav {
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%) translateY(12px);

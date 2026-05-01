@@ -94,6 +94,15 @@ export default function Home({ user, userData }) {
     return () => clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = verseOpen ? 'hidden' : ''
+    document.body.toggleAttribute('data-verse-modal-open', verseOpen)
+    return () => {
+      document.body.style.overflow = ''
+      document.body.removeAttribute('data-verse-modal-open')
+    }
+  }, [verseOpen])
+
 
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
@@ -275,7 +284,10 @@ export default function Home({ user, userData }) {
         </div>
       </div>
 
-      {verseOpen && <div className={`verse-modal${isNight ? ' night' : ''}`}>
+      <div
+        className={`verse-modal ${verseOpen ? 'open' : 'closed'}${isNight ? ' night' : ''}`}
+        aria-hidden={!verseOpen}
+      >
           <div className="daily-sky">
             <div className="daily-stars" />
             <div className="daily-sun" />
@@ -285,7 +297,7 @@ export default function Home({ user, userData }) {
             <div className="daily-hill daily-hill-front" />
           </div>
           <div className="verse-modal-overlay" />
-          <button className="verse-modal-back" onClick={() => setVerseOpen(false)}>
+          <button className="verse-modal-back" onClick={() => setVerseOpen(false)} tabIndex={verseOpen ? 0 : -1}>
             <ArrowLeft size={20} />
           </button>
           <div className="verse-modal-scroll">
@@ -299,7 +311,7 @@ export default function Home({ user, userData }) {
               <p className="verse-modal-expl">{dailyVerse.explanation}</p>
             </div>
           </div>
-        </div>}
+        </div>
 
 {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
