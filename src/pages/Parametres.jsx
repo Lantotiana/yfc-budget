@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { auth } from '../auth'
 import { db } from '../firebase'
@@ -8,11 +9,13 @@ import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 import { sameEmail } from '../utils/access'
+import { ADMIN_EMAIL } from '../constants'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
 
 export default function Parametres({ user, userData, setUserData }) {
+  const navigate = useNavigate()
   const { dark, toggle, C } = useTheme()
   const fileRef = useRef()
 
@@ -219,6 +222,19 @@ export default function Parametres({ user, userData, setUserData }) {
             {saving ? 'Enregistrement...' : 'Sauvegarder le profil'}
           </button>
         </div>
+
+        {/* Mot de passe */}
+        {user?.email === ADMIN_EMAIL && (
+          <div style={section}>
+            <div style={sectionLabel}>Administration</div>
+            <button
+              onClick={() => navigate('/admin')}
+              style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Ouvrir la page admin
+            </button>
+          </div>
+        )}
 
         {/* Mot de passe */}
         <div style={section}>

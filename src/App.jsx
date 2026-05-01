@@ -17,6 +17,8 @@ import Dashboard from './pages/Dashboard'
 import Documents from './pages/Documents'
 import Notifications from './pages/Notifications'
 import Fampaherezana from './pages/Fampaherezana'
+import MessagesStaff from './pages/MessagesStaff'
+import Admin from './components/Admin'
 import './App.css'
 
 function ScrollToTop() {
@@ -296,6 +298,16 @@ export default function App() {
         <Route path="/notifications" element={
           <ProtectedRoute user={user}>
             <Notifications user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/messages" element={
+          <ProtectedRoute user={user}>
+            <MessagesStaff user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute user={user}>
+            <Admin user={user} />
           </ProtectedRoute>
         } />
         <Route path="/assistant" element={

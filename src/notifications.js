@@ -31,7 +31,7 @@ async function getActor() {
   }
 }
 
-export async function createNotification({ type, titre, detail = '', cible = '', route = '' }) {
+export async function createNotification({ type, titre, detail = '', cible = '', route = '', targetUserId = null, targetUserEmail = null, metadata = null }) {
   try {
     const actor = await getActor()
     await addDoc(collection(db, 'notifications'), {
@@ -40,6 +40,9 @@ export async function createNotification({ type, titre, detail = '', cible = '',
       detail,
       cible,
       route,
+      targetUserId,
+      targetUserEmail,
+      metadata,
       actor,
       createdAt: new Date().toISOString(),
       readBy: [],

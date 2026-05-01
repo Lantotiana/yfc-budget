@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
-import { Bell, CalendarCheck, CalendarDays, FolderOpen, Settings, Users, UserRound, Wallet } from 'lucide-react'
+import { Bell, CalendarCheck, CalendarDays, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const typeIcon = {
@@ -11,6 +11,8 @@ const typeIcon = {
   presence: CalendarCheck,
   evenement: CalendarDays,
   document: FolderOpen,
+  message: MessageCircle,
+  mention: MessageCircle,
   profil: Settings,
   admin: UserRound,
 }
@@ -27,6 +29,8 @@ const typeColor = {
   evenements: '#f59e0b',
   document: '#06b6d4',
   documents: '#06b6d4',
+  message: '#10b981',
+  mention: '#10b981',
   profil: '#64748b',
   admin: '#64748b',
 }
@@ -108,7 +112,11 @@ export default function Notifications({ user }) {
   useEffect(() => {
     if (!user?.uid || notifications.length === 0) return
 
-    const unread = notifications.filter(notif => !(notif.readBy || []).includes(user.uid))
+    const unread = notifications.filter(notif => {
+      if (notif.targetUserId && notif.targetUserId !== user.uid) return false
+      if (notif.targetUserEmail && notif.targetUserEmail !== user.email) return false
+      return !(notif.readBy || []).includes(user.uid)
+    })
     if (unread.length === 0) return
 
     const batch = writeBatch(db)
@@ -120,14 +128,23 @@ export default function Notifications({ user }) {
     batch.commit().catch(err => console.warn('Notifications non marquées comme lues', err))
   }, [notifications, user?.uid])
 
+  const visibleNotifications = useMemo(
+    () => notifications.filter(notif => {
+      if (notif.targetUserId && notif.targetUserId !== user?.uid) return false
+      if (notif.targetUserEmail && notif.targetUserEmail !== user?.email) return false
+      return true
+    }),
+    [notifications, user?.uid, user?.email]
+  )
+
   const grouped = useMemo(() => {
-    return notifications.reduce((acc, notif) => {
+    return visibleNotifications.reduce((acc, notif) => {
       const label = groupLabel(notif.createdAt)
       if (!acc[label]) acc[label] = []
       acc[label].push(notif)
       return acc
     }, {})
-  }, [notifications])
+  }, [visibleNotifications])
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
@@ -137,7 +154,7 @@ export default function Notifications({ user }) {
         <div>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Notifications</div>
           <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
-            {notifications.length} activité{notifications.length !== 1 ? 's' : ''} récente{notifications.length !== 1 ? 's' : ''}
+            {visibleNotifications.length} activité{visibleNotifications.length !== 1 ? 's' : ''} récente{visibleNotifications.length !== 1 ? 's' : ''}
           </div>
         </div>
         <div className="header-action" style={{ width: 36, height: 36, borderRadius: 12, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -148,7 +165,7 @@ export default function Notifications({ user }) {
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>Chargement...</div>
-        ) : notifications.length === 0 ? (
+        ) : visibleNotifications.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>
             Aucune notification pour le moment.
           </div>

@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
-import Admin from '../components/Admin'
-import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
@@ -76,11 +74,11 @@ const dailyVerses = [
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
-  const [showAdmin, setShowAdmin] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
   const [verseClosing, setVerseClosing] = useState(false)
   const [verseHistoryPushed, setVerseHistoryPushed] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
   const [fallbackOffset, setFallbackOffset] = useState(0)
@@ -140,11 +138,38 @@ export default function Home({ user, userData }) {
     const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(20))
     return onSnapshot(q, snap => {
       const unread = snap.docs.filter(d => {
+        const targetUserId = d.data().targetUserId
+        const targetUserEmail = d.data().targetUserEmail
+        if (targetUserId && targetUserId !== user.uid) return false
+        if (targetUserEmail && targetUserEmail !== user.email) return false
         const readBy = d.data().readBy || []
         return !readBy.includes(user.uid)
       })
       setNotifCount(unread.length)
     }, () => setNotifCount(0))
+  }, [user?.uid])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const q = query(collection(db, 'staffMessages'), orderBy('createdAt', 'desc'), limit(50))
+    return onSnapshot(q, snap => {
+      let saved = {}
+      try { saved = JSON.parse(localStorage.getItem(`staffMsg_reactions_${user.uid}`) || '{}') } catch {}
+
+      let count = 0
+      snap.docs.forEach(d => {
+        const data = d.data()
+        if (data.deleted) return
+        if (!(data.readBy || []).includes(user.uid)) count++
+        if (data.senderId === user.uid) {
+          const current = Object.values(data.reactions || {}).reduce((sum, uids) => {
+            return sum + (uids || []).filter(id => id !== user.uid).length
+          }, 0)
+          if (current > (saved[d.id] || 0)) count++
+        }
+      })
+      setUnreadMessages(count)
+    }, () => setUnreadMessages(0))
   }, [user?.uid])
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
@@ -223,14 +248,19 @@ export default function Home({ user, userData }) {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 8 }}>
-            {user.email === ADMIN_EMAIL && (
-              <button
-                onClick={() => setShowAdmin(true)}
-                style={{ height: 40, padding: '0 12px', borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
-              >
-                Admin
-              </button>
-            )}
+            {/* Messages Staff */}
+            <button
+              onClick={() => navigate('/messages')}
+              style={{ width: 40, height: 40, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', position: 'relative' }}
+              aria-label="Messages Staff"
+            >
+              <MessageCircle size={17} />
+              {unreadMessages > 0 && (
+                <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 999, background: '#10b981', color: '#fff', border: `2px solid ${C.bg}`, fontSize: 9, fontWeight: 800, lineHeight: '13px', textAlign: 'center' }}>
+                  {unreadMessages > 9 ? '9+' : unreadMessages}
+                </span>
+              )}
+            </button>
 
             {/* Notifications */}
             <button
@@ -383,7 +413,6 @@ export default function Home({ user, userData }) {
           </div>
         </div>
 
-{showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
   )
 }

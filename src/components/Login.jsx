@@ -4,6 +4,8 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, se
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
+import { createNotification } from '../notifications'
+import { ADMIN_EMAIL } from '../constants'
 
 const hero = '/hero.webp'
 
@@ -125,6 +127,16 @@ export default function Login() {
     }
 
     // Succès — afficher l'écran de confirmation puis déconnecter
+    await createNotification({
+      type: 'admin',
+      titre: 'Nouvelle demande d’approbation',
+      detail: `${userData.nom} - ${userData.email}`,
+      cible: cred.user.uid,
+      route: '/admin',
+      targetUserEmail: ADMIN_EMAIL,
+      metadata: { source: 'approval-request' },
+    })
+
     setNomInscrit(nom.trim().split(' ')[0])
     setInscriptionReussie(true)
     setLoading(false)
