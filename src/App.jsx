@@ -91,19 +91,20 @@ function BackNavigationGuard({ user }) {
 }
 
 const bottomNavItems = [
-  { path: '/', label: 'Accueil', Icon: HomeIcon },
-  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard },
-  { path: '/budget', label: 'Budget', Icon: Wallet },
+  { path: '/', label: 'Accueil', Icon: HomeIcon, color: '#2563eb' },
+  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard, color: '#2563eb' },
+  { path: '/budget', label: 'Budget', Icon: Wallet, color: '#10b981' },
   { path: '/presences', label: 'Présences', Icon: CalendarCheck },
-  { path: '/membres', label: 'Membres', Icon: Users },
-  { path: '/evenements', label: 'Events', Icon: CalendarDays },
-  { path: '/documents', label: 'Docs', Icon: FolderOpen },
+  { path: '/membres', label: 'Membres', Icon: Users, color: '#f43f5e' },
+  { path: '/evenements', label: 'Events', Icon: CalendarDays, color: '#f59e0b' },
+  { path: '/documents', label: 'Docs', Icon: FolderOpen, color: '#06b6d4' },
 ]
 
 function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
+  const swipeStart = useRef(null)
   const baseVisible = Boolean(user && location.pathname !== '/login')
   const visible = baseVisible && !modalOpen
 
@@ -125,6 +126,54 @@ function BottomNav({ user }) {
     return () => document.body.removeAttribute('data-bottom-nav')
   }, [visible])
 
+  useEffect(() => {
+    if (!visible) return
+
+    function getActiveIndex() {
+      return bottomNavItems.findIndex(item => item.path === '/'
+        ? location.pathname === '/'
+        : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))
+    }
+
+    function isInteractiveTarget(target) {
+      return target?.closest?.('input, textarea, select, [contenteditable="true"], .modal-overlay, .bottom-sheet-overlay')
+    }
+
+    function onTouchStart(e) {
+      if (e.touches.length !== 1 || isInteractiveTarget(e.target)) return
+      const touch = e.touches[0]
+      swipeStart.current = { x: touch.clientX, y: touch.clientY }
+    }
+
+    function onTouchEnd(e) {
+      if (!swipeStart.current || isInteractiveTarget(e.target)) {
+        swipeStart.current = null
+        return
+      }
+
+      const touch = e.changedTouches[0]
+      const dx = touch.clientX - swipeStart.current.x
+      const dy = touch.clientY - swipeStart.current.y
+      swipeStart.current = null
+
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.4) return
+
+      const currentIndex = getActiveIndex()
+      if (currentIndex < 0) return
+
+      const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1
+      const nextItem = bottomNavItems[nextIndex]
+      if (nextItem) navigate(nextItem.path)
+    }
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [location.pathname, navigate, visible])
+
   if (!visible) return null
 
   return (
@@ -138,7 +187,7 @@ function BottomNav({ user }) {
             key={item.path}
             type="button"
             className={`bottom-nav-item${active ? ' active' : ''}`}
-            style={{ '--bottom-nav-active': 'var(--amber)' }}
+            style={{ '--bottom-nav-active': '#10b981' }}
             onClick={() => navigate(item.path)}
             aria-label={item.label}
           >

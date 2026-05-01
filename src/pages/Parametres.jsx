@@ -124,7 +124,7 @@ export default function Parametres({ user, userData, setUserData }) {
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div style={{ padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+      <div className="textured-page-header" style={{ '--header-color': '#64748b', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
       </div>
 
@@ -193,7 +193,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={saveProfile}
             disabled={saving || !nom.trim()}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
           >
             {saving ? 'Enregistrement...' : 'Sauvegarder le profil'}
           </button>
@@ -233,7 +233,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={savePassword}
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
           >
             {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
           </button>

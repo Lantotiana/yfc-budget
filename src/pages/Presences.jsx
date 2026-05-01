@@ -100,6 +100,8 @@ export default function Presences({ user, userData }) {
   }
 
   const presentCount = membres.filter(m => presences[m.id] === true).length
+  const presencePercent = membres.length ? Math.round((presentCount / membres.length) * 100) : 0
+  const progressColor = presencePercent < 40 ? C.coral : presencePercent < 75 ? C.amber : C.teal
 
   function normSearch(s) {
     return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -154,7 +156,7 @@ export default function Presences({ user, userData }) {
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div style={{ padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, background: C.bg, flexShrink: 0 }}>
+      <div className="textured-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, background: C.bg, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
@@ -165,7 +167,7 @@ export default function Presences({ user, userData }) {
             )}
           </div>
           {selectedEvent && membres.length > 0 && (
-            <button onClick={partager} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+            <button className="header-action" onClick={partager} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
               <Share2 size={13} /> {copied ? 'Copié !' : 'Partager'}
             </button>
           )}
@@ -183,7 +185,7 @@ export default function Presences({ user, userData }) {
               <option key={ev.id} value={ev.id}>{ev.titre} — {toDisplayDate(ev.date)}</option>
             ))}
           </select>
-          <button onClick={() => setShowNewEvent(true)} style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <button className="header-action" onClick={() => setShowNewEvent(true)} style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
             + Nouveau
           </button>
         </div>
@@ -208,7 +210,7 @@ export default function Presences({ user, userData }) {
         {selectedEvent && membres.length > 0 && (
           <div style={{ marginTop: 12 }}>
             <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 5, background: `linear-gradient(90deg, ${C.teal}, ${C.violet})`, width: `${Math.round((presentCount / membres.length) * 100)}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1)' }} />
+              <div style={{ height: '100%', borderRadius: 5, background: progressColor, width: `${presencePercent}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1), background .3s ease' }} />
             </div>
           </div>
         )}

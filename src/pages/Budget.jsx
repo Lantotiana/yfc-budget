@@ -84,15 +84,15 @@ export default function Budget() {
   )
 
   return (
-    <div className="sin" style={{ minHeight: '100vh', background: C.bg }}>
+    <div className="sin budget-page" style={{ minHeight: '100vh', background: C.bg }}>
       {/* Header */}
-      <div className="f1" style={{ padding: '20px 20px 0', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
-        <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>Young For Christ</div>
+      <div className="f1 textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+        <div className="header-title" style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
+        <div className="header-subtitle" style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>Young For Christ</div>
       </div>
 
       {/* Entrées / Dépenses */}
-      <div className="f2" style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="f2" style={{ padding: '0 20px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div onClick={() => navigate('/budget/entrees')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
           <div style={{ fontSize: 10, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>ENTRÉES</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
@@ -104,7 +104,7 @@ export default function Budget() {
       </div>
 
       {/* Solde */}
-      <div className="f3" style={{ padding: '0 20px 16px' }}>
+      <div className="f3" style={{ padding: '0 20px 12px' }}>
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 11, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>SOLDE ACTUEL</div>
@@ -118,7 +118,7 @@ export default function Budget() {
         </div>
       </div>
 
-      <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {loading && <div className="loading">Chargement...</div>}
         <TransactionForm onAdd={addTransaction} />
         <TransactionList

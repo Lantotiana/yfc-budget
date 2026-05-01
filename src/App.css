@@ -23,7 +23,7 @@
   --border-light: rgba(0,0,0,0.06);
   --border-input: rgba(0,0,0,0.10);
   --del-btn-bg: rgba(224,85,85,0.10);
-  --btn-primary-bg: #E8933A;
+  --btn-primary-bg: #10B981;
   --btn-secondary-bg: #EDF0FA;
   --hero-bg: #08090F;
 }
@@ -52,7 +52,7 @@
   --border-light: rgba(255,255,255,0.06);
   --border-input: rgba(255,255,255,0.10);
   --del-btn-bg: rgba(242,107,107,0.12);
-  --btn-primary-bg: #F2A84E;
+  --btn-primary-bg: #26D9C4;
   --btn-secondary-bg: #181B2E;
   --hero-bg: #08090F;
 }
@@ -97,6 +97,216 @@ body {
 @keyframes sunIn  { from{transform:rotate(30deg) scale(.6);opacity:0}  to{transform:rotate(0) scale(1);opacity:1} }
 .moon-anim { animation: moonIn .35s cubic-bezier(.34,1.56,.64,1) both; }
 .sun-anim  { animation: sunIn  .35s cubic-bezier(.34,1.56,.64,1) both; }
+
+/* ====== HOME VERSE CARD ====== */
+.daily-verse-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 156px;
+  border-radius: 22px;
+  background: #38bdf8;
+  box-shadow: 0 18px 36px rgba(56, 189, 248, 0.28);
+  isolation: isolate;
+  animation: dailyCardGlow 1.8s ease-out both;
+}
+
+.daily-verse-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 78% 24%, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.18) 24%, transparent 58%);
+  opacity: 0;
+  animation: dailyLightBloom 1.9s ease-out both;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.daily-sky {
+  position: absolute;
+  inset: 0;
+  background: #38bdf8;
+}
+
+.daily-sky::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 14px 14px, rgba(255, 255, 255, 0.2) 0 2px, transparent 2.5px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px);
+  background-size: 30px 30px, 20px 20px;
+  opacity: 0.45;
+}
+
+.daily-sun {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 0 12px rgba(250, 204, 21, 0.18), 0 0 34px rgba(250, 204, 21, 0.6);
+  animation: dailySunRise 1.7s cubic-bezier(.2,.9,.2,1) both, dailySunFloat 4.5s 1.7s ease-in-out infinite;
+  z-index: 1;
+}
+
+.daily-cloud {
+  position: absolute;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  animation: dailyCloudDrift 12s ease-in-out infinite;
+}
+
+.daily-cloud::before,
+.daily-cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.daily-cloud::before {
+  left: 12px;
+  width: 24px;
+  height: 24px;
+}
+
+.daily-cloud::after {
+  right: 12px;
+  width: 30px;
+  height: 30px;
+}
+
+.daily-cloud-one {
+  top: 20px;
+  left: auto;
+  right: 94px;
+  width: 64px;
+  opacity: 0.62;
+}
+
+.daily-cloud-two {
+  top: 72px;
+  right: 88px;
+  width: 54px;
+  opacity: 0.55;
+  animation-delay: -5s;
+}
+
+.daily-hill {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -48px;
+  height: 96px;
+  border-radius: 50% 50% 0 0;
+}
+
+.daily-hill-back {
+  bottom: -36px;
+  background: #22c55e;
+  opacity: 0.72;
+}
+
+.daily-hill-front {
+  left: -18%;
+  right: -4%;
+  bottom: -58px;
+  height: 110px;
+  background: #16a34a;
+}
+
+.daily-verse-content {
+  position: relative;
+  z-index: 2;
+  max-width: 70%;
+  padding: 18px;
+  color: #fff;
+}
+
+.daily-verse-label {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.daily-verse-text {
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 700;
+  text-shadow: 0 1px 10px rgba(14, 116, 144, 0.22);
+}
+
+.daily-verse-ref {
+  margin-top: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@keyframes dailySunRise {
+  0% {
+    transform: translateY(92px) scale(0.72);
+    opacity: 0.25;
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0), 0 0 0 rgba(250, 204, 21, 0);
+  }
+  58% {
+    transform: translateY(-4px) scale(1.08);
+    opacity: 1;
+    box-shadow: 0 0 0 22px rgba(250, 204, 21, 0.2), 0 0 62px rgba(250, 204, 21, 0.82);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    box-shadow: 0 0 0 12px rgba(250, 204, 21, 0.18), 0 0 34px rgba(250, 204, 21, 0.6);
+  }
+}
+
+@keyframes dailyLightBloom {
+  0% { opacity: 0; transform: scale(0.84); }
+  45% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0.38; transform: scale(1); }
+}
+
+@keyframes dailyCardGlow {
+  0% { box-shadow: 0 10px 20px rgba(56, 189, 248, 0.12); }
+  55% { box-shadow: 0 22px 42px rgba(250, 204, 21, 0.28), 0 18px 36px rgba(56, 189, 248, 0.24); }
+  100% { box-shadow: 0 18px 36px rgba(56, 189, 248, 0.28); }
+}
+
+@keyframes dailySunFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(5px) scale(1.04); }
+}
+
+@keyframes dailyCloudDrift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+
+@media (max-width: 420px) {
+  .daily-verse-card {
+    min-height: 168px;
+  }
+
+  .daily-verse-content {
+    max-width: 76%;
+    padding: 16px;
+  }
+
+  .daily-verse-text {
+    font-size: 14px;
+  }
+}
 
 button {
   -webkit-tap-highlight-color: transparent;
@@ -189,6 +399,61 @@ button {
   transform: translateY(-50%);
   color: rgba(255,255,255,0.5);
   display: flex;
+}
+
+.textured-page-header {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-body) !important;
+  border-bottom: 0 !important;
+  color: inherit;
+  box-shadow: none;
+}
+
+.textured-page-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.textured-page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.textured-page-header .header-title {
+  color: inherit;
+}
+
+.textured-page-header div,
+.textured-page-header span,
+.textured-page-header svg {
+  color: inherit;
+  stroke: currentColor;
+}
+
+.textured-page-header .header-subtitle {
+  color: inherit;
+}
+
+.textured-page-header .header-action {
+  box-shadow: none;
+}
+
+.textured-page-header .header-action svg {
+  stroke: currentColor;
+}
+
+.textured-page-header input,
+.textured-page-header select {
+  color: inherit;
+}
+
+.textured-page-header input::placeholder {
+  color: var(--text-muted);
 }
 
 /* ====== CONTAINER ====== */
@@ -308,6 +573,15 @@ button {
   box-shadow: var(--card-shadow);
 }
 
+.budget-page .card {
+  margin: 0 20px;
+}
+
+.budget-page .card:has(.tx-search-wrapper) {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
 .card-title {
   font-size: 11px;
   font-weight: 700;
@@ -398,12 +672,12 @@ input:focus, select:focus {
 
 .btn-motif,
 .btn-export {
-  padding: 10px 14px;
+  padding: 13px;
   background: var(--btn-secondary-bg);
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1.5px solid var(--border-input);
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
   color: var(--text-primary);
   font-family: inherit;
@@ -503,12 +777,22 @@ input:focus, select:focus {
 .filter-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .filter-row .btn-export {
   grid-column: span 2;
+}
+
+.budget-export-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--btn-primary-bg);
+  color: #fff;
+  border: none;
 }
 
 /* ====== MODAL ====== */
@@ -769,7 +1053,7 @@ input:focus, select:focus {
 /* ====== TRANSACTION LIST ====== */
 .tx-search-wrapper {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .tx-search-input {
@@ -810,7 +1094,7 @@ input:focus, select:focus {
 .tx-count {
   font-size: 11px;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-weight: 600;
 }
 

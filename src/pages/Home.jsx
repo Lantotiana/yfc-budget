@@ -13,12 +13,22 @@ function getPrenom(fullName) {
 }
 
 const modules = [
-  { path: '/dashboard', Icon: LayoutDashboard, label: 'Tableau de bord', desc: 'Vue globale',           col: 'amber',  ik: 'stats' },
-  { path: '/budget',    Icon: Wallet,           label: 'Budget YFC',      desc: 'Entrées & dépenses',    col: 'teal',   ik: 'budget' },
-  { path: '/presences', Icon: CalendarCheck,    label: 'Présences',        desc: 'Suivi Alimbavaka',      col: 'violet', ik: 'presence' },
-  { path: '/membres',   Icon: Users,            label: 'Membres',          desc: 'Liste des membres',     col: 'coral',  ik: 'membres' },
-  { path: '/evenements',Icon: CalendarDays,     label: 'Événements',       desc: 'Agenda YFC',            col: 'amber',  ik: 'events' },
-  { path: '/documents', Icon: FolderOpen,       label: 'Documents',        desc: 'Ressources partagées',  col: 'teal',   ik: 'docs' },
+  { path: '/dashboard', Icon: LayoutDashboard, label: 'Tableau de bord', desc: 'Vue globale',          color: '#2563eb' },
+  { path: '/budget',    Icon: Wallet,          label: 'Budget YFC',      desc: 'Entrées & dépenses',   color: '#10b981' },
+  { path: '/presences', Icon: CalendarCheck,   label: 'Présences',       desc: 'Suivi Alimbavaka',     color: '#7c3aed' },
+  { path: '/membres',   Icon: Users,           label: 'Membres',         desc: 'Liste des membres',    color: '#f43f5e' },
+  { path: '/evenements',Icon: CalendarDays,    label: 'Événements',      desc: 'Agenda YFC',           color: '#f59e0b' },
+  { path: '/documents', Icon: FolderOpen,      label: 'Documents',       desc: 'Ressources partagées', color: '#06b6d4' },
+]
+
+const dailyVerses = [
+  { text: "L'Éternel est mon berger: je ne manquerai de rien.", ref: 'Psaume 23:1' },
+  { text: 'Je puis tout par celui qui me fortifie.', ref: 'Philippiens 4:13' },
+  { text: 'Ta parole est une lampe à mes pieds, et une lumière sur mon sentier.', ref: 'Psaume 119:105' },
+  { text: "Recommande ton sort à l'Éternel, mets en lui ta confiance, et il agira.", ref: 'Psaume 37:5' },
+  { text: 'Ne crains rien, car je suis avec toi.', ref: 'Ésaïe 41:10' },
+  { text: 'Que tout ce que vous faites se fasse avec amour.', ref: '1 Corinthiens 16:14' },
+  { text: "L'Éternel combattra pour vous; et vous, gardez le silence.", ref: 'Exode 14:14' },
 ]
 
 export default function Home({ user, userData }) {
@@ -40,14 +50,8 @@ export default function Home({ user, userData }) {
     }, () => setNotifCount(0))
   }, [user?.uid])
 
-  function getModColor(col) {
-    return { amber: C.amber, teal: C.teal, violet: C.violet, coral: C.coral }[col]
-  }
-  function getModBg(col) {
-    return { amber: C.amberD, teal: C.tealD, violet: C.violetD, coral: C.coralD }[col]
-  }
-
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
+  const dailyVerse = dailyVerses[Math.floor(Date.now() / 86400000) % dailyVerses.length]
 
   return (
     <div className="page-container sin" style={{ paddingBottom: 'calc(86px + env(safe-area-inset-bottom))', background: C.bg }}>
@@ -58,7 +62,7 @@ export default function Home({ user, userData }) {
           <div
             onClick={() => navigate('/parametres')}
             style={{
-              width: 52, height: 52, borderRadius: 18, flexShrink: 0,
+              width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
               background: `linear-gradient(135deg, ${C.amber}, ${C.teal})`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 19, fontWeight: 700, color: '#fff', cursor: 'pointer',
@@ -74,11 +78,11 @@ export default function Home({ user, userData }) {
 
           {/* Greeting */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: C.t2, marginBottom: 2 }}>Bonjour 👋</div>
+            <div style={{ fontSize: 12, color: C.t2, marginBottom: 2 }}>Bonjour</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, lineHeight: 1.1, letterSpacing: '-.4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {prenom}
             </div>
-            <div style={{ fontSize: 10, color: C.amber, fontWeight: 600, letterSpacing: '1px', marginTop: 2, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 10, color: C.t2, fontWeight: 700, letterSpacing: '1px', marginTop: 2, textTransform: 'uppercase' }}>
               Young For Christ
             </div>
           </div>
@@ -120,14 +124,28 @@ export default function Home({ user, userData }) {
         </div>
       </div>
 
+      {/* Daily verse */}
+      <div className="f2" style={{ padding: '0 20px 16px' }}>
+        <div className="daily-verse-card">
+          <div className="daily-sky">
+            <div className="daily-sun" />
+            <div className="daily-cloud daily-cloud-one" />
+            <div className="daily-cloud daily-cloud-two" />
+            <div className="daily-hill daily-hill-back" />
+            <div className="daily-hill daily-hill-front" />
+          </div>
+          <div className="daily-verse-content">
+            <div className="daily-verse-label">Verset du jour</div>
+            <div className="daily-verse-text">“{dailyVerse.text}”</div>
+            <div className="daily-verse-ref">{dailyVerse.ref}</div>
+          </div>
+        </div>
+      </div>
+
       {/* Modules grid */}
-      <div className="f2" style={{ padding: '0 20px' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 14 }}>Modules</div>
+      <div className="f3" style={{ padding: '0 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {modules.map((m, i) => {
-            const col = getModColor(m.col)
-            const bg  = getModBg(m.col)
-            return (
+          {modules.map((m, i) => (
               <button
                 key={m.path}
                 className={`f${i + 1}`}
@@ -137,20 +155,35 @@ export default function Home({ user, userData }) {
                 onTouchStart={e => e.currentTarget.style.transform = 'scale(.96)'}
                 onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
                 style={{
-                  background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 20,
-                  padding: '18px 16px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
-                  transition: 'transform .15s', textAlign: 'left',
+                  background: m.color,
+                  border: '0',
+                  borderRadius: 20,
+                  padding: '18px 16px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'transform .15s',
+                  textAlign: 'left',
+                  boxShadow: `0 14px 30px ${m.color}33`,
                 }}
               >
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, borderRadius: '0 0 4px 4px' }} />
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  <m.Icon size={18} color={col} />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: 'radial-gradient(circle at 12px 12px, rgba(255,255,255,.24) 0 2px, transparent 2.5px), linear-gradient(135deg, rgba(255,255,255,.16) 0 1px, transparent 1px)',
+                    backgroundSize: '28px 28px, 18px 18px',
+                    opacity: .55,
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, position: 'relative' }}>
+                  <m.Icon size={18} color="#fff" />
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 3, lineHeight: 1.3 }}>{m.label}</div>
-                <div style={{ fontSize: 11, color: C.t2 }}>{m.desc}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 3, lineHeight: 1.3, position: 'relative' }}>{m.label}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.78)', position: 'relative' }}>{m.desc}</div>
               </button>
-            )
-          })}
+          ))}
         </div>
       </div>
 

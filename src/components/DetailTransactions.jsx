@@ -214,16 +214,16 @@ export default function DetailTransactions({ type, transactions, onBack }) {
     <div className="sin" style={{ minHeight: '100vh', background: C.bg }}>
 
       {/* Header */}
-      <div className="f1" style={{ padding: '20px 20px 0', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div className="f1 textured-page-header" style={{ '--header-color': isEntree ? '#10b981' : '#f43f5e', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onBack} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button hidden className="header-action" onClick={onBack} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             ← Retour
           </button>
           <div style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>
             {isEntree ? 'Entrées' : 'Dépenses'}
           </div>
         </div>
-        <button onClick={exportExcel} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button className="header-action" onClick={exportExcel} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
           Exporter
         </button>
       </div>
@@ -368,7 +368,7 @@ export default function DetailTransactions({ type, transactions, onBack }) {
             <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" />
           </div>
 
-          <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.amber, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1, marginBottom: 8 }}>
+          <button onClick={handleSave} disabled={saving} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1, marginBottom: 8 }}>
             {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
           <button onClick={handleDelete} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>

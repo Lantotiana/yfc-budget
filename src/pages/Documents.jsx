@@ -109,7 +109,7 @@ export default function Documents({ user, userData }) {
     <div className="page-container sin" style={{ background: C.bg, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
 
       {/* Header */}
-      <div className="f1" style={{ padding: '20px 20px 0', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div className="f1 textured-page-header" style={{ '--header-color': '#06b6d4', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
           <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>
@@ -117,7 +117,8 @@ export default function Documents({ user, userData }) {
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.violet, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
+          className="header-action"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
         >
           <Upload size={14} /> {uploading ? 'Envoi...' : 'Ajouter'}
         </button>
@@ -134,7 +135,7 @@ export default function Documents({ user, userData }) {
         )}
 
         {uploading && uploadProgress && (
-          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.violetD, borderRadius: 12, color: C.violet, fontSize: 13, fontWeight: 600 }}>
+          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.tealD, borderRadius: 12, color: C.teal, fontSize: 13, fontWeight: 600 }}>
             {uploadProgress}
           </div>
         )}
@@ -156,7 +157,7 @@ export default function Documents({ user, userData }) {
               >
                 <div
                   onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
-                  style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
+                  style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: C.tealD, color: C.teal, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
                 >
                   <FileIcon type={doc.type} />
                 </div>

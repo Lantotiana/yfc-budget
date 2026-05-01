@@ -345,7 +345,7 @@ export default function TransactionList({
           <button className="btn-export" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={shareReport}>
             <Share2 size={14} /> {shareFeedback || 'Partager'}
           </button>
-          <button className="btn-export" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#16A34A', color: '#fff', border: 'none' }} onClick={exportToExcel}>
+          <button className="btn-export budget-export-primary" onClick={exportToExcel}>
             <Download size={14} /> Exporter Excel
           </button>
         </div>

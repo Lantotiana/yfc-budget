@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Users } from 'lucide-react'
@@ -10,15 +10,66 @@ function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
 }
 
-function StatCard({ label, value, col, colD, Icon }) {
+function useAnimatedNumber(value, duration = 900) {
+  const [display, setDisplay] = useState(0)
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    const start = performance.now()
+    const to = Number(value || 0)
+
+    function tick(now) {
+      const progress = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(to * eased))
+      if (progress < 1) frameRef.current = requestAnimationFrame(tick)
+    }
+
+    cancelAnimationFrame(frameRef.current)
+    frameRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameRef.current)
+  }, [value, duration])
+
+  return display
+}
+
+function AnimatedMoney({ value, suffix = true }) {
+  const animated = useAnimatedNumber(Math.abs(value || 0))
+  return <>{animated.toLocaleString('fr-FR')}{suffix ? ' Ar' : ''}</>
+}
+
+function AnimatedNumber({ value }) {
+  return useAnimatedNumber(value).toLocaleString('fr-FR')
+}
+
+function MiniIllustration({ color, type }) {
+  const line = type === 'expense'
+    ? 'M 0 42 L 18 26 L 36 42 L 54 18 L 72 32 L 92 40 L 112 24 L 132 42 L 150 42'
+    : 'M 0 42 L 18 38 L 36 42 L 56 34 L 74 38 L 94 32 L 112 28 L 132 27 L 150 20'
+  const area = `${line} L 150 52 L 0 52 Z`
+
+  return (
+    <svg viewBox="0 0 150 54" aria-hidden="true" style={{ width: '100%', height: 54, display: 'block', marginTop: 12 }}>
+      <path d={area} fill={color} opacity="0.08" />
+      <path d={line} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function StatCard({ label, value, col, colD, Icon, type }) {
   const { C } = useTheme()
   return (
-    <div style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
-      <div style={{ width: 30, height: 30, borderRadius: 10, background: colD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-        <Icon size={14} color={col} />
+    <div style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px 14px 12px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 11, color: C.t2, marginBottom: 4 }}>{label}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: col, letterSpacing: '-.5px' }}>{value}</div>
+        </div>
+        <div style={{ width: 30, height: 30, borderRadius: 10, background: colD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon size={14} color={col} />
+        </div>
       </div>
-      <div style={{ fontSize: 11, color: C.t2, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: col, letterSpacing: '-.5px' }}>{value}</div>
+      <MiniIllustration color={col} type={type} />
     </div>
   )
 }
@@ -68,25 +119,25 @@ export default function Dashboard() {
   return (
     <div className="sin" style={{ minHeight: '100vh', background: C.bg, padding: '0 0 calc(86px + env(safe-area-inset-bottom))' }}>
       {/* Hero solde */}
-      <div className="f1" style={{
-        padding: '28px 20px 36px',
+      <div className="f1 textured-page-header" style={{
+        '--header-color': '#2563eb',
+        padding: '28px 20px 28px',
         paddingTop: 'max(28px, env(safe-area-inset-top))',
         textAlign: 'center',
         borderBottom: `1px solid ${C.bord}`,
-        background: `linear-gradient(180deg, ${C.amberD.replace('0.13','0.08').replace('0.12','0.08')} 0%, transparent 100%)`,
       }}>
         <div style={{ fontSize: 11, color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
-        <div style={{ fontSize: 42, fontWeight: 700, color: C.t1, letterSpacing: '-2px', lineHeight: 1 }}>
-          {solde < 0 ? '-' : ''}{fmt(Math.abs(solde)).replace(' Ar', '')}
+        <div style={{ fontSize: 36, fontWeight: 700, color: C.t1, letterSpacing: '-1.4px', lineHeight: 1 }}>
+          {solde < 0 ? '-' : ''}<AnimatedMoney value={solde} suffix={false} />
           <span style={{ fontSize: 18, fontWeight: 500, color: C.t2, marginLeft: 6 }}>Ar</span>
         </div>
       </div>
 
-      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
         {/* Entrées / Dépenses */}
         <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <StatCard label="Entrées"  value={fmt(totalEntrees)}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} />
-          <StatCard label="Dépenses" value={fmt(totalDepenses)} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} />
+          <StatCard label="Entrées"  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income" />
+          <StatCard label="Dépenses" value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" />
         </div>
 
         {/* Membres / Événements */}
@@ -95,7 +146,7 @@ export default function Dashboard() {
             <div style={{ width: 30, height: 30, borderRadius: 10, background: C.violetD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <Users size={14} color={C.violet} />
             </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}>{membres.length}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={membres.length} /></div>
             <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Membres</div>
             <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>total inscrits</div>
           </button>
@@ -103,7 +154,7 @@ export default function Dashboard() {
             <div style={{ width: 30, height: 30, borderRadius: 10, background: C.amberD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <CalendarDays size={14} color={C.amber} />
             </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}>{upcomingCount}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={upcomingCount} /></div>
             <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Événements</div>
             <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
           </button>
