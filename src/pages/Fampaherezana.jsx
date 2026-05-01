@@ -216,13 +216,14 @@ async function executeAssistantAction(action) {
   }
 
   if (action.action === 'send_message') {
-    const message = data.message || data.text || data.content || data.title || data.titre
+    const message = data.corps || data.body || data.message || data.text || data.content || ''
+    const titre = data.sujet || data.title || data.titre || 'Message'
     if (!message) throw new Error('Le contenu du message est manquant.')
     await createNotification({
       type: 'message',
-      titre: data.title || data.titre || 'Message',
+      titre,
       detail: String(message),
-      cible: data.target || data.cible || 'Tous',
+      cible: data.destinataires || data.target || data.cible || 'Tous',
       route: '/notifications',
     })
     return 'Message préparé et ajouté aux notifications.'
@@ -358,7 +359,9 @@ export default function Fampaherezana({ user }) {
               />
             ) : (
               <div className={`famp-bubble ${message.role}`}>
-                {message.text}
+                {message.text.split('\n').map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
               </div>
             )}
           </div>
