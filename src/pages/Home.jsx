@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
@@ -330,6 +331,18 @@ export default function Home({ user, userData }) {
           ))}
         </div>
       </div>
+
+      {createPortal((
+        <button
+          type="button"
+          className="famp-floating-btn"
+          onClick={() => navigate('/fampaherezana')}
+          aria-label="Fampaherezana"
+          title="Fampaherezana"
+        >
+          <MessageCircle size={23} />
+        </button>
+      ), document.body)}
 
       <div
         className={`verse-modal ${verseOpen ? 'open' : 'closed'}${verseClosing ? ' closing' : ''}${isNight ? ' night' : ''}`}

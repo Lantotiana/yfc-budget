@@ -2575,6 +2575,231 @@ input:focus, select:focus {
   margin-top: 7px;
 }
 
+/* ====== FAMPAHEREZANA ====== */
+.famp-floating-btn {
+  position: fixed;
+  right: 18px;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: #10b981;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow:
+    0 18px 34px rgba(15,23,42,0.22),
+    0 10px 24px rgba(16,185,129,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.28);
+}
+
+.famp-floating-btn:active {
+  transform: scale(0.96);
+}
+
+.famp-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+}
+
+.famp-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 18px 14px;
+  background: color-mix(in srgb, var(--bg-body) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.famp-back {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.famp-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.famp-kicker {
+  font-size: 10px;
+  color: #10b981;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-bottom: 2px;
+}
+
+.famp-title-wrap h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.famp-quota {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(16,185,129,0.12);
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.famp-chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 18px calc(154px + env(safe-area-inset-bottom));
+}
+
+.famp-message-row {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.famp-message-row.user {
+  justify-content: flex-end;
+}
+
+.famp-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.14);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.famp-bubble {
+  max-width: min(82%, 430px);
+  padding: 12px 14px;
+  border-radius: 18px;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 14px;
+  box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+}
+
+.famp-bubble.assistant {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-top-left-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.famp-bubble.user {
+  background: #10b981;
+  color: #fff;
+  border-top-right-radius: 6px;
+}
+
+.famp-bubble.quota {
+  background: rgba(244,63,94,0.1);
+  color: #f43f5e;
+  border-color: rgba(244,63,94,0.18);
+}
+
+.famp-bubble.typing {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 62px;
+}
+
+.famp-bubble.typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  opacity: 0.35;
+  animation: fampTyping 1s ease-in-out infinite;
+}
+
+.famp-bubble.typing span:nth-child(2) { animation-delay: .14s; }
+.famp-bubble.typing span:nth-child(3) { animation-delay: .28s; }
+
+@keyframes fampTyping {
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+.famp-input-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 500px);
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--card-bg) 94%, transparent);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 16px 42px rgba(15,23,42,0.16);
+  z-index: 40;
+}
+
+.famp-input-bar input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  padding: 0 10px;
+}
+
+.famp-input-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+.famp-input-bar button {
+  width: 42px;
+  height: 42px;
+  border-radius: 15px;
+  border: none;
+  background: #10b981;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.famp-input-bar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* ====== BOTTOM NAVIGATION ====== */
 .bottom-nav {
   position: fixed;
