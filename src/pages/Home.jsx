@@ -52,6 +52,8 @@ export default function Home({ user, userData }) {
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
   const dailyVerse = dailyVerses[Math.floor(Date.now() / 86400000) % dailyVerses.length]
+  const currentHour = new Date().getHours()
+  const isNight = currentHour >= 18 || currentHour < 6
 
   return (
     <div className="page-container sin" style={{ paddingBottom: 'calc(86px + env(safe-area-inset-bottom))', background: C.bg }}>
@@ -63,11 +65,11 @@ export default function Home({ user, userData }) {
             onClick={() => navigate('/parametres')}
             style={{
               width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-              background: `linear-gradient(135deg, ${C.amber}, ${C.teal})`,
+              background: C.surf2,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 19, fontWeight: 700, color: '#fff', cursor: 'pointer',
               overflow: 'hidden',
-              boxShadow: `0 8px 24px ${C.amberD.replace('0.13','0.4').replace('0.12','0.4')}`,
+              boxShadow: C.shadow,
             }}
           >
             {userData?.photoURL
@@ -126,8 +128,9 @@ export default function Home({ user, userData }) {
 
       {/* Daily verse */}
       <div className="f2" style={{ padding: '0 20px 16px' }}>
-        <div className="daily-verse-card">
+        <div className={`daily-verse-card ${isNight ? 'night' : 'day'}`}>
           <div className="daily-sky">
+            <div className="daily-stars" />
             <div className="daily-sun" />
             <div className="daily-cloud daily-cloud-one" />
             <div className="daily-cloud daily-cloud-two" />

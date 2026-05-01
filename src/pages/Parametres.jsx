@@ -161,7 +161,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div
               onClick={() => fileRef.current?.click()}
-              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, color: C.t1, flexShrink: 0, border: `2px solid ${C.amber}` }}
+              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, color: C.t1, flexShrink: 0 }}
             >
               {uploadingPhoto ? '...' : photoURL
                 ? <img src={photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

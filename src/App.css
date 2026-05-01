@@ -110,6 +110,15 @@ body {
   animation: dailyCardGlow 1.8s ease-out both;
 }
 
+.daily-verse-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 0% 0%, rgba(0, 0, 0, 0.28) 0%, transparent 52%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .daily-verse-card::after {
   content: "";
   position: absolute;
@@ -127,6 +136,21 @@ body {
   background: #38bdf8;
 }
 
+.daily-verse-card.night {
+  background: #1d4ed8;
+  box-shadow: 0 18px 36px rgba(29, 78, 216, 0.28);
+  animation: none;
+}
+
+.daily-verse-card.night::after {
+  background: radial-gradient(circle at 80% 24%, rgba(191, 219, 254, 0.36), rgba(147, 197, 253, 0.14) 24%, transparent 58%);
+  animation: dailyMoonBloom 1.8s ease-out both;
+}
+
+.daily-verse-card.night .daily-sky {
+  background: #1d4ed8;
+}
+
 .daily-sky::before {
   content: "";
   position: absolute;
@@ -136,6 +160,31 @@ body {
     linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px);
   background-size: 30px 30px, 20px 20px;
   opacity: 0.45;
+}
+
+.daily-verse-card.night .daily-sky::before {
+  background-image:
+    radial-gradient(circle at 18px 18px, rgba(255, 255, 255, 0.42) 0 1.3px, transparent 1.8px),
+    radial-gradient(circle at 52px 30px, rgba(255, 255, 255, 0.28) 0 1px, transparent 1.6px),
+    linear-gradient(135deg, rgba(147, 197, 253, 0.12) 0 1px, transparent 1px);
+  background-size: 58px 46px, 74px 64px, 22px 22px;
+  opacity: 0.72;
+}
+
+.daily-stars {
+  display: none;
+}
+
+.daily-verse-card.night .daily-stars {
+  display: block;
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 24%, #fff 0 1px, transparent 1.6px),
+    radial-gradient(circle at 38% 16%, rgba(255,255,255,.85) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 68% 42%, rgba(255,255,255,.8) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 62%, rgba(255,255,255,.72) 0 1.1px, transparent 1.7px);
+  animation: dailyStarsTwinkle 3.8s ease-in-out infinite;
 }
 
 .daily-sun {
@@ -151,12 +200,33 @@ body {
   z-index: 1;
 }
 
+.daily-verse-card.night .daily-sun {
+  background: #f8fafc;
+  box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
+  animation: dailyMoonRise 1.6s cubic-bezier(.2,.9,.2,1) both, dailyMoonFloat 5s 1.6s ease-in-out infinite;
+}
+
+.daily-verse-card.night .daily-sun::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #1d4ed8;
+}
+
 .daily-cloud {
   position: absolute;
   height: 18px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
   animation: dailyCloudDrift 12s ease-in-out infinite;
+}
+
+.daily-verse-card.night .daily-cloud {
+  background: rgba(219, 234, 254, 0.32);
 }
 
 .daily-cloud::before,
@@ -211,12 +281,21 @@ body {
   opacity: 0.72;
 }
 
+.daily-verse-card.night .daily-hill-back {
+  background: #2563eb;
+  opacity: 0.78;
+}
+
 .daily-hill-front {
   left: -18%;
   right: -4%;
   bottom: -58px;
   height: 110px;
   background: #16a34a;
+}
+
+.daily-verse-card.night .daily-hill-front {
+  background: #15803d;
 }
 
 .daily-verse-content {
@@ -275,6 +354,33 @@ body {
   0% { opacity: 0; transform: scale(0.84); }
   45% { opacity: 1; transform: scale(1.08); }
   100% { opacity: 0.38; transform: scale(1); }
+}
+
+@keyframes dailyMoonBloom {
+  0% { opacity: 0; transform: scale(0.86); }
+  50% { opacity: 0.72; transform: scale(1.06); }
+  100% { opacity: 0.36; transform: scale(1); }
+}
+
+@keyframes dailyMoonRise {
+  0% {
+    transform: translateY(76px) scale(0.78);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dailyMoonFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(4px) scale(1.02); }
+}
+
+@keyframes dailyStarsTwinkle {
+  0%, 100% { opacity: 0.68; }
+  50% { opacity: 1; }
 }
 
 @keyframes dailyCardGlow {
