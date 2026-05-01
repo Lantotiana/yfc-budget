@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { Sparkles, X, RefreshCw } from 'lucide-react'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import { generateBudgetSummary } from '../services/budgetSummary'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -21,7 +23,24 @@ export default function Budget() {
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
   const [editTx, setEditTx] = useState(null)
+  const [summary, setSummary] = useState(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [summaryMonth, setSummaryMonth] = useState('')
   const showDetail = detailType === 'entrees' ? 'entree' : detailType === 'depenses' ? 'depense' : null
+
+  async function openSummary(force = false) {
+    setSummaryOpen(true)
+    if (summary && !force) return
+    setSummaryLoading(true)
+    const currentMonth = new Date().toISOString().slice(0, 7)
+    const hasCurrentMonth = transactions.some(t => t.date?.startsWith(currentMonth))
+    const month = hasCurrentMonth ? currentMonth : months[0] ?? currentMonth
+    setSummaryMonth(month)
+    const text = await generateBudgetSummary(transactions, month, force)
+    setSummary(text)
+    setSummaryLoading(false)
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -112,11 +131,56 @@ export default function Budget() {
               {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
             </div>
           </div>
-          <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
-            {solde >= 0 ? '+' : '−'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => openSummary()}
+              style={{ width: 42, height: 42, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}
+              title="Résumé IA"
+            >
+              <Sparkles size={18} />
+            </button>
+            <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
+              {solde >= 0 ? '+' : '−'}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Résumé IA modal */}
+      {summaryOpen && (
+        <div className="modal-overlay" onClick={() => setSummaryOpen(false)}>
+          <div className="modal popup-float" style={{ maxHeight: '75vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div className="dialog-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={15} color="#10b981" />
+                <h2 className="dialog-title">
+                  Résumé IA — {summaryMonth ? new Date(summaryMonth + '-01').toLocaleString('fr-FR', { month: 'long', year: 'numeric' }) : '…'}
+                </h2>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => openSummary(true)} className="dialog-close-btn">
+                  <RefreshCw size={15} className={summaryLoading ? 'spin' : ''} />
+                </button>
+                <button onClick={() => setSummaryOpen(false)} className="dialog-close-btn">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {summaryLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: 12 }}>
+                  <div className="spin" style={{ width: 28, height: 28, border: `3px solid ${C.bord}`, borderTopColor: '#10b981', borderRadius: '50%' }} />
+                  <span style={{ fontSize: 13, color: C.t2 }}>Analyse en cours…</span>
+                </div>
+              ) : summary ? (
+                <p style={{ fontSize: 14, lineHeight: 1.75, color: C.t1, margin: 0, whiteSpace: 'pre-wrap' }}>{summary}</p>
+              ) : (
+                <p style={{ fontSize: 14, color: C.t2, textAlign: 'center', padding: '24px 0' }}>Impossible de générer le résumé.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {loading && <div className="loading">Chargement...</div>}

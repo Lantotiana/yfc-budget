@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, Settings, Users, Wallet } from 'lucide-react'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
-import { getVerseOfDay, generateNewVerse } from '../services/verseOfDay'
+import { getVerseOfDay } from '../services/verseOfDay'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -67,7 +67,6 @@ export default function Home({ user, userData }) {
   const [verseOpen, setVerseOpen] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
-  const [verseLoading, setVerseLoading] = useState(false)
 
   useEffect(() => {
     getVerseOfDay().then(v => { if (v) setAiVerse(v) })
@@ -78,14 +77,6 @@ export default function Home({ user, userData }) {
     return () => { document.body.style.overflow = '' }
   }, [verseOpen])
 
-  async function handleGenerateVerse(e) {
-    e.stopPropagation()
-    if (verseLoading) return
-    setVerseLoading(true)
-    const v = await generateNewVerse()
-    if (v) setAiVerse(v)
-    setVerseLoading(false)
-  }
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   useEffect(() => {
@@ -196,13 +187,6 @@ export default function Home({ user, userData }) {
             <div className="daily-verse-text">"{dailyVerse.text}"</div>
             <div className="daily-verse-ref">{dailyVerse.ref}</div>
           </div>
-          <button
-            className={`verse-gen-btn${verseLoading ? ' loading' : ''}`}
-            onClick={handleGenerateVerse}
-            aria-label="Nouveau verset"
-          >
-            <RefreshCw size={13} />
-          </button>
         </div>
       </div>
 

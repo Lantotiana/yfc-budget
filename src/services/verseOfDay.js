@@ -2,7 +2,9 @@ const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
 const CACHE_PREFIX = 'yfc_verse_'
 
 function todayKey() {
-  return CACHE_PREFIX + new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const block = Math.floor(now.getHours() / 3) * 3
+  return CACHE_PREFIX + now.toISOString().slice(0, 10) + '-' + String(block).padStart(2, '0')
 }
 
 function getCached() {
