@@ -6,12 +6,16 @@ import { Plus, Search, Trash2, Download } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
-const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '' }
+const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 const AVATAR_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#f43f5e', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6', '#ef4444']
 
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+function normalizeEmail(email) {
+  return (email || '').trim().toLowerCase()
 }
 
 function getAvatarColor(member) {
@@ -24,8 +28,10 @@ function getAvatarColor(member) {
 export default function Membres({ user, userData }) {
   const { C } = useTheme()
   const [membres, setMembres] = useState([])
+  const [staffEmails, setStaffEmails] = useState(() => new Set())
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
   const [sheet, setSheet] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -40,9 +46,20 @@ export default function Membres({ user, userData }) {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'users'), snap => {
+      const emails = snap.docs
+        .map(d => d.data())
+        .filter(u => u.approuve === true && u.email)
+        .map(u => normalizeEmail(u.email))
+      setStaffEmails(new Set(emails))
+    })
+    return () => unsub()
+  }, [])
+
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
-    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '' })
+    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email) })
     setSheet(m)
   }
   function closeSheet() { setSheet(null); setForm(EMPTY) }
@@ -56,6 +73,7 @@ export default function Membres({ user, userData }) {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
+          staff: form.staff === true || isApprovedUserEmail(form.email),
           dateAjout: new Date().toISOString().slice(0, 10),
         })
         await createNotification({
@@ -70,6 +88,7 @@ export default function Membres({ user, userData }) {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
+          staff: form.staff === true || isApprovedUserEmail(form.email),
         })
         await createNotification({
           type: 'membre',
@@ -116,11 +135,25 @@ export default function Membres({ user, userData }) {
   }
 
   const term = normalize(search)
-  const filtered = membres.filter(m =>
-    normalize(m.nom).includes(term) ||
-    normalize(m.prenoms).includes(term) ||
-    normalize(m.telephone).includes(term)
-  )
+  const isApprovedUserEmail = email => Boolean(normalizeEmail(email) && staffEmails.has(normalizeEmail(email)))
+  const isFormApprovedUser = isApprovedUserEmail(form.email)
+  const isStaffMember = m => m.staff === true || isApprovedUserEmail(m.email)
+
+  const filtered = membres.filter(m => {
+    const matchesSearch =
+      normalize(m.nom).includes(term) ||
+      normalize(m.prenoms).includes(term) ||
+      normalize(m.telephone).includes(term) ||
+      normalize(m.email).includes(term)
+
+    if (!matchesSearch) return false
+    if (roleFilter === 'staff') return isStaffMember(m)
+    if (roleFilter === 'membre') return !isStaffMember(m)
+    return true
+  })
+
+  const staffCount = membres.filter(isStaffMember).length
+  const memberOnlyCount = membres.length - staffCount
 
   const isEditing = sheet && sheet !== 'add'
 
@@ -149,6 +182,36 @@ export default function Membres({ user, userData }) {
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 14, outline: 'none' }} />
         </div>
+        <div className="member-role-filter" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+          {[
+            { key: 'all', label: 'Tous', count: membres.length },
+            { key: 'membre', label: 'Membres', count: memberOnlyCount },
+            { key: 'staff', label: 'Staff', count: staffCount },
+          ].map(item => {
+            const active = roleFilter === item.key
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setRoleFilter(item.key)}
+                style={{
+                  minWidth: 0,
+                  border: 'none',
+                  borderRadius: 10,
+                  padding: '8px 6px',
+                  background: active ? C.teal : 'transparent',
+                  color: active ? '#fff' : C.t2,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {item.label} <span style={{ opacity: active ? 0.9 : 0.65 }}>{item.count}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Liste */}
@@ -156,16 +219,24 @@ export default function Membres({ user, userData }) {
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 13 }}>Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 13 }}>{search ? 'Aucun résultat' : 'Aucun membre enregistré'}</div>
+          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 13 }}>{search || roleFilter !== 'all' ? 'Aucun résultat' : 'Aucun membre enregistré'}</div>
         ) : filtered.map(m => {
           const avatarColor = getAvatarColor(m)
+          const isStaff = isStaffMember(m)
           return (
           <div key={m.id} onClick={() => openEdit(m)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '13px 14px', marginBottom: 8, cursor: 'pointer' }}>
             <div style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, background: `${avatarColor}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: avatarColor }}>
               {(m.nom || '?')[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+                {isStaff && (
+                  <span style={{ flexShrink: 0, padding: '3px 7px', borderRadius: 999, background: 'rgba(16,185,129,0.12)', color: C.teal, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
+                    Staff
+                  </span>
+                )}
+              </div>
               {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
               {m.email && <div style={{ fontSize: 11, color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
             </div>
@@ -193,6 +264,19 @@ export default function Membres({ user, userData }) {
                 <div key={f.key}><label className="form-label">{f.label}</label><input type={f.type || 'text'} value={form[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} className="form-input" /></div>
               ))}
               <div><label className="form-label">Taille T-shirt</label><select value={form.tailleTshirt} onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))} className="form-input" style={{ cursor: 'pointer' }}><option value="">Non spécifiée</option>{TAILLES_TSHIRT.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '2px 0', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={form.staff === true || isFormApprovedUser}
+                  onChange={e => setForm(prev => ({ ...prev, staff: e.target.checked }))}
+                  disabled={isFormApprovedUser}
+                  style={{ width: 18, height: 18, accentColor: C.teal }}
+                />
+                <span style={{ color: C.t1, fontSize: 13, fontWeight: 500 }}>
+                  Cette personne est Staff
+                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 11, fontWeight: 600 }}> (user approuvé)</span>}
+                </span>
+              </label>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
               <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>

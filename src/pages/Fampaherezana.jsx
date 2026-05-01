@@ -113,6 +113,7 @@ async function executeAssistantAction(action) {
       telephone: String(data.telephone || data.phone || '').trim(),
       email: String(data.email || '').trim(),
       tailleTshirt: data.tailleTshirt || '',
+      staff: data.staff === true,
       dateAjout: new Date().toISOString().slice(0, 10),
     })
     await createNotification({
@@ -129,7 +130,7 @@ async function executeAssistantAction(action) {
     const id = data.id || data.memberId || data.membreId
     if (!id) throw new Error('L’identifiant du membre est manquant.')
     const patch = {}
-    ;['nom', 'prenoms', 'nomPrefere', 'adresse', 'telephone', 'email', 'tailleTshirt'].forEach(key => {
+    ;['nom', 'prenoms', 'nomPrefere', 'adresse', 'telephone', 'email', 'tailleTshirt', 'staff'].forEach(key => {
       if (data[key] !== undefined) patch[key] = data[key]
     })
     if (Object.keys(patch).length === 0) throw new Error('Aucune modification détectée.')
