@@ -6,9 +6,12 @@ import { Plus, Search, Trash2, Download } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
-const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false }
+import { ADMIN_EMAIL } from '../constants'
+
+const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '' }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 const AVATAR_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#f43f5e', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6', '#ef4444']
+const STAFF_ROLES = ['Président', 'Vice-président', 'Secrétaire', 'Trésorier', 'Responsable communication', 'Responsable logistique', 'Mentor']
 
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -36,6 +39,7 @@ export default function Membres({ user, userData }) {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
+  const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
     const q = query(collection(db, 'membres'), orderBy('nom'))
@@ -59,21 +63,30 @@ export default function Membres({ user, userData }) {
 
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
-    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email) })
+    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email), staffRole: m.staffRole || '' })
     setSheet(m)
   }
   function closeSheet() { setSheet(null); setForm(EMPTY) }
+
+  function getStaffRoleToSave(isStaff) {
+    if (!isStaff) return ''
+    if (isAdmin) return form.staffRole || ''
+    return sheet && sheet !== 'add' ? (sheet.staffRole || '') : ''
+  }
 
   async function save() {
     if (!form.nom.trim()) return
     setSaving(true)
     try {
+      const isStaff = form.staff === true || isApprovedUserEmail(form.email)
+      const staffRole = getStaffRoleToSave(isStaff)
       if (sheet === 'add') {
         await addDoc(collection(db, 'membres'), {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
-          staff: form.staff === true || isApprovedUserEmail(form.email),
+          staff: isStaff,
+          staffRole,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
         await createNotification({
@@ -88,7 +101,8 @@ export default function Membres({ user, userData }) {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
-          staff: form.staff === true || isApprovedUserEmail(form.email),
+          staff: isStaff,
+          staffRole,
         })
         await createNotification({
           type: 'membre',
@@ -126,6 +140,8 @@ export default function Membres({ user, userData }) {
       'Email': m.email || '',
       'Adresse': m.adresse || '',
       'Taille T-shirt': m.tailleTshirt || '',
+      'Staff': isStaffMember(m) ? 'Oui' : 'Non',
+      'Rôle staff': isStaffMember(m) ? (m.staffRole || '') : '',
       "Date d'ajout": toDisplayDate(m.dateAjout),
     }))
     const ws = XLSX.utils.json_to_sheet(rows)
@@ -137,6 +153,7 @@ export default function Membres({ user, userData }) {
   const term = normalize(search)
   const isApprovedUserEmail = email => Boolean(normalizeEmail(email) && staffEmails.has(normalizeEmail(email)))
   const isFormApprovedUser = isApprovedUserEmail(form.email)
+  const isFormStaff = form.staff === true || isFormApprovedUser
   const isStaffMember = m => m.staff === true || isApprovedUserEmail(m.email)
 
   const filtered = membres.filter(m => {
@@ -236,6 +253,11 @@ export default function Membres({ user, userData }) {
                     Staff
                   </span>
                 )}
+                {isStaff && m.staffRole && (
+                  <span style={{ flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '3px 7px', borderRadius: 999, background: C.surf2, color: C.t2, fontSize: 9, fontWeight: 800 }}>
+                    {m.staffRole}
+                  </span>
+                )}
               </div>
               {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
               {m.email && <div style={{ fontSize: 11, color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
@@ -267,16 +289,45 @@ export default function Membres({ user, userData }) {
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '2px 0', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={form.staff === true || isFormApprovedUser}
+                  checked={isFormStaff}
                   onChange={e => setForm(prev => ({ ...prev, staff: e.target.checked }))}
                   disabled={isFormApprovedUser}
                   style={{ width: 18, height: 18, accentColor: C.teal }}
                 />
-                <span style={{ color: C.t1, fontSize: 13, fontWeight: 500 }}>
+                <span style={{ color: C.t1, fontSize: 13, fontWeight: 400 }}>
                   Cette personne est Staff
-                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 11, fontWeight: 600 }}> (user approuvé)</span>}
+                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 11, fontWeight: 400 }}> (user approuvé)</span>}
                 </span>
               </label>
+              {isFormStaff && (
+                <div>
+                  <label className="form-label">Rôle</label>
+                  {isAdmin ? (
+                    <select
+                      value={form.staffRole}
+                      onChange={e => setForm(prev => ({ ...prev, staffRole: e.target.value }))}
+                      className="form-input"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <option value="">Aucun rôle attribué</option>
+                      {STAFF_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+                    </select>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={form.staffRole || 'Non attribué'}
+                        disabled
+                        className="form-input"
+                        style={{ color: C.t2 }}
+                      />
+                      <div style={{ marginTop: 5, fontSize: 11, color: C.t3 }}>
+                        Seul l'admin peut attribuer un rôle.
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
               <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>

@@ -151,6 +151,8 @@ async function buildAppContext(uid) {
   ])
 
   const user = userSnap.exists ? userSnap.data() : {}
+  const currentUserEmail = String(user.email || '').trim().toLowerCase()
+  const currentMember = membres.find(m => String(m.email || '').trim().toLowerCase() === currentUserEmail) || null
   const totalEntrees = totalByType(transactions, 'entree')
   const totalDepenses = totalByType(transactions, 'depense')
 
@@ -177,6 +179,8 @@ async function buildAppContext(uid) {
       nom: user.nom || null,
       email: user.email || null,
       role: user.role || (user.admin ? 'admin' : 'membre'),
+      staff: currentMember?.staff === true,
+      staffRole: currentMember?.staffRole || null,
       approuve: user.approuve === true,
       dateInscription: user.dateInscription || null,
       photoURL: user.photoURL || null,
@@ -214,6 +218,8 @@ async function buildAppContext(uid) {
       telephone: m.telephone || m.tel || null,
       email: m.email || null,
       tailleTshirt: m.tailleTshirt || null,
+      staff: m.staff === true,
+      staffRole: m.staffRole || null,
       dateAjout: m.dateAjout || m.dateInscription || null,
     })),
     transactions: transactions.map(t => ({
@@ -298,10 +304,10 @@ DONNÉES DISPONIBLES DANS LE CONTEXTE JSON
 
 Tu as accès à TOUTES les données réelles de l'application :
 
-• currentUser — l'utilisateur connecté (uid, nom, email, role, approuve, dateInscription, photoURL)
+• currentUser — l'utilisateur connecté (uid, nom, email, role, staff, staffRole, approuve, dateInscription, photoURL)
 • stats — chiffres globaux (nb membres, transactions, solde, présences, documents, etc.)
 • utilisateurs — tous les comptes de l'app (id, nom, prenom, email, role, approuve, dateInscription)
-• membres — liste complète (id, nom, prenoms, nomPrefere, adresse, telephone, email, tailleTshirt, dateAjout)
+• membres — liste complète (id, nom, prenoms, nomPrefere, adresse, telephone, email, tailleTshirt, staff, staffRole, dateAjout)
 • transactions — toutes les transactions budget (id, type[entree/depense], date, montant, motif, note, createdBy{uid,nom,email}, createdAt)
 • evenements — agenda YFC (id, nom, dateDebut, dateFin, heureDebut, heureFin, lieu, description)
 • presences — par événement Alimbavaka (id, titre, date, createdAt, nbPresents, nbAbsents, presents[{membreId,nom,prenoms,nomPrefere}], absents[...])
@@ -329,8 +335,8 @@ Quand l'utilisateur demande de créer ou modifier quelque chose, réponds UNIQUE
 {"action":"<type>","data":{...},"needsConfirmation":true}
 
 Types d'actions :
-• create_member        → data: { nom, prenoms, nomPrefere, adresse, telephone, email, tailleTshirt }
-• update_member        → data: { id, <champs modifiés> }
+• create_member        → data: { nom, prenoms, nomPrefere, adresse, telephone, email, tailleTshirt, staff, staffRole }
+• update_member        → data: { id, <champs modifiés>, staffRole }
 • create_event         → data: { nom, dateDebut, dateFin, heureDebut, heureFin, lieu, description }
 • update_event         → data: { id, <champs modifiés> }
 • create_expense       → data: { motif, montant, date, note }
@@ -366,6 +372,7 @@ IMPORTANT FORMAT :
 
 SÉCURITÉ
 - Toujours demander confirmation avant toute modification
+- Pour create_expense et create_contribution, l'utilisateur doit avoir currentUser.staffRole égal à Président, Vice-président ou Trésorier. Sinon, réponds qu'il peut consulter le budget mais pas le modifier.
 - Si demande ambiguë → UNE question simple
 
 ---

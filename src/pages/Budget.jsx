@@ -10,16 +10,18 @@ import DetailTransactions from '../components/DetailTransactions'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import { generateBudgetSummary } from '../services/budgetSummary'
+import { canManageBudgetRole, sameEmail } from '../utils/access'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
 }
 
-export default function Budget() {
+export default function Budget({ user }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const { detailType } = useParams()
   const [transactions, setTransactions] = useState([])
+  const [membres, setMembres] = useState([])
   const [loading, setLoading] = useState(true)
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -60,7 +62,19 @@ export default function Budget() {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    const q = query(collection(db, 'membres'), orderBy('nom'))
+    const unsub = onSnapshot(q, snapshot => {
+      setMembres(snapshot.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    return () => unsub()
+  }, [])
+
+  const currentMember = membres.find(m => sameEmail(m.email, user?.email))
+  const canManageBudget = canManageBudgetRole(currentMember?.staffRole)
+
   async function addTransaction(tx) {
+    if (!canManageBudget) return
     await addDoc(collection(db, 'transactions'), tx)
     await createNotification({
       type: 'budget',
@@ -72,6 +86,7 @@ export default function Budget() {
   }
 
   async function deleteTransaction(tx) {
+    if (!canManageBudget) return
     await deleteDoc(doc(db, 'transactions', tx.id))
     await createNotification({
       type: 'budget',
@@ -100,6 +115,7 @@ export default function Budget() {
       transactions={transactions}
       onBack={() => navigate('/budget', { replace: true })}
       onEdit={tx => { setEditTx(tx); navigate('/budget', { replace: true }) }}
+      canManageBudget={canManageBudget}
     />
   )
 
@@ -185,7 +201,7 @@ export default function Budget() {
 
       <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {loading && <div className="loading">Chargement...</div>}
-        <TransactionForm onAdd={addTransaction} />
+        <TransactionForm onAdd={addTransaction} canManageBudget={canManageBudget} />
         <TransactionList
           transactions={filtered}
           months={months}
@@ -197,6 +213,7 @@ export default function Budget() {
           allTransactions={transactions}
           editTx={editTx}
           onEditDone={() => setEditTx(null)}
+          canManageBudget={canManageBudget}
         />
       </div>
     </div>

@@ -332,7 +332,7 @@ export default function Home({ user, userData }) {
         </div>
       </div>
 
-      {createPortal((
+      {!(verseOpen || verseClosing) && createPortal((
         <button
           type="button"
           className="famp-floating-btn"

@@ -37,7 +37,7 @@ function fuzzyMatch(text, query) {
 
 export default function TransactionList({
   transactions, months, filterMonth, filterType,
-  onFilterMonth, onFilterType, onDelete, allTransactions = []
+  onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true
 }) {
   const { C } = useTheme()
   const [selected, setSelected] = useState(null)
@@ -103,12 +103,14 @@ export default function TransactionList({
   }
 
   function handleChangeType(t) {
+    if (!canManageBudget) return
     setEditType(t)
     setEditMotif(DEFAULT_MOTIFS[t][0])
     setEditMotifCustom('')
   }
 
   async function handleSave() {
+    if (!canManageBudget) return
     const motifFinal = editMotif === 'Autre' ? editMotifCustom.trim() : editMotif
     if (!editDate || !editMontant || isNaN(editMontant) || Number(editMontant) <= 0) {
       alert('Veuillez remplir la date et le montant.')
@@ -138,6 +140,7 @@ export default function TransactionList({
   }
 
   async function handleDelete() {
+    if (!canManageBudget) return
     if (window.confirm('Supprimer cette transaction ?')) {
       await deleteDoc(doc(db, 'transactions', selected.id))
       await createNotification({
@@ -415,6 +418,11 @@ export default function TransactionList({
               <h3 className="dialog-title">Modifier la transaction</h3>
               <button onClick={closeEdit} className="dialog-close-btn"><X size={18} /></button>
             </div>
+            {!canManageBudget && (
+              <div className="budget-readonly-note">
+                Lecture seule : seuls les Présidents, Vice-présidents et Trésoriers peuvent modifier le budget.
+              </div>
+            )}
 
             {selected.createdBy && (
               <div className="flex-center gap-10 p-12 rounded-12 mb-14" style={{background:'var(--surface-alt)'}}>
@@ -445,10 +453,10 @@ export default function TransactionList({
             )}
 
             <div className="type-toggle mb-14">
-              <button onClick={() => handleChangeType('entree')} className="type-btn" style={{background: editType==='entree' ? C.tealD : 'transparent', color: editType==='entree' ? C.teal : C.t2}}>
+              <button onClick={() => handleChangeType('entree')} disabled={!canManageBudget} className="type-btn" style={{background: editType==='entree' ? C.tealD : 'transparent', color: editType==='entree' ? C.teal : C.t2}}>
                 + Entrée
               </button>
-              <button onClick={() => handleChangeType('depense')} className="type-btn" style={{background: editType==='depense' ? C.coralD : 'transparent', color: editType==='depense' ? C.coral : C.t2}}>
+              <button onClick={() => handleChangeType('depense')} disabled={!canManageBudget} className="type-btn" style={{background: editType==='depense' ? C.coralD : 'transparent', color: editType==='depense' ? C.coral : C.t2}}>
                 − Dépense
               </button>
             </div>
@@ -456,17 +464,17 @@ export default function TransactionList({
             <div className="form-row gap-10 mb-10">
               <div>
                 <label className="form-label">Date</label>
-                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" />
+                <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" disabled={!canManageBudget} />
               </div>
               <div>
                 <label className="form-label">Montant (Ar)</label>
-                <input type="number" value={editMontant} onChange={e => setEditMontant(e.target.value)} min="0" className="form-input" />
+                <input type="number" value={editMontant} onChange={e => setEditMontant(e.target.value)} min="0" className="form-input" disabled={!canManageBudget} />
               </div>
             </div>
 
             <div className="mb-10">
               <label className="form-label">Motif</label>
-              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input">
+              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
                 {DEFAULT_MOTIFS[editType].map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
@@ -481,20 +489,21 @@ export default function TransactionList({
                   placeholder="Ex: Achat matériel évangélisation..."
                   className="form-input"
                   autoFocus
+                  disabled={!canManageBudget}
                 />
               </div>
             )}
 
             <div className="mb-16">
               <label className="form-label">Note (optionnel)</label>
-              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" />
+              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" disabled={!canManageBudget} />
             </div>
 
-            <button onClick={handleSave} disabled={saving} className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none mb-8" style={{padding:'12px', background:'var(--btn-primary-bg)', opacity: saving ? 0.7 : 1}}>
+            <button onClick={handleSave} disabled={saving || !canManageBudget} className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none mb-8" style={{padding:'12px', background:'var(--btn-primary-bg)', opacity: saving || !canManageBudget ? 0.45 : 1}}>
               {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </button>
 
-            <button onClick={handleDelete} className="btn-danger w-full" style={{padding:'12px', fontSize:'14px', fontWeight:'700'}}>
+            <button onClick={handleDelete} disabled={!canManageBudget} className="btn-danger w-full" style={{padding:'12px', fontSize:'14px', fontWeight:'700', opacity: !canManageBudget ? 0.45 : 1}}>
               Supprimer la transaction
             </button>
           </div>

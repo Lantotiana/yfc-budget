@@ -2,12 +2,14 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import { ArrowLeft, Send } from 'lucide-react'
 import assistantAvatar from '../assets/assistant_avatar.jpg'
 import { useNavigate } from 'react-router-dom'
-import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { createNotification } from '../notifications'
 import { generateAppAssistant } from '../services/fampaherezana'
 import { useTheme } from '../context/ThemeContext'
+import { ADMIN_EMAIL } from '../constants'
+import { canManageBudgetRole, sameEmail } from '../utils/access'
 
 const WELCOME = 'Bonjour 😊 Que souhaitez-vous faire dans l’application ? (voir les données, ajouter un événement, enregistrer une dépense, etc.)\n\nSalama 😊 Inona no tianao hatao ato amin’ny application ? (hijery données, hanampy événement, hanoratra dépense, sns.)'
 const STORAGE_PREFIX = 'yfc_app_assistant_chat_'
@@ -98,8 +100,17 @@ async function getCreatedBy() {
   }
 }
 
+async function currentUserCanManageBudget() {
+  const user = auth.currentUser
+  if (!user?.email) return false
+  const snap = await getDocs(collection(db, 'membres'))
+  const member = snap.docs.map(d => d.data()).find(m => sameEmail(m.email, user.email))
+  return canManageBudgetRole(member?.staffRole)
+}
+
 async function executeAssistantAction(action) {
   const data = action?.data || {}
+  const canAssignStaffRole = auth.currentUser?.email === ADMIN_EMAIL
 
   if (action.action === 'create_member') {
     const nom = data.nom || data.name
@@ -114,6 +125,7 @@ async function executeAssistantAction(action) {
       email: String(data.email || '').trim(),
       tailleTshirt: data.tailleTshirt || '',
       staff: data.staff === true,
+      staffRole: data.staff === true && canAssignStaffRole ? String(data.staffRole || data.role || '').trim() : '',
       dateAjout: new Date().toISOString().slice(0, 10),
     })
     await createNotification({
@@ -133,6 +145,10 @@ async function executeAssistantAction(action) {
     ;['nom', 'prenoms', 'nomPrefere', 'adresse', 'telephone', 'email', 'tailleTshirt', 'staff'].forEach(key => {
       if (data[key] !== undefined) patch[key] = data[key]
     })
+    if (canAssignStaffRole) {
+      if (data.staffRole !== undefined) patch.staffRole = data.staffRole
+      if (data.role !== undefined && patch.staffRole === undefined) patch.staffRole = data.role
+    }
     if (Object.keys(patch).length === 0) throw new Error('Aucune modification détectée.')
     await updateDoc(doc(db, 'membres', id), patch)
     await createNotification({
@@ -192,6 +208,9 @@ async function executeAssistantAction(action) {
   }
 
   if (action.action === 'create_expense' || action.action === 'create_contribution') {
+    if (!(await currentUserCanManageBudget())) {
+      throw new Error('Vous pouvez consulter le budget, mais seuls les Présidents, Vice-présidents et Trésoriers peuvent le modifier.')
+    }
     const isExpense = action.action === 'create_expense'
     const motif = getActionTitle(data)
     const montant = getActionAmount(data)
