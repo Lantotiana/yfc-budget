@@ -2,17 +2,37 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
-import { Bell, CalendarCheck, FileText, Settings, UserRound, Wallet } from 'lucide-react'
+import { Bell, CalendarCheck, CalendarDays, FolderOpen, Settings, Users, UserRound, Wallet } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const typeIcon = {
   budget: Wallet,
-  membre: UserRound,
+  membre: Users,
   presence: CalendarCheck,
-  evenement: CalendarCheck,
-  document: FileText,
+  evenement: CalendarDays,
+  document: FolderOpen,
   profil: Settings,
   admin: UserRound,
+}
+
+const typeColor = {
+  dashboard: '#2563eb',
+  stats: '#2563eb',
+  budget: '#10b981',
+  presence: '#7c3aed',
+  presences: '#7c3aed',
+  membre: '#f43f5e',
+  membres: '#f43f5e',
+  evenement: '#f59e0b',
+  evenements: '#f59e0b',
+  document: '#06b6d4',
+  documents: '#06b6d4',
+  profil: '#64748b',
+  admin: '#64748b',
+}
+
+function getNotificationColor(type) {
+  return typeColor[type] || '#10b981'
 }
 
 const TITLE_FIXES = {
@@ -137,6 +157,7 @@ export default function Notifications({ user }) {
             <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 8px' }}>{label}</div>
             {items.map(notif => {
               const Icon = typeIcon[notif.type] || Bell
+              const color = getNotificationColor(notif.type)
               return (
                 <button
                   key={notif.id}
@@ -144,7 +165,7 @@ export default function Notifications({ user }) {
                   type="button"
                   style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 14, padding: '13px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                 >
-                  <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${color}1F`, color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon size={16} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
