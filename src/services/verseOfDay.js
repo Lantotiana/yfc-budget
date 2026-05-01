@@ -3,8 +3,10 @@ const CACHE_PREFIX = 'yfc_verse_'
 
 function todayKey() {
   const now = new Date()
-  const block = Math.floor(now.getHours() / 3) * 3
-  return CACHE_PREFIX + now.toISOString().slice(0, 10) + '-' + String(block).padStart(2, '0')
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${CACHE_PREFIX}${year}-${month}-${day}`
 }
 
 function getCached() {

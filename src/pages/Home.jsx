@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
-import { getVerseOfDay } from '../services/verseOfDay'
+import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
 
 function getPrenom(fullName) {
   if (!fullName) return null
   return fullName.trim().split(' ')[0]
+}
+
+function getLocalDayKey(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getFallbackVerseIndex(dayKey) {
+  const [year, month, day] = dayKey.split('-').map(Number)
+  return Math.floor(new Date(year, month - 1, day).getTime() / 86400000) % dailyVerses.length
 }
 
 const modules = [
@@ -67,9 +79,19 @@ export default function Home({ user, userData }) {
   const [verseOpen, setVerseOpen] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
+  const [generatingVerse, setGeneratingVerse] = useState(false)
+  const [fallbackOffset, setFallbackOffset] = useState(0)
+  const [now, setNow] = useState(() => new Date())
+  const dayKey = getLocalDayKey(now)
 
   useEffect(() => {
+    setFallbackOffset(0)
     getVerseOfDay().then(v => { if (v) setAiVerse(v) })
+  }, [dayKey])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -92,9 +114,22 @@ export default function Home({ user, userData }) {
   }, [user?.uid])
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
-  const dailyVerse = aiVerse ?? dailyVerses[Math.floor(Date.now() / 86400000) % dailyVerses.length]
-  const currentHour = new Date().getHours()
+  const dailyVerse = aiVerse ?? dailyVerses[(getFallbackVerseIndex(dayKey) + fallbackOffset) % dailyVerses.length]
+  const currentHour = now.getHours()
   const isNight = currentHour >= 18 || currentHour < 6
+
+  async function handleGenerateVerse(e) {
+    e.stopPropagation()
+    if (generatingVerse) return
+    setGeneratingVerse(true)
+    const verse = await generateNewVerse()
+    if (verse) setAiVerse(verse)
+    else {
+      setAiVerse(null)
+      setFallbackOffset(prev => prev + 1)
+    }
+    setGeneratingVerse(false)
+  }
 
   return (
     <div className="page-container sin" style={{ paddingBottom: 'calc(86px + env(safe-area-inset-bottom))', background: C.bg }}>
@@ -187,6 +222,15 @@ export default function Home({ user, userData }) {
             <div className="daily-verse-text">"{dailyVerse.text}"</div>
             <div className="daily-verse-ref">{dailyVerse.ref}</div>
           </div>
+          <button
+            type="button"
+            className={`verse-gen-btn${generatingVerse ? ' loading' : ''}`}
+            onClick={handleGenerateVerse}
+            aria-label="Générer un autre verset"
+            title="Générer"
+          >
+            <RefreshCw size={14} />
+          </button>
         </div>
       </div>
 

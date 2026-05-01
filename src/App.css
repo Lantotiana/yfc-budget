@@ -84,7 +84,7 @@ body {
 /* ====== ANIMATIONS ====== */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 .sin { animation: fadeSlideUp .32s cubic-bezier(.25,.8,.25,1) both; }
 .f1  { animation: fadeSlideUp .38s .05s both cubic-bezier(.25,.8,.25,1); }
@@ -169,6 +169,14 @@ body {
     linear-gradient(135deg, rgba(147, 197, 253, 0.12) 0 1px, transparent 1px);
   background-size: 58px 46px, 74px 64px, 22px 22px;
   opacity: 0.72;
+}
+
+.daily-verse-card.night .daily-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 0% 0%, rgba(15, 23, 42, 0.58), rgba(30, 64, 175, 0.22) 34%, transparent 62%);
+  pointer-events: none;
 }
 
 .daily-stars {
@@ -1205,6 +1213,69 @@ input:focus, select:focus {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+}
+
+.ai-summary-modal {
+  width: min(92vw, 460px);
+  max-width: 460px;
+  max-height: min(78vh, 640px);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-summary-header {
+  padding: 18px 18px 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-light);
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ai-summary-header .dialog-title {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.ai-summary-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px 18px;
+}
+
+.ai-summary-loading {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ai-summary-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 420px) {
+  .ai-summary-modal {
+    width: calc(100vw - 28px);
+    max-height: 76vh;
+    border-radius: 18px;
+  }
+
+  .ai-summary-header {
+    padding: 16px 16px 12px;
+  }
+
+  .ai-summary-body {
+    padding: 14px 16px 16px;
+  }
 }
 
 /* ====== MISC ====== */

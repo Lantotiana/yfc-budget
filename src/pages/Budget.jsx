@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Sparkles, X, RefreshCw } from 'lucide-react'
@@ -147,17 +148,17 @@ export default function Budget() {
       </div>
 
       {/* Résumé IA modal */}
-      {summaryOpen && (
+      {summaryOpen && createPortal((
         <div className="modal-overlay" onClick={() => setSummaryOpen(false)}>
-          <div className="modal popup-float" style={{ maxHeight: '75vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
-            <div className="dialog-header">
+          <div className="modal ai-summary-modal popup-float" onClick={e => e.stopPropagation()}>
+            <div className="dialog-header ai-summary-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Sparkles size={15} color="#10b981" />
                 <h2 className="dialog-title">
                   Résumé IA — {summaryMonth ? new Date(summaryMonth + '-01').toLocaleString('fr-FR', { month: 'long', year: 'numeric' }) : '…'}
                 </h2>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button onClick={() => openSummary(true)} className="dialog-close-btn">
                   <RefreshCw size={15} className={summaryLoading ? 'spin' : ''} />
                 </button>
@@ -166,21 +167,21 @@ export default function Budget() {
                 </button>
               </div>
             </div>
-            <div style={{ overflowY: 'auto', flex: 1 }}>
+            <div className="ai-summary-body">
               {summaryLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: 12 }}>
+                <div className="ai-summary-loading">
                   <div className="spin" style={{ width: 28, height: 28, border: `3px solid ${C.bord}`, borderTopColor: '#10b981', borderRadius: '50%' }} />
                   <span style={{ fontSize: 13, color: C.t2 }}>Analyse en cours…</span>
                 </div>
               ) : summary ? (
-                <p style={{ fontSize: 14, lineHeight: 1.75, color: C.t1, margin: 0, whiteSpace: 'pre-wrap' }}>{summary}</p>
+                <p className="ai-summary-text">{summary}</p>
               ) : (
                 <p style={{ fontSize: 14, color: C.t2, textAlign: 'center', padding: '24px 0' }}>Impossible de générer le résumé.</p>
               )}
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {loading && <div className="loading">Chargement...</div>}
