@@ -2529,6 +2529,103 @@ input:focus, select:focus {
     -webkit-backdrop-filter: none;
     background: rgba(12, 14, 24, 0.58);
   }
+
+  .verse-modal {
+    background: #2563eb;
+    overflow: hidden;
+  }
+
+  .verse-modal.night {
+    background: #1e40af;
+  }
+
+  .verse-modal .daily-sky,
+  .verse-modal.night .daily-sky {
+    background: #2563eb;
+  }
+
+  .verse-modal.night .daily-sky {
+    background: #1e40af;
+  }
+
+  .verse-modal .daily-sky::before,
+  .verse-modal .daily-sky::after,
+  .verse-modal.night .daily-sky::before,
+  .verse-modal.night .daily-sky::after {
+    display: none;
+  }
+
+  .verse-modal .daily-sun {
+    top: 56px;
+    right: 34px;
+    width: 64px;
+    height: 64px;
+    animation: none;
+    transform: none;
+    box-shadow: 0 0 0 14px rgba(250, 204, 21, 0.14);
+  }
+
+  .verse-modal.night .daily-sun {
+    background: #f8fafc;
+    box-shadow: 0 0 0 14px rgba(191, 219, 254, 0.12);
+  }
+
+  .verse-modal.night .daily-sun::after {
+    background: #1e40af;
+  }
+
+  .verse-modal .daily-hill,
+  .verse-modal .daily-hill-back,
+  .verse-modal .daily-hill-front {
+    transform: none;
+    animation: none;
+  }
+
+  .verse-modal .daily-hill-back {
+    bottom: 42px;
+    background: #22c55e;
+    opacity: 0.62;
+  }
+
+  .verse-modal .daily-hill-front {
+    bottom: 18px;
+    background: #16a34a;
+  }
+
+  .verse-modal.night .daily-hill-back {
+    background: #2563eb;
+    opacity: 0.62;
+  }
+
+  .verse-modal.night .daily-hill-front {
+    background: #166534;
+  }
+
+  .verse-modal-overlay {
+    display: block;
+    background: linear-gradient(
+      to bottom,
+      rgba(15, 23, 42, 0.04) 0%,
+      rgba(15, 23, 42, 0.16) 34%,
+      rgba(15, 23, 42, 0.36) 100%
+    );
+  }
+
+  .verse-modal-scroll {
+    overflow: hidden;
+    top: 24%;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    padding: 22px 22px 0;
+    transform: none;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .verse-modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: 28px;
+  }
 }
 
 body:has(.bottom-sheet-overlay) .bottom-nav,
