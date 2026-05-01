@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
@@ -78,6 +78,7 @@ export default function Home({ user, userData }) {
   const [showAdmin, setShowAdmin] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
   const [verseClosing, setVerseClosing] = useState(false)
+  const [verseHistoryPushed, setVerseHistoryPushed] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
@@ -96,14 +97,37 @@ export default function Home({ user, userData }) {
   }, [])
 
   useEffect(() => {
-    const modalVisible = verseOpen || verseClosing
-    document.body.style.overflow = modalVisible ? 'hidden' : ''
-    document.body.toggleAttribute('data-verse-modal-open', modalVisible)
+    const modalBlocking = verseOpen || verseClosing
+    const modalVisible = verseOpen && !verseClosing
+    document.body.style.overflow = modalBlocking ? 'hidden' : ''
+    document.body.toggleAttribute('data-verse-modal-open', modalBlocking)
+    document.body.toggleAttribute('data-verse-modal-visible', modalVisible)
     return () => {
       document.body.style.overflow = ''
       document.body.removeAttribute('data-verse-modal-open')
+      document.body.removeAttribute('data-verse-modal-visible')
     }
   }, [verseOpen, verseClosing])
+
+  useEffect(() => {
+    function onPopState(e) {
+      if (!verseOpen) return
+      // Intercept Back while verse is open so the global Back guard doesn't show the Home exit toast.
+      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation()
+      if (typeof e.stopPropagation === 'function') e.stopPropagation()
+      if (typeof e.preventDefault === 'function') e.preventDefault()
+      if (e.state?.yfcVerseModal) return
+      setVerseClosing(true)
+      window.setTimeout(() => {
+        setVerseOpen(false)
+        setVerseClosing(false)
+        setVerseHistoryPushed(false)
+      }, 260)
+    }
+
+    window.addEventListener('popstate', onPopState, { capture: true })
+    return () => window.removeEventListener('popstate', onPopState, { capture: true })
+  }, [verseOpen])
 
 
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
@@ -141,6 +165,10 @@ export default function Home({ user, userData }) {
   function openVerse() {
     setVerseClosing(false)
     setVerseOpen(true)
+    if (!verseHistoryPushed) {
+      window.history.pushState({ yfcVerseModal: true }, '', window.location.href)
+      setVerseHistoryPushed(true)
+    }
   }
 
   function closeVerse() {
@@ -148,6 +176,10 @@ export default function Home({ user, userData }) {
     window.setTimeout(() => {
       setVerseOpen(false)
       setVerseClosing(false)
+      if (verseHistoryPushed) {
+        setVerseHistoryPushed(false)
+        window.history.back()
+      }
     }, 260)
   }
 
@@ -244,13 +276,16 @@ export default function Home({ user, userData }) {
           </div>
           <button
             type="button"
-            className={`verse-gen-btn${generatingVerse ? ' loading' : ''}`}
+            className={`verse-modal-generate${generatingVerse ? ' loading' : ''}`}
             onClick={handleGenerateVerse}
             aria-label="Générer un autre verset"
             title="Générer"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={16} />
           </button>
+          <div className="daily-verse-open-cue" aria-hidden="true">
+            <ArrowRight size={15} />
+          </div>
         </div>
       </div>
 
@@ -308,6 +343,16 @@ export default function Home({ user, userData }) {
           <div className="verse-modal-overlay" />
           <button className="verse-modal-back" onClick={closeVerse} tabIndex={verseOpen ? 0 : -1}>
             <ArrowLeft size={20} />
+          </button>
+          <button
+            type="button"
+            className={`verse-modal-generate${generatingVerse ? ' loading' : ''}`}
+            onClick={handleGenerateVerse}
+            tabIndex={verseOpen ? 0 : -1}
+            aria-label="Générer un autre verset"
+            title="Générer"
+          >
+            <RefreshCw size={16} />
           </button>
           <div className="verse-modal-scroll">
             <div className="verse-modal-header">

@@ -31,7 +31,7 @@ function ProtectedRoute({ user, children }) {
 
 function getBackTarget(pathname) {
   if (pathname === '/') return null
-  if (pathname === '/budget/entrees' || pathname === '/budget/depenses') return '/budget'
+  if (pathname.startsWith('/budget/entrees') || pathname.startsWith('/budget/depenses')) return '/budget'
   return '/'
 }
 
@@ -50,7 +50,11 @@ function BackNavigationGuard({ user }) {
       window.location.href
     )
 
-    function onPop() {
+    function onPop(e) {
+      // If the verse fullscreen modal is open, Home.jsx handles Back to close it.
+      if (document.body.hasAttribute('data-verse-modal-open')) return
+      if (document.querySelector('.verse-modal.open')) return
+
       const target = getBackTarget(location.pathname)
 
       if (target) {
@@ -103,21 +107,9 @@ const bottomNavItems = [
 function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [modalOpen, setModalOpen] = useState(false)
   const swipeStart = useRef(null)
   const baseVisible = Boolean(user && location.pathname !== '/login')
-  const visible = baseVisible && !modalOpen
-
-  useEffect(() => {
-    function syncModalState() {
-      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay')) || document.body.hasAttribute('data-verse-modal-open'))
-    }
-
-    syncModalState()
-    const observer = new MutationObserver(syncModalState)
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] })
-    return () => observer.disconnect()
-  }, [location.pathname])
+  const visible = baseVisible
 
   useEffect(() => {
     if (visible) document.body.setAttribute('data-bottom-nav', 'true')
