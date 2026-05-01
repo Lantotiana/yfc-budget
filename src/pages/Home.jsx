@@ -275,7 +275,7 @@ export default function Home({ user, userData }) {
         </div>
       </div>
 
-      <div className={`verse-modal${isNight ? ' night' : ''}${verseOpen ? ' open' : ''}`}>
+      {verseOpen && <div className={`verse-modal${isNight ? ' night' : ''}`}>
           <div className="daily-sky">
             <div className="daily-stars" />
             <div className="daily-sun" />
@@ -299,7 +299,7 @@ export default function Home({ user, userData }) {
               <p className="verse-modal-expl">{dailyVerse.explanation}</p>
             </div>
           </div>
-        </div>
+        </div>}
 
 {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
