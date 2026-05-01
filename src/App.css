@@ -85,7 +85,7 @@ body {
 /* ====== ANIMATIONS ====== */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: none; }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .sin { animation: fadeSlideUp .32s cubic-bezier(.25,.8,.25,1) both; }
 .f1  { animation: fadeSlideUp .38s .05s both cubic-bezier(.25,.8,.25,1); }
@@ -442,7 +442,10 @@ body {
   animation: verseModalIn .22s ease-out both;
   contain: paint;
   transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .verse-modal.night {
@@ -704,8 +707,8 @@ body {
 }
 
 @keyframes verseModalIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(6px) translateZ(0); }
+  to   { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 
 @keyframes popupFloatIn {
@@ -2510,7 +2513,6 @@ input:focus, select:focus {
   }
 
   .daily-verse-card,
-  .verse-modal,
   .modal,
   .ai-summary-modal {
     transform: none;
@@ -2530,6 +2532,7 @@ input:focus, select:focus {
   .daily-sky::after,
   .daily-stars,
   .daily-cloud,
+  .daily-sun,
   .verse-modal-overlay {
     animation: none !important;
     transition: none !important;
