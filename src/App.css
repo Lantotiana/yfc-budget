@@ -215,7 +215,7 @@ body {
   border-radius: 50%;
   background: #facc15;
   box-shadow: 0 0 0 12px rgba(250, 204, 21, 0.18), 0 0 34px rgba(250, 204, 21, 0.6);
-  animation: dailySunRise 1.15s cubic-bezier(.2,.9,.2,1) both;
+  animation: none;
   z-index: 1;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -224,7 +224,7 @@ body {
 .daily-verse-card.night .daily-sun {
   background: #f8fafc;
   box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
-  animation: dailyMoonRise 1.05s cubic-bezier(.2,.9,.2,1) both;
+  animation: none;
 }
 
 .daily-verse-card.night .daily-sun::after {
@@ -510,7 +510,7 @@ body {
 .verse-modal.night .daily-sun {
   background: #f8fafc;
   box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
-  animation: dailyMoonRise 1.05s cubic-bezier(.2,.9,.2,1) both;
+  animation: none;
 }
 
 .verse-modal .daily-sun {

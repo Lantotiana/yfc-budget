@@ -139,7 +139,7 @@ export default function Home({ user, userData }) {
   return (
     <div className="page-container sin" style={{ paddingBottom: 'calc(86px + env(safe-area-inset-bottom))', background: C.bg }}>
       {/* Header */}
-      <div className="f1" style={{ padding: '20px 20px 24px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+      <div style={{ padding: '20px 20px 24px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Avatar */}
           <div
@@ -208,7 +208,7 @@ export default function Home({ user, userData }) {
       </div>
 
       {/* Daily verse */}
-      <div className="f2" style={{ padding: '0 20px 16px' }}>
+      <div style={{ padding: '0 20px 16px' }}>
         <div
           className={`daily-verse-card ${isNight ? 'night' : 'day'}`}
           onClick={() => setVerseOpen(true)}
