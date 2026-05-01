@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, useEffect } from 'react'
-import { ArrowLeft, Send, Sparkles } from 'lucide-react'
+import { ArrowLeft, Send } from 'lucide-react'
+import assistantAvatar from '../assets/assistant_avatar.jpg'
 import { useNavigate } from 'react-router-dom'
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth } from '../auth'
@@ -347,7 +348,7 @@ export default function Fampaherezana({ user }) {
           <div key={index} className={`famp-message-row ${message.role}`}>
             {message.role === 'assistant' && (
               <div className="famp-avatar">
-                <Sparkles size={16} />
+                <img src={assistantAvatar} alt="Assistant" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               </div>
             )}
             {message.action ? (
@@ -370,7 +371,7 @@ export default function Fampaherezana({ user }) {
         {loading && (
           <div className="famp-message-row assistant">
             <div className="famp-avatar">
-              <Sparkles size={16} />
+              <img src={assistantAvatar} alt="Assistant" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             </div>
             <div className="famp-bubble assistant typing">
               <span />
