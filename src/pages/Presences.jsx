@@ -244,7 +244,7 @@ export default function Presences({ user, userData }) {
                     border: `1px solid ${present ? C.teal + '40' : C.bord}`,
                     borderRadius: 16, padding: '12px 14px', marginBottom: 8,
                     cursor: isSaving ? 'wait' : 'pointer',
-                    transition: 'all .2s', opacity: isSaving ? 0.6 : 1,
+                    transition: 'background .2s, border-color .2s, opacity .2s', opacity: isSaving ? 0.6 : 1,
                   }}
                 >
                   <div style={{ width: 38, height: 38, borderRadius: 14, flexShrink: 0, background: present ? C.tealD : C.surf2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: present ? C.teal : C.t2 }}>
@@ -254,7 +254,7 @@ export default function Presences({ user, userData }) {
                     <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
                     {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{m.telephone}</div>}
                   </div>
-                  <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .25s cubic-bezier(.34,1.56,.64,1)', transform: present ? 'scale(1)' : 'scale(0.9)' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1)', transform: present ? 'scale(1)' : 'scale(0.9)' }}>
                     {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                   </div>
                 </div>
