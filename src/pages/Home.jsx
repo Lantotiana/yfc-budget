@@ -78,7 +78,6 @@ export default function Home({ user, userData }) {
   const [verseClosing, setVerseClosing] = useState(false)
   const [verseHistoryPushed, setVerseHistoryPushed] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
-  const [unreadMessages, setUnreadMessages] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
   const [fallbackOffset, setFallbackOffset] = useState(0)
@@ -149,28 +148,6 @@ export default function Home({ user, userData }) {
     }, () => setNotifCount(0))
   }, [user?.uid])
 
-  useEffect(() => {
-    if (!user?.uid) return
-    const q = query(collection(db, 'staffMessages'), orderBy('createdAt', 'desc'), limit(50))
-    return onSnapshot(q, snap => {
-      let saved = {}
-      try { saved = JSON.parse(localStorage.getItem(`staffMsg_reactions_${user.uid}`) || '{}') } catch {}
-
-      let count = 0
-      snap.docs.forEach(d => {
-        const data = d.data()
-        if (data.deleted) return
-        if (!(data.readBy || []).includes(user.uid)) count++
-        if (data.senderId === user.uid) {
-          const current = Object.values(data.reactions || {}).reduce((sum, uids) => {
-            return sum + (uids || []).filter(id => id !== user.uid).length
-          }, 0)
-          if (current > (saved[d.id] || 0)) count++
-        }
-      })
-      setUnreadMessages(count)
-    }, () => setUnreadMessages(0))
-  }, [user?.uid])
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
   const dailyVerse = aiVerse ?? dailyVerses[(getFallbackVerseIndex(dayKey) + fallbackOffset) % dailyVerses.length]
@@ -248,18 +225,13 @@ export default function Home({ user, userData }) {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* Messages Staff */}
+            {/* Assistant IA */}
             <button
-              onClick={() => navigate('/messages')}
-              style={{ width: 40, height: 40, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', position: 'relative' }}
-              aria-label="Messages Staff"
+              onClick={() => navigate('/assistant')}
+              style={{ width: 40, height: 40, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}
+              aria-label="Assistant virtuel"
             >
               <MessageCircle size={17} />
-              {unreadMessages > 0 && (
-                <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 999, background: '#10b981', color: '#fff', border: `2px solid ${C.bg}`, fontSize: 9, fontWeight: 800, lineHeight: '13px', textAlign: 'center' }}>
-                  {unreadMessages > 9 ? '9+' : unreadMessages}
-                </span>
-              )}
             </button>
 
             {/* Notifications */}
@@ -366,9 +338,9 @@ export default function Home({ user, userData }) {
         <button
           type="button"
           className="famp-floating-btn"
-          onClick={() => navigate('/assistant')}
-          aria-label="Assistant virtuel"
-          title="Assistant virtuel"
+          onClick={() => navigate('/messages')}
+          aria-label="Messages Staff"
+          title="Messages Staff"
         >
           <MessageCircle size={23} />
         </button>
