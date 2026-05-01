@@ -240,17 +240,12 @@ export default function Home({ user, userData }) {
       </div>
 
       {/* Modules grid */}
-      <div className="f3" style={{ padding: '0 20px' }}>
+      <div style={{ padding: '0 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {modules.map((m, i) => (
               <button
                 key={m.path}
-                className={`f${i + 1}`}
                 onClick={() => navigate(m.path)}
-                onMouseDown={e => e.currentTarget.style.transform = 'scale(.96)'}
-                onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                onTouchStart={e => e.currentTarget.style.transform = 'scale(.96)'}
-                onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
                 style={{
                   background: m.color,
                   border: '0',
@@ -259,7 +254,6 @@ export default function Home({ user, userData }) {
                   cursor: 'pointer',
                   position: 'relative',
                   overflow: 'hidden',
-                  transition: 'transform .15s',
                   textAlign: 'left',
                   boxShadow: `0 14px 30px ${m.color}33`,
                 }}
