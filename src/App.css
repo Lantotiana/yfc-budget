@@ -180,10 +180,19 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 24%, #fff 0 1px, transparent 1.6px),
-    radial-gradient(circle at 38% 16%, rgba(255,255,255,.85) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 68% 42%, rgba(255,255,255,.8) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 84% 62%, rgba(255,255,255,.72) 0 1.1px, transparent 1.7px);
+    radial-gradient(circle at 8%  11%, #fff 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 19%  6%, rgba(255,255,255,.7)  0 0.8px, transparent 1.3px),
+    radial-gradient(circle at 34% 21%, rgba(255,255,255,.9)  0 1px,   transparent 1.6px),
+    radial-gradient(circle at 47%  9%, rgba(255,255,255,.6)  0 0.7px, transparent 1.2px),
+    radial-gradient(circle at 61% 17%, #fff 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 73%  4%, rgba(255,255,255,.8)  0 0.9px, transparent 1.4px),
+    radial-gradient(circle at 88% 14%, rgba(255,255,255,.95) 0 1.3px, transparent 2px),
+    radial-gradient(circle at 26% 38%, rgba(255,255,255,.55) 0 0.8px, transparent 1.3px),
+    radial-gradient(circle at 53% 31%, rgba(255,255,255,.75) 0 1px,   transparent 1.5px),
+    radial-gradient(circle at 79% 28%, rgba(255,255,255,.65) 0 0.7px, transparent 1.2px),
+    radial-gradient(circle at 92% 43%, rgba(255,255,255,.85) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 14% 52%, rgba(255,255,255,.5)  0 0.9px, transparent 1.4px),
+    radial-gradient(circle at 67% 58%, rgba(255,255,255,.7)  0 1px,   transparent 1.6px);
   animation: dailyStarsTwinkle 3.8s ease-in-out infinite;
 }
 
@@ -412,6 +421,267 @@ body {
   .daily-verse-text {
     font-size: 14px;
   }
+}
+
+/* ====== VERSE MODAL ====== */
+.verse-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: #38bdf8;
+  animation: verseModalIn .28s cubic-bezier(.2,.9,.3,1) both;
+}
+
+.verse-modal.night {
+  background: #1d4ed8;
+}
+
+.verse-modal .daily-sky {
+  position: absolute;
+  inset: 0;
+}
+
+.verse-modal.night .daily-sky {
+  background: #1d4ed8;
+}
+
+.verse-modal.night .daily-sky::before {
+  background-image:
+    radial-gradient(circle at 18px 18px, rgba(255, 255, 255, 0.42) 0 1.3px, transparent 1.8px),
+    radial-gradient(circle at 52px 30px, rgba(255, 255, 255, 0.28) 0 1px, transparent 1.6px),
+    linear-gradient(135deg, rgba(147, 197, 253, 0.12) 0 1px, transparent 1px);
+  background-size: 58px 46px, 74px 64px, 22px 22px;
+  opacity: 0.72;
+}
+
+.verse-modal.night .daily-stars {
+  display: block;
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 5%   8%, #fff 0 1.3px, transparent 2px),
+    radial-gradient(circle at 13%  23%, rgba(255,255,255,.65) 0 0.8px, transparent 1.3px),
+    radial-gradient(circle at 22%  5%,  rgba(255,255,255,.9)  0 1px,   transparent 1.6px),
+    radial-gradient(circle at 31%  33%, rgba(255,255,255,.5)  0 0.7px, transparent 1.1px),
+    radial-gradient(circle at 43%  14%, #fff 0 1.2px, transparent 1.9px),
+    radial-gradient(circle at 52%  27%, rgba(255,255,255,.75) 0 0.9px, transparent 1.4px),
+    radial-gradient(circle at 61%  7%,  rgba(255,255,255,.85) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 70%  38%, rgba(255,255,255,.6)  0 0.8px, transparent 1.3px),
+    radial-gradient(circle at 78%  18%, rgba(255,255,255,.95) 0 1.4px, transparent 2.1px),
+    radial-gradient(circle at 87%  9%,  rgba(255,255,255,.7)  0 0.9px, transparent 1.5px),
+    radial-gradient(circle at 94%  29%, rgba(255,255,255,.8)  0 1px,   transparent 1.6px),
+    radial-gradient(circle at 9%   44%, rgba(255,255,255,.55) 0 0.7px, transparent 1.2px),
+    radial-gradient(circle at 27%  51%, rgba(255,255,255,.7)  0 1px,   transparent 1.5px),
+    radial-gradient(circle at 39%  62%, rgba(255,255,255,.5)  0 0.8px, transparent 1.3px),
+    radial-gradient(circle at 56%  47%, rgba(255,255,255,.8)  0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 66%  59%, rgba(255,255,255,.6)  0 0.7px, transparent 1.2px),
+    radial-gradient(circle at 82%  53%, rgba(255,255,255,.75) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 91%  67%, rgba(255,255,255,.65) 0 0.9px, transparent 1.4px),
+    radial-gradient(circle at 17%  71%, rgba(255,255,255,.85) 0 1px,   transparent 1.6px),
+    radial-gradient(circle at 48%  78%, rgba(255,255,255,.55) 0 0.8px, transparent 1.3px);
+  animation: dailyStarsTwinkle 3.8s ease-in-out infinite;
+}
+
+.verse-modal.night .daily-sun {
+  background: #f8fafc;
+  box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
+  animation: dailyMoonRise 1.6s cubic-bezier(.2,.9,.2,1) both, dailyMoonFloat 5s 1.6s ease-in-out infinite;
+}
+
+.verse-modal.night .daily-sun::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #1d4ed8;
+}
+
+.verse-modal.night .daily-cloud {
+  background: rgba(219, 234, 254, 0.32);
+}
+
+.verse-modal.night .daily-hill-back {
+  background: #2563eb;
+  opacity: 0.78;
+}
+
+.verse-modal.night .daily-hill-front {
+  background: #15803d;
+}
+
+.verse-modal.night .daily-sky::after {
+  background: #15803d;
+}
+
+.verse-modal .daily-hill-back {
+  bottom: 48px;
+}
+
+.verse-modal .daily-hill-front {
+  bottom: 30px;
+}
+
+.verse-modal .daily-sky::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: #16a34a;
+}
+
+.verse-modal.night .daily-sky::after {
+  background: #15803d;
+}
+
+.verse-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 14%,
+    rgba(0, 0, 0, 0.18) 34%,
+    rgba(0, 0, 0, 0.38) 100%
+  );
+}
+
+.verse-modal-back {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  left: 20px;
+  z-index: 20;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+
+.verse-modal-back:active {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.verse-modal-scroll {
+  position: absolute;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  top: 20%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px 26px 0;
+}
+
+.verse-modal-header {
+  flex-shrink: 0;
+}
+
+.verse-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.verse-modal-tag {
+  display: inline-flex;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.verse-modal-verse {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #fff;
+  margin: 0 0 10px;
+  letter-spacing: -.3px;
+  text-shadow: 0 1px 12px rgba(14, 116, 144, 0.3);
+}
+
+.verse-modal.night .verse-modal-verse {
+  text-shadow: 0 1px 12px rgba(0, 0, 60, 0.4);
+}
+
+.verse-modal-ref {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+.verse-modal-sep {
+  width: 44px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 20px 0;
+}
+
+.verse-modal-expl {
+  font-size: 15px;
+  line-height: 1.72;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0;
+}
+
+@keyframes verseModalIn {
+  from { opacity: 0; transform: scale(.96) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.verse-gen-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+
+.verse-gen-btn:active {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.verse-gen-btn.loading svg {
+  animation: verseGenSpin .8s linear infinite;
+}
+
+@keyframes verseGenSpin {
+  to { transform: rotate(360deg); }
 }
 
 button {

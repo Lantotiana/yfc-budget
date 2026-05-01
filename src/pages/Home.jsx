@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import Admin from '../components/Admin'
 import { ADMIN_EMAIL } from '../constants'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
+import { getVerseOfDay, generateNewVerse } from '../services/verseOfDay'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -22,20 +23,69 @@ const modules = [
 ]
 
 const dailyVerses = [
-  { text: "L'Éternel est mon berger: je ne manquerai de rien.", ref: 'Psaume 23:1' },
-  { text: 'Je puis tout par celui qui me fortifie.', ref: 'Philippiens 4:13' },
-  { text: 'Ta parole est une lampe à mes pieds, et une lumière sur mon sentier.', ref: 'Psaume 119:105' },
-  { text: "Recommande ton sort à l'Éternel, mets en lui ta confiance, et il agira.", ref: 'Psaume 37:5' },
-  { text: 'Ne crains rien, car je suis avec toi.', ref: 'Ésaïe 41:10' },
-  { text: 'Que tout ce que vous faites se fasse avec amour.', ref: '1 Corinthiens 16:14' },
-  { text: "L'Éternel combattra pour vous; et vous, gardez le silence.", ref: 'Exode 14:14' },
+  {
+    text: "L'Éternel est mon berger: je ne manquerai de rien.",
+    ref: 'Psaume 23:1',
+    explanation: "Ce verset nous rappelle que Dieu prend soin de nous comme un berger attentif veille sur ses brebis. Il pourvoit à tous nos besoins — matériels, spirituels, émotionnels. Rien de ce dont nous avons vraiment besoin ne nous manquera si nous nous confions en Lui.",
+  },
+  {
+    text: 'Je puis tout par celui qui me fortifie.',
+    ref: 'Philippiens 4:13',
+    explanation: "Paul écrit ces mots depuis la prison, ayant appris à être content en toutes circonstances. Cette force ne vient pas de nous-mêmes, mais du Christ qui nous habite. Quand nous nous sentons faibles, c'est là que Sa puissance se manifeste le plus pleinement.",
+  },
+  {
+    text: 'Ta parole est une lampe à mes pieds, et une lumière sur mon sentier.',
+    ref: 'Psaume 119:105',
+    explanation: "La Bible n'est pas juste un livre d'histoire : c'est une lumière vivante qui éclaire nos décisions quotidiennes. Une lampe éclaire suffisamment pour le prochain pas — pas toujours tout le chemin. Dieu nous guide pas à pas, à travers Sa Parole.",
+  },
+  {
+    text: "Recommande ton sort à l'Éternel, mets en lui ta confiance, et il agira.",
+    ref: 'Psaume 37:5',
+    explanation: "Confier nos projets à Dieu n'est pas une passivité, c'est un acte de foi profonde. Le mot hébreu signifie littéralement « rouler son fardeau sur Lui ». Quand on lâche prise et qu'on fait confiance, Il prend la situation en main et agit en notre faveur.",
+  },
+  {
+    text: 'Ne crains rien, car je suis avec toi.',
+    ref: 'Ésaïe 41:10',
+    explanation: "Dieu s'adresse à Israël en exil, mais ce message traverse les siècles et nous atteint aujourd'hui. Sa présence ne supprime pas les difficultés, mais elle les transforme. Savoir qu'Il est à nos côtés change tout — la peur cède la place à une paix qui dépasse notre compréhension.",
+  },
+  {
+    text: 'Que tout ce que vous faites se fasse avec amour.',
+    ref: '1 Corinthiens 16:14',
+    explanation: "Paul conclut sa lettre par cet appel simple mais profond : l'amour doit être le motif derrière chaque action. Pas seulement les grandes décisions, mais aussi les petits gestes du quotidien. L'amour de Dieu en nous devient le moteur de notre vie entière.",
+  },
+  {
+    text: "L'Éternel combattra pour vous; et vous, gardez le silence.",
+    ref: 'Exode 14:14',
+    explanation: "Moïse dit ces mots au peuple piégé entre la mer Rouge et l'armée de Pharaon. « Garder le silence » ne signifie pas ne rien faire, mais faire confiance plutôt que paniquer. Il y a des batailles que Dieu réserve pour Lui seul — notre rôle est de rester fermes dans la foi.",
+  },
 ]
 
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const [showAdmin, setShowAdmin] = useState(false)
+  const [verseOpen, setVerseOpen] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
+  const [aiVerse, setAiVerse] = useState(null)
+  const [verseLoading, setVerseLoading] = useState(false)
+
+  useEffect(() => {
+    getVerseOfDay().then(v => { if (v) setAiVerse(v) })
+  }, [])
+
+  useEffect(() => {
+    document.body.style.overflow = verseOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [verseOpen])
+
+  async function handleGenerateVerse(e) {
+    e.stopPropagation()
+    if (verseLoading) return
+    setVerseLoading(true)
+    const v = await generateNewVerse()
+    if (v) setAiVerse(v)
+    setVerseLoading(false)
+  }
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
 
   useEffect(() => {
@@ -51,7 +101,7 @@ export default function Home({ user, userData }) {
   }, [user?.uid])
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
-  const dailyVerse = dailyVerses[Math.floor(Date.now() / 86400000) % dailyVerses.length]
+  const dailyVerse = aiVerse ?? dailyVerses[Math.floor(Date.now() / 86400000) % dailyVerses.length]
   const currentHour = new Date().getHours()
   const isNight = currentHour >= 18 || currentHour < 6
 
@@ -128,7 +178,11 @@ export default function Home({ user, userData }) {
 
       {/* Daily verse */}
       <div className="f2" style={{ padding: '0 20px 16px' }}>
-        <div className={`daily-verse-card ${isNight ? 'night' : 'day'}`}>
+        <div
+          className={`daily-verse-card ${isNight ? 'night' : 'day'}`}
+          onClick={() => setVerseOpen(true)}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="daily-sky">
             <div className="daily-stars" />
             <div className="daily-sun" />
@@ -139,9 +193,16 @@ export default function Home({ user, userData }) {
           </div>
           <div className="daily-verse-content">
             <div className="daily-verse-label">Verset du jour</div>
-            <div className="daily-verse-text">“{dailyVerse.text}”</div>
+            <div className="daily-verse-text">"{dailyVerse.text}"</div>
             <div className="daily-verse-ref">{dailyVerse.ref}</div>
           </div>
+          <button
+            className={`verse-gen-btn${verseLoading ? ' loading' : ''}`}
+            onClick={handleGenerateVerse}
+            aria-label="Nouveau verset"
+          >
+            <RefreshCw size={13} />
+          </button>
         </div>
       </div>
 
@@ -189,6 +250,34 @@ export default function Home({ user, userData }) {
           ))}
         </div>
       </div>
+
+      {verseOpen && (
+        <div className={`verse-modal${isNight ? ' night' : ''}`}>
+          <div className="daily-sky">
+            <div className="daily-stars" />
+            <div className="daily-sun" />
+            <div className="daily-cloud daily-cloud-one" />
+            <div className="daily-cloud daily-cloud-two" />
+            <div className="daily-hill daily-hill-back" />
+            <div className="daily-hill daily-hill-front" />
+          </div>
+          <div className="verse-modal-overlay" />
+          <button className="verse-modal-back" onClick={() => setVerseOpen(false)}>
+            <ArrowLeft size={20} />
+          </button>
+          <div className="verse-modal-scroll">
+            <div className="verse-modal-header">
+              <div className="verse-modal-tag">Verset du jour</div>
+              <p className="verse-modal-verse">&ldquo;{dailyVerse.text}&rdquo;</p>
+              <p className="verse-modal-ref">{dailyVerse.ref}</p>
+            </div>
+            <div className="verse-modal-body">
+              <div className="verse-modal-sep" />
+              <p className="verse-modal-expl">{dailyVerse.explanation}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
 {showAdmin && <Admin onClose={() => setShowAdmin(false)} />}
     </div>
