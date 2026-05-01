@@ -441,7 +441,7 @@ body {
   background: #38bdf8;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .24s ease;
+  transition: opacity .22s ease, transform .26s ease;
   contain: paint;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -450,11 +450,18 @@ body {
 .verse-modal.open {
   opacity: 1;
   pointer-events: auto;
+  transform: translateX(0) translateZ(0);
 }
 
 .verse-modal.closed {
   opacity: 0;
   pointer-events: none;
+}
+
+.verse-modal.closing {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-36px) translateZ(0);
 }
 
 .verse-modal.night {

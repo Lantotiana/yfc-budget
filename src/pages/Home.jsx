@@ -77,6 +77,7 @@ export default function Home({ user, userData }) {
   const { C } = useTheme()
   const [showAdmin, setShowAdmin] = useState(false)
   const [verseOpen, setVerseOpen] = useState(false)
+  const [verseClosing, setVerseClosing] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
@@ -95,13 +96,14 @@ export default function Home({ user, userData }) {
   }, [])
 
   useEffect(() => {
-    document.body.style.overflow = verseOpen ? 'hidden' : ''
-    document.body.toggleAttribute('data-verse-modal-open', verseOpen)
+    const modalVisible = verseOpen || verseClosing
+    document.body.style.overflow = modalVisible ? 'hidden' : ''
+    document.body.toggleAttribute('data-verse-modal-open', modalVisible)
     return () => {
       document.body.style.overflow = ''
       document.body.removeAttribute('data-verse-modal-open')
     }
-  }, [verseOpen])
+  }, [verseOpen, verseClosing])
 
 
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
@@ -134,6 +136,19 @@ export default function Home({ user, userData }) {
       setFallbackOffset(prev => prev + 1)
     }
     setGeneratingVerse(false)
+  }
+
+  function openVerse() {
+    setVerseClosing(false)
+    setVerseOpen(true)
+  }
+
+  function closeVerse() {
+    setVerseClosing(true)
+    window.setTimeout(() => {
+      setVerseOpen(false)
+      setVerseClosing(false)
+    }, 260)
   }
 
   return (
@@ -211,7 +226,7 @@ export default function Home({ user, userData }) {
       <div style={{ padding: '0 20px 16px' }}>
         <div
           className={`daily-verse-card ${isNight ? 'night' : 'day'}`}
-          onClick={() => setVerseOpen(true)}
+          onClick={openVerse}
           style={{ cursor: 'pointer' }}
         >
           <div className="daily-sky">
@@ -279,7 +294,7 @@ export default function Home({ user, userData }) {
       </div>
 
       <div
-        className={`verse-modal ${verseOpen ? 'open' : 'closed'}${isNight ? ' night' : ''}`}
+        className={`verse-modal ${verseOpen ? 'open' : 'closed'}${verseClosing ? ' closing' : ''}${isNight ? ' night' : ''}`}
         aria-hidden={!verseOpen}
       >
           <div className="daily-sky">
@@ -291,7 +306,7 @@ export default function Home({ user, userData }) {
             <div className="daily-hill daily-hill-front" />
           </div>
           <div className="verse-modal-overlay" />
-          <button className="verse-modal-back" onClick={() => setVerseOpen(false)} tabIndex={verseOpen ? 0 : -1}>
+          <button className="verse-modal-back" onClick={closeVerse} tabIndex={verseOpen ? 0 : -1}>
             <ArrowLeft size={20} />
           </button>
           <div className="verse-modal-scroll">
