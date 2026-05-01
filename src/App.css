@@ -2460,6 +2460,77 @@ input:focus, select:focus {
   }
 }
 
+@media (max-width: 768px) {
+  body {
+    transition: none;
+  }
+
+  .daily-verse-card,
+  .verse-modal,
+  .modal,
+  .ai-summary-modal {
+    transform: none;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+
+  .bottom-nav {
+    transform: translateX(-50%);
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+
+  .daily-verse-card::before,
+  .daily-verse-card::after,
+  .daily-sky::before,
+  .daily-sky::after,
+  .daily-stars,
+  .daily-cloud,
+  .verse-modal-overlay {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .daily-verse-card::after {
+    opacity: 0.24;
+  }
+
+  .daily-verse-card.night::after {
+    opacity: 0.2;
+  }
+
+  .daily-stars,
+  .daily-cloud {
+    display: none !important;
+  }
+
+  .daily-verse-text,
+  .verse-modal-verse {
+    text-shadow: none;
+  }
+
+  .bottom-nav {
+    background: #f7f8fc;
+    box-shadow: 0 10px 28px rgba(26, 28, 46, 0.14);
+  }
+
+  .bottom-nav::before,
+  .bottom-nav::after {
+    display: none;
+  }
+
+  [data-theme="dark"] .bottom-nav {
+    background: #171a2a;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.44);
+  }
+
+  .modal-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(12, 14, 24, 0.58);
+  }
+}
+
 body:has(.bottom-sheet-overlay) .bottom-nav,
 body:has(.modal-overlay) .bottom-nav {
   opacity: 0;
