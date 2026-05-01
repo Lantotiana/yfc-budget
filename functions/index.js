@@ -105,88 +105,228 @@ exports.summarizeBudget = onCall({ secrets: [geminiApiKey] }, async request => {
   return { text }
 })
 
-function usageDayKey() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Indian/Antananarivo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
+function plainDate(value) {
+  if (!value) return null
+  if (typeof value === 'string') return value
+  if (value.toDate) return value.toDate().toISOString()
+  if (value.seconds) return new Date(value.seconds * 1000).toISOString()
+  return null
 }
 
-function buildFampaherezanaPrompt(message) {
-  return `Tu es un assistant chrétien spécialisé uniquement dans les "fampaherezana" en malgache.
+function safeDoc(doc) {
+  const data = doc.data() || {}
+  return { id: doc.id, ...data }
+}
 
-Ton rôle est d'encourager spirituellement l'utilisateur avec douceur, respect et bienveillance, en donnant des paroles de réconfort, d'espérance, de foi et d'encouragement basées sur la Bible.
+function totalByType(transactions, type) {
+  return transactions
+    .filter(t => t.type === type)
+    .reduce((sum, t) => sum + Number(t.montant || 0), 0)
+}
 
-RÈGLES IMPORTANTES :
-1. Tu réponds uniquement en malgache.
-2. Tu traites uniquement les demandes liées aux "fampaherezana".
-3. Si l'utilisateur demande autre chose que du fampaherezana, réponds poliment exactement :
-"Miala tsiny, natao manokana ho an'ny fampaherezana ara-panahy ihany aho. Azonao lazaina amiko hoe inona no fampaherezana ilainao androany?"
-4. Ne donne pas de conseils médicaux, juridiques, financiers, politiques ou techniques.
-5. Ne débats pas sur la religion. Reste dans l'encouragement biblique.
-6. Chaque réponse doit contenir :
-   - une parole d'encouragement adaptée à la situation
-   - au moins 1 à 3 versets bibliques en appui
-   - une courte prière ou phrase de foi à la fin
-7. Le ton doit être chaleureux, simple, rassurant et spirituel.
-8. Ne juge jamais l'utilisateur.
-9. Ne pose qu'une seule question de clarification si la demande est trop vague.
-10. Si l'utilisateur exprime une grande détresse, réponds avec compassion, encourage-le à parler à une personne de confiance ou à un responsable spirituel, sans donner de détails dangereux.
+async function listCollection(name, { orderBy, direction = 'asc', limit = 80 } = {}) {
+  let ref = db.collection(name)
+  if (orderBy) ref = ref.orderBy(orderBy, direction)
+  if (limit) ref = ref.limit(limit)
+  const snap = await ref.get()
+  return snap.docs.map(safeDoc)
+}
 
-FORMAT DE RÉPONSE :
-- "Fampaherezana:"
-- "Andinin-teny manohana:"
-- "Vavaka fohy:"
+async function buildAppContext(uid) {
+  const [userSnap, membres, transactions, agendaEvents, presenceEvents, presences, documents] = await Promise.all([
+    db.collection('users').doc(uid).get(),
+    listCollection('membres', { orderBy: 'nom', limit: 250 }),
+    listCollection('transactions', { orderBy: 'date', direction: 'desc', limit: 120 }),
+    listCollection('evenements_agenda', { orderBy: 'dateDebut', limit: 80 }),
+    listCollection('evenements', { orderBy: 'date', direction: 'desc', limit: 80 }),
+    listCollection('presences', { limit: 500 }),
+    listCollection('documents', { orderBy: 'uploadedAt', direction: 'desc', limit: 60 }),
+  ])
 
-Demande de l'utilisateur :
+  const user = userSnap.exists ? userSnap.data() : {}
+  const totalEntrees = totalByType(transactions, 'entree')
+  const totalDepenses = totalByType(transactions, 'depense')
+
+  return {
+    generatedAt: new Date().toISOString(),
+    currentUser: {
+      uid,
+      nom: user.nom || null,
+      email: user.email || null,
+      role: user.role || (user.admin ? 'admin' : 'membre'),
+      approuve: user.approuve === true,
+    },
+    stats: {
+      membres: membres.length,
+      transactions: transactions.length,
+      totalEntrees,
+      totalDepenses,
+      solde: totalEntrees - totalDepenses,
+      evenementsAgenda: agendaEvents.length,
+      evenementsPresence: presenceEvents.length,
+      presences: presences.length,
+      documents: documents.length,
+    },
+    membres: membres.map(m => ({
+      id: m.id,
+      nom: m.nom || null,
+      telephone: m.telephone || m.tel || null,
+      email: m.email || null,
+      dateInscription: m.dateInscription || null,
+    })),
+    transactions: transactions.map(t => ({
+      id: t.id,
+      type: t.type || null,
+      date: t.date || null,
+      montant: Number(t.montant || 0),
+      motif: t.motif || null,
+      note: t.note || null,
+    })),
+    evenements: agendaEvents.map(e => ({
+      id: e.id,
+      titre: e.titre || e.title || null,
+      dateDebut: e.dateDebut || null,
+      dateFin: e.dateFin || null,
+      lieu: e.lieu || null,
+      description: e.description || null,
+      statut: e.statut || null,
+    })),
+    presences: {
+      evenements: presenceEvents.map(e => ({
+        id: e.id,
+        nom: e.nom || e.titre || null,
+        date: e.date || null,
+      })),
+      enregistrements: presences.map(p => ({
+        id: p.id,
+        evenementId: p.evenementId || p.eventId || null,
+        membreId: p.membreId || p.memberId || null,
+        present: p.present ?? true,
+      })),
+    },
+    documents: documents.map(d => ({
+      id: d.id,
+      nom: d.nom || d.name || d.title || null,
+      type: d.type || null,
+      uploadedAt: plainDate(d.uploadedAt),
+    })),
+  }
+}
+
+function buildAssistantPrompt(message, context) {
+  return `Tu es l'assistante virtuelle officielle de cette application de gestion d'association.
+
+Tu aides l'utilisateur à :
+- consulter les données de l'application
+- comprendre les informations
+- créer, modifier ou organiser des données
+
+Tu peux répondre en français OU en malgache selon la langue de l'utilisateur.
+
+---
+
+CONTEXTE
+L'application contient des données comme :
+- membres
+- événements
+- cotisations
+- dépenses
+- présences
+- messages / annonces
+- statistiques
+
+Ces données te sont fournies dans le contexte sous forme JSON.
+
+---
+
+RÈGLES STRICTES
+
+1. Tu ne dois JAMAIS inventer de données.
+2. Si une information n'est pas présente :
+   → "Je n'ai pas accès à cette information pour le moment."
+3. Tu réponds uniquement sur les données de l'application.
+4. Si la demande est hors sujet :
+   → "Je peux seulement aider avec les informations liées à l'application."
+5. Tu dois être clair, structuré et utile.
+6. Respecte les rôles utilisateurs si fournis (admin, membre, etc.).
+7. Tu ne fais AUCUNE action réelle (écriture en base).
+
+---
+
+GESTION DES ACTIONS
+
+Quand l'utilisateur demande une action (ajouter, modifier, supprimer), tu dois répondre en JSON STRICT, sans texte autour :
+Ne mets jamais le JSON dans un bloc markdown. N'utilise jamais \`\`\`json ni \`\`\`.
+
+{
+  "action": "<type_action>",
+  "data": { ... },
+  "needsConfirmation": true
+}
+
+Types d'actions possibles :
+- create_member
+- update_member
+- create_event
+- update_event
+- create_expense
+- create_contribution
+- send_message
+
+Toujours :
+- extraire proprement les infos
+- compléter si possible (date actuelle si non précisée)
+- rester simple et cohérent
+- si une information essentielle manque (ex: motif/titre d'une dépense, nom d'un membre, titre d'un événement), ne réponds pas en JSON : pose UNE question simple pour demander cette information
+
+---
+
+GESTION DES QUESTIONS
+
+Quand l'utilisateur pose une question, tu réponds normalement avec ce format :
+
+Résumé court
+
+Détails (si nécessaire)
+
+Action suggérée (optionnel)
+
+---
+
+AIDE À LA RÉDACTION
+
+Tu peux aussi rédiger des messages, reformuler, résumer.
+Mais tu ne dois jamais envoyer directement (toujours proposer).
+
+---
+
+SÉCURITÉ
+
+- Ne supprime rien sans confirmation
+- Ne modifie rien sans confirmation
+- Si la demande est ambiguë → pose UNE question simple
+
+---
+
+CONTEXTE JSON DE L'APPLICATION :
+${JSON.stringify(context)}
+
+MESSAGE UTILISATEUR :
 ${message}`
 }
 
-exports.generateFampaherezana = onCall({ secrets: [geminiApiKey] }, async request => {
+exports.generateAppAssistant = onCall({ secrets: [geminiApiKey] }, async request => {
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Login required')
 
   const message = String(request.data?.message || '').trim()
   if (!message) throw new HttpsError('invalid-argument', 'Message is required')
   if (message.length > 800) throw new HttpsError('invalid-argument', 'Message too long')
 
-  const uid = request.auth.uid
-  const day = usageDayKey()
-  const usageRef = db.collection('fampaherezanaUsage').doc(`${uid}_${day}`)
-  let used = 0
-
-  await db.runTransaction(async tx => {
-    const snap = await tx.get(usageRef)
-    used = Number(snap.data()?.count || 0)
-    if (used >= 10) {
-      throw new HttpsError('resource-exhausted', 'Quota reached')
-    }
-    tx.set(usageRef, {
-      uid,
-      day,
-      count: used + 1,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true })
-    used += 1
+  const context = await buildAppContext(request.auth.uid)
+  const text = await callGemini(buildAssistantPrompt(message, context), {
+    temperature: 0.35,
+    maxOutputTokens: 1100,
   })
 
-  try {
-    const text = await callGemini(buildFampaherezanaPrompt(message), {
-      temperature: 0.75,
-      maxOutputTokens: 900,
-    })
-
-    return {
-      text,
-      remaining: Math.max(0, 10 - used),
-      limit: 10,
-    }
-  } catch (err) {
-    await usageRef.set({
-      count: admin.firestore.FieldValue.increment(-1),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true }).catch(() => {})
-    throw err
-  }
+  return { text }
 })

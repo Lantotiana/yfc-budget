@@ -1,28 +1,40 @@
 import { httpsCallable } from 'firebase/functions'
 import { cloudFunctions } from '../firebase'
 
-const QUOTA_MESSAGE = 'Efa tapitra ny quota-nao androany. Afaka miverina rahampitso ianao hahazo fampaherezana vaovao.'
+function parseAssistantAction(text) {
+  const raw = String(text || '').trim()
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim()
 
-export async function generateFampaherezana(message) {
+  if (!cleaned.startsWith('{')) return null
+
   try {
-    const callable = httpsCallable(cloudFunctions, 'generateFampaherezana')
+    const data = JSON.parse(cleaned)
+    if (!data?.action || typeof data.action !== 'string') return null
+    return data
+  } catch {
+    return null
+  }
+}
+
+export async function generateAppAssistant(message) {
+  try {
+    const callable = httpsCallable(cloudFunctions, 'generateAppAssistant')
     const result = await callable({ message })
+    const text = result.data?.text || ''
+    const action = parseAssistantAction(text)
     return {
       ok: true,
-      text: result.data?.text || '',
-      remaining: result.data?.remaining ?? null,
-      limit: result.data?.limit ?? 10,
+      text: action ? '' : text,
+      action,
     }
   } catch (err) {
-    if (err?.code === 'functions/resource-exhausted') {
-      return { ok: false, quota: true, text: QUOTA_MESSAGE, remaining: 0, limit: 10 }
-    }
-    console.warn('Fampaherezana function:', err)
+    console.warn('App assistant function:', err)
     return {
       ok: false,
-      text: 'Miala tsiny, tsy afaka mamaly vetivety aho izao. Andramo indray afaka kelikely.',
-      remaining: null,
-      limit: 10,
+      text: 'Je n’arrive pas à contacter l’assistante pour le moment. Réessayez dans quelques instants.',
     }
   }
 }

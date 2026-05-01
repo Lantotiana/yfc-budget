@@ -336,9 +336,9 @@ export default function Home({ user, userData }) {
         <button
           type="button"
           className="famp-floating-btn"
-          onClick={() => navigate('/fampaherezana')}
-          aria-label="Fampaherezana"
-          title="Fampaherezana"
+          onClick={() => navigate('/assistant')}
+          aria-label="Assistant virtuel"
+          title="Assistant virtuel"
         >
           <MessageCircle size={23} />
         </button>

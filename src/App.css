@@ -2725,6 +2725,110 @@ input:focus, select:focus {
   border-color: rgba(244,63,94,0.18);
 }
 
+.assistant-action-card {
+  max-width: min(82%, 430px);
+  padding: 14px;
+  border-radius: 18px;
+  border-top-left-radius: 6px;
+  background: var(--card-bg);
+  border: 1px solid rgba(16,185,129,0.18);
+  box-shadow: 0 12px 28px rgba(15,23,42,0.1);
+}
+
+.assistant-action-kicker {
+  color: #10b981;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+
+.assistant-action-title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.assistant-action-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.assistant-action-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(16,185,129,0.07);
+}
+
+.assistant-action-row span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.assistant-action-row strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  word-break: break-word;
+}
+
+.assistant-action-row strong.missing {
+  color: #f43f5e;
+}
+
+.assistant-action-note {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.assistant-action-note.success {
+  color: #10b981;
+  font-weight: 800;
+}
+
+.assistant-action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.assistant-action-buttons button {
+  height: 38px;
+  border-radius: 12px;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.assistant-action-buttons button:disabled {
+  opacity: .65;
+  cursor: default;
+}
+
+.assistant-action-buttons .confirm {
+  background: #10b981;
+  color: #fff;
+}
+
+.assistant-action-buttons .cancel {
+  background: rgba(100,116,139,0.12);
+  color: var(--text-secondary);
+}
+
 .famp-bubble.typing {
   display: flex;
   align-items: center;

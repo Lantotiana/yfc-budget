@@ -298,6 +298,11 @@ export default function App() {
             <Notifications user={user} userData={userData} />
           </ProtectedRoute>
         } />
+        <Route path="/assistant" element={
+          <ProtectedRoute user={user}>
+            <Fampaherezana user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
         <Route path="/fampaherezana" element={
           <ProtectedRoute user={user}>
             <Fampaherezana user={user} userData={userData} />
