@@ -110,7 +110,7 @@ function BottomNav({ user }) {
 
   useEffect(() => {
     function syncModalState() {
-      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay')))
+      setModalOpen(Boolean(document.querySelector('.bottom-sheet-overlay, .modal-overlay, .verse-modal')))
     }
 
     syncModalState()
@@ -136,7 +136,7 @@ function BottomNav({ user }) {
     }
 
     function isInteractiveTarget(target) {
-      return target?.closest?.('input, textarea, select, [contenteditable="true"], .modal-overlay, .bottom-sheet-overlay')
+      return target?.closest?.('input, textarea, select, [contenteditable="true"], .modal-overlay, .bottom-sheet-overlay, .verse-modal')
     }
 
     function onTouchStart(e) {

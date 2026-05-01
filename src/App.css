@@ -78,6 +78,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   transition: background 0.35s, color 0.35s;
 }
 
@@ -107,7 +108,9 @@ body {
   background: #38bdf8;
   box-shadow: 0 18px 36px rgba(56, 189, 248, 0.28);
   isolation: isolate;
-  animation: dailyCardGlow 1.8s ease-out both;
+  contain: paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .daily-verse-card::before {
@@ -124,8 +127,7 @@ body {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 78% 24%, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.18) 24%, transparent 58%);
-  opacity: 0;
-  animation: dailyLightBloom 1.9s ease-out both;
+  opacity: 0.38;
   pointer-events: none;
   z-index: 1;
 }
@@ -144,7 +146,7 @@ body {
 
 .daily-verse-card.night::after {
   background: radial-gradient(circle at 80% 24%, rgba(191, 219, 254, 0.36), rgba(147, 197, 253, 0.14) 24%, transparent 58%);
-  animation: dailyMoonBloom 1.8s ease-out both;
+  opacity: 0.36;
 }
 
 .daily-verse-card.night .daily-sky {
@@ -201,7 +203,7 @@ body {
     radial-gradient(circle at 92% 43%, rgba(255,255,255,.85) 0 1.1px, transparent 1.7px),
     radial-gradient(circle at 14% 52%, rgba(255,255,255,.5)  0 0.9px, transparent 1.4px),
     radial-gradient(circle at 67% 58%, rgba(255,255,255,.7)  0 1px,   transparent 1.6px);
-  animation: dailyStarsTwinkle 3.8s ease-in-out infinite;
+  opacity: 0.82;
 }
 
 .daily-sun {
@@ -213,14 +215,16 @@ body {
   border-radius: 50%;
   background: #facc15;
   box-shadow: 0 0 0 12px rgba(250, 204, 21, 0.18), 0 0 34px rgba(250, 204, 21, 0.6);
-  animation: dailySunRise 1.7s cubic-bezier(.2,.9,.2,1) both, dailySunFloat 4.5s 1.7s ease-in-out infinite;
+  animation: dailySunRise 1.15s cubic-bezier(.2,.9,.2,1) both;
   z-index: 1;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .daily-verse-card.night .daily-sun {
   background: #f8fafc;
   box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
-  animation: dailyMoonRise 1.6s cubic-bezier(.2,.9,.2,1) both, dailyMoonFloat 5s 1.6s ease-in-out infinite;
+  animation: dailyMoonRise 1.05s cubic-bezier(.2,.9,.2,1) both;
 }
 
 .daily-verse-card.night .daily-sun::after {
@@ -239,7 +243,7 @@ body {
   height: 18px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
-  animation: dailyCloudDrift 12s ease-in-out infinite;
+  transform: translateZ(0);
 }
 
 .daily-verse-card.night .daily-cloud {
@@ -353,17 +357,14 @@ body {
   0% {
     transform: translateY(92px) scale(0.72);
     opacity: 0.25;
-    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0), 0 0 0 rgba(250, 204, 21, 0);
   }
   58% {
     transform: translateY(-4px) scale(1.08);
     opacity: 1;
-    box-shadow: 0 0 0 22px rgba(250, 204, 21, 0.2), 0 0 62px rgba(250, 204, 21, 0.82);
   }
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
-    box-shadow: 0 0 0 12px rgba(250, 204, 21, 0.18), 0 0 34px rgba(250, 204, 21, 0.6);
   }
 }
 
@@ -438,7 +439,10 @@ body {
   z-index: 1000;
   overflow: hidden;
   background: #38bdf8;
-  animation: verseModalIn .28s cubic-bezier(.2,.9,.3,1) both;
+  animation: verseModalIn .22s ease-out both;
+  contain: paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .verse-modal.night {
@@ -488,13 +492,13 @@ body {
     radial-gradient(circle at 91%  67%, rgba(255,255,255,.65) 0 0.9px, transparent 1.4px),
     radial-gradient(circle at 17%  71%, rgba(255,255,255,.85) 0 1px,   transparent 1.6px),
     radial-gradient(circle at 48%  78%, rgba(255,255,255,.55) 0 0.8px, transparent 1.3px);
-  animation: dailyStarsTwinkle 3.8s ease-in-out infinite;
+  opacity: 0.82;
 }
 
 .verse-modal.night .daily-sun {
   background: #f8fafc;
   box-shadow: 0 0 0 10px rgba(191, 219, 254, 0.16), 0 0 34px rgba(191, 219, 254, 0.55);
-  animation: dailyMoonRise 1.6s cubic-bezier(.2,.9,.2,1) both, dailyMoonFloat 5s 1.6s ease-in-out infinite;
+  animation: dailyMoonRise 1.05s cubic-bezier(.2,.9,.2,1) both;
 }
 
 .verse-modal.night .daily-sun::after {
@@ -570,9 +574,7 @@ body {
   height: 42px;
   border-radius: 14px;
   border: none;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.28);
   color: #fff;
   cursor: pointer;
   display: flex;
@@ -658,8 +660,8 @@ body {
 }
 
 @keyframes verseModalIn {
-  from { opacity: 0; transform: scale(.96) translateY(14px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @keyframes popupFloatIn {
@@ -2303,6 +2305,7 @@ input:focus, select:focus {
     inset 0 1px 0 rgba(255,255,255,0.8);
   overflow: hidden;
   isolation: isolate;
+  contain: paint;
   z-index: 90;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -2316,8 +2319,6 @@ input:focus, select:focus {
   inset: 0;
   z-index: -2;
   background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(18px) saturate(1.25);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
 }
 
 .bottom-nav::after {
@@ -2350,8 +2351,6 @@ input:focus, select:focus {
 @media (max-width: 640px) {
   .bottom-nav::before {
     background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(18px) saturate(1.25);
-    -webkit-backdrop-filter: blur(18px) saturate(1.25);
   }
 
   .bottom-nav::after {
@@ -2394,7 +2393,6 @@ input:focus, select:focus {
   transition:
     background 0.32s ease,
     color 0.24s ease,
-    box-shadow 0.32s ease,
     transform 0.28s cubic-bezier(.2,.9,.2,1);
 }
 
@@ -2419,7 +2417,6 @@ input:focus, select:focus {
   box-shadow:
     0 6px 18px color-mix(in srgb, var(--bottom-nav-active) 42%, transparent),
     inset 0 1px 0 rgba(255,255,255,0.32);
-  animation: bottom-nav-ripple 0.34s cubic-bezier(.2,.9,.2,1);
 }
 
 .bottom-nav-item.active .bottom-nav-label {
@@ -2449,6 +2446,17 @@ input:focus, select:focus {
     box-shadow:
       0 6px 18px color-mix(in srgb, var(--bottom-nav-active) 42%, transparent),
       inset 0 1px 0 rgba(255,255,255,0.32);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
   }
 }
 
