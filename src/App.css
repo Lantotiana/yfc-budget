@@ -3340,6 +3340,9 @@ input:focus, select:focus {
   box-shadow: 0 8px 24px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.08);
   z-index: 301;
   animation: picker-pop .16s cubic-bezier(.34,1.56,.64,1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 @keyframes picker-pop {
   from { opacity: 0; transform: scale(.7) translateY(6px); }
@@ -3379,6 +3382,9 @@ input:focus, select:focus {
   padding: max(env(safe-area-inset-top), 8px) 12px 10px;
   box-shadow: 0 4px 20px rgba(0,0,0,.14);
   animation: ctx-slide-down .18s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 @keyframes ctx-slide-down {
   from { transform: translateY(-100%); opacity: 0; }
