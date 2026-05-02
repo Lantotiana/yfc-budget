@@ -123,7 +123,7 @@ export default function Parametres({ user, userData, setUserData }) {
   const inp = {
     width: '100%', padding: '11px 14px',
     border: `1.5px solid ${C.bord2}`, borderRadius: 12,
-    fontSize: 14, background: C.surf2, color: C.t1,
+    fontSize: 'var(--font-sm)', background: C.surf2, color: C.t1,
     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   }
 
@@ -133,7 +133,7 @@ export default function Parametres({ user, userData, setUserData }) {
   }
 
   const sectionLabel = {
-    fontSize: 11, fontWeight: 700, color: C.t3,
+    fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3,
     textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14,
   }
 
@@ -144,14 +144,14 @@ export default function Parametres({ user, userData, setUserData }) {
 
       {/* Header */}
       <div className="textured-page-header" style={{ '--header-color': '#64748b', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
+        <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
       </div>
 
       <div className="page-content" style={{ padding: '16px 20px', paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
 
         {/* Flash */}
         {msg.text && (
-          <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 13, fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
+          <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 'var(--font-sm)', fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
             {msg.text}
           </div>
         )}
@@ -161,8 +161,8 @@ export default function Parametres({ user, userData, setUserData }) {
           <div style={sectionLabel}>Apparence</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>Mode sombre</div>
-              <div style={{ fontSize: 12, color: C.t2, marginTop: 1 }}>{dark ? 'Activé' : 'Désactivé'}</div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Mode sombre</div>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{dark ? 'Activé' : 'Désactivé'}</div>
             </div>
             <button
               onClick={toggle}
@@ -180,7 +180,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div
               onClick={() => fileRef.current?.click()}
-              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 20, color: C.t1, flexShrink: 0 }}
+              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-md)', color: C.t1, flexShrink: 0 }}
             >
               {uploadingPhoto ? '...' : photoURL
                 ? <img src={photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -188,10 +188,10 @@ export default function Parametres({ user, userData, setUserData }) {
               }
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 2 }}>Photo de profil</div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>Photo de profil</div>
               <button
                 onClick={() => fileRef.current?.click()}
-                style={{ fontSize: 12, color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
+                style={{ fontSize: 'var(--font-xs)', color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
               >
                 {uploadingPhoto ? 'Envoi en cours...' : 'Modifier la photo'}
               </button>
@@ -217,7 +217,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={saveProfile}
             disabled={saving || !nom.trim()}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
           >
             {saving ? 'Enregistrement...' : 'Sauvegarder le profil'}
           </button>
@@ -229,7 +229,7 @@ export default function Parametres({ user, userData, setUserData }) {
             <div style={sectionLabel}>Administration</div>
             <button
               onClick={() => navigate('/admin')}
-              style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
               Ouvrir la page admin
             </button>
@@ -270,7 +270,7 @@ export default function Parametres({ user, userData, setUserData }) {
           <button
             onClick={savePassword}
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
           >
             {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
           </button>
@@ -279,7 +279,7 @@ export default function Parametres({ user, userData, setUserData }) {
         {/* Déconnexion */}
         <button
           onClick={() => signOut(auth)}
-          style={{ width: '100%', padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{ width: '100%', padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
         >
           Se déconnecter
         </button>

@@ -111,14 +111,14 @@ export default function Documents({ user, userData }) {
       {/* Header */}
       <div className="f1 textured-page-header" style={{ '--header-color': '#06b6d4', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
-          <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>
         </div>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
           className="header-action"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
         >
           <Upload size={14} /> {uploading ? 'Envoi...' : 'Ajouter'}
         </button>
@@ -129,19 +129,19 @@ export default function Documents({ user, userData }) {
       <div className="f2 scroll-bottom-safe" style={{ padding: '0 20px' }}>
 
         {error && (
-          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.coralD, borderRadius: 12, color: C.coral, fontSize: 13, fontWeight: 600 }}>
+          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.coralD, borderRadius: 12, color: C.coral, fontSize: 'var(--font-sm)', fontWeight: 600 }}>
             {error}
           </div>
         )}
 
         {uploading && uploadProgress && (
-          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.tealD, borderRadius: 12, color: C.teal, fontSize: 13, fontWeight: 600 }}>
+          <div style={{ marginBottom: 8, padding: '12px 14px', background: C.tealD, borderRadius: 12, color: C.teal, fontSize: 'var(--font-sm)', fontWeight: 600 }}>
             {uploadProgress}
           </div>
         )}
 
         {documents.length === 0 && !uploading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             Aucun document. Appuyez sur « Ajouter » pour en uploader un.
           </div>
         ) : (
@@ -166,10 +166,10 @@ export default function Documents({ user, userData }) {
                   onClick={() => canPreview(doc.type) ? setPreview(doc) : null}
                   style={{ flex: 1, minWidth: 0, cursor: canPreview(doc.type) ? 'pointer' : 'default' }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {doc.nom}
                   </div>
-                  <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
+                  <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>
                     {fmtSize(doc.taille)} · {formatDate(doc.uploadedAt)}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function Documents({ user, userData }) {
             onClick={e => e.stopPropagation()}
             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(0,0,0,0.6)', flexShrink: 0 }}
           >
-            <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ flex: 1, fontSize: 'var(--font-sm)', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {preview.nom}
             </div>
             <a
@@ -248,7 +248,7 @@ export default function Documents({ user, userData }) {
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce document ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: 13, color: C.t2 }}>
+            <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>
               « {confirmDel.nom} » sera définitivement supprimé.
             </p>
             <div className="dialog-footer">

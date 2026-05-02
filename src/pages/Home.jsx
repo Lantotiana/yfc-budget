@@ -201,7 +201,7 @@ export default function Home({ user, userData }) {
               width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
               background: C.surf2,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 19, fontWeight: 700, color: '#fff', cursor: 'pointer',
+              fontSize: 'var(--font-md)', fontWeight: 700, color: '#fff', cursor: 'pointer',
               overflow: 'hidden',
               boxShadow: C.shadow,
             }}
@@ -214,11 +214,11 @@ export default function Home({ user, userData }) {
 
           {/* Greeting */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: C.t2, marginBottom: 2 }}>Bonjour</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, lineHeight: 1.1, letterSpacing: '-.4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 2 }}>Bonjour</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, lineHeight: 1.1, letterSpacing: '-.4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {prenom}
             </div>
-            <div style={{ fontSize: 10, color: C.t2, fontWeight: 700, letterSpacing: '1px', marginTop: 2, textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, fontWeight: 700, letterSpacing: '1px', marginTop: 2, textTransform: 'uppercase' }}>
               Young For Christ
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function Home({ user, userData }) {
             >
               <Bell size={17} />
               {notifCount > 0 && (
-                <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 999, background: C.coral, color: '#fff', border: `2px solid ${C.bg}`, fontSize: 9, fontWeight: 800, lineHeight: '13px', textAlign: 'center' }}>
+                <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 999, background: C.coral, color: '#fff', border: `2px solid ${C.bg}`, fontSize: 'var(--font-xs)', fontWeight: 800, lineHeight: '13px', textAlign: 'center' }}>
                   {notifCount > 9 ? '9+' : notifCount}
                 </span>
               )}
@@ -327,8 +327,8 @@ export default function Home({ user, userData }) {
                 <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, position: 'relative' }}>
                   <m.Icon size={18} color="#fff" />
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 3, lineHeight: 1.3, position: 'relative' }}>{m.label}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,.78)', position: 'relative' }}>{m.desc}</div>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: '#fff', marginBottom: 3, lineHeight: 1.3, position: 'relative' }}>{m.label}</div>
+                <div style={{ fontSize: 'var(--font-xs)', color: 'rgba(255,255,255,.78)', position: 'relative' }}>{m.desc}</div>
               </button>
           ))}
         </div>

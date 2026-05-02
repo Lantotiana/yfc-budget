@@ -145,10 +145,10 @@ export default function Evenements() {
       {/* Header */}
       <div className="f1 textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Événements</div>
-          <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>{evenements.length} événement{evenements.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Événements</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{evenements.length} événement{evenements.length !== 1 ? 's' : ''}</div>
         </div>
-        <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+        <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
           <Plus size={14} color="#fff" /> Ajouter
         </button>
       </div>
@@ -156,9 +156,9 @@ export default function Evenements() {
       {/* Liste */}
       <div className="f2 scroll-bottom-safe" style={{ padding: '0 20px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>Chargement...</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Chargement...</div>
         ) : sorted.length === 0 ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>Aucun événement</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Aucun événement</div>
         ) : sorted.map(e => {
           const isPast = !e._end || e._end <= now
           const countdown = e._start && !isPast ? buildCountdown(e._start, now) : null
@@ -170,12 +170,12 @@ export default function Evenements() {
               <div style={{ paddingLeft: isPast ? 0 : 8 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ flex: 1, paddingRight: 8 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, lineHeight: 1.3 }}>{e.nom}</div>
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, lineHeight: 1.3 }}>{e.nom}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {isPast
-                      ? <div style={{ padding: '3px 9px', borderRadius: 20, background: C.surf3, fontSize: 10, fontWeight: 500, color: C.t3 }}>Terminé</div>
-                      : countdown && <div style={{ padding: '3px 9px', borderRadius: 20, background: C.tealD, border: `1px solid ${C.teal}50`, fontSize: 10, fontWeight: 600, color: C.teal, whiteSpace: 'nowrap' }}>{countdown}</div>
+                      ? <div style={{ padding: '3px 9px', borderRadius: 20, background: C.surf3, fontSize: 'var(--font-xs)', fontWeight: 500, color: C.t3 }}>Terminé</div>
+                      : countdown && <div style={{ padding: '3px 9px', borderRadius: 20, background: C.tealD, border: `1px solid ${C.teal}50`, fontSize: 'var(--font-xs)', fontWeight: 600, color: C.teal, whiteSpace: 'nowrap' }}>{countdown}</div>
                     }
                     <button onClick={ev => { ev.stopPropagation(); setConfirmDel(e) }} style={{ width: 28, height: 28, borderRadius: 9, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Trash2 size={13} color={C.coral} />
@@ -183,8 +183,8 @@ export default function Evenements() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {dateLabel && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.t2 }}><Calendar size={13} color={C.t3} />{dateLabel}{timeLabel && <><span style={{ color: C.t3 }}>·</span><Clock size={13} color={C.t3} />{timeLabel}</>}</div>}
-                  {e.lieu && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.t2 }}><MapPin size={13} color={C.t3} />{e.lieu}</div>}
+                  {dateLabel && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-xs)', color: C.t2 }}><Calendar size={13} color={C.t3} />{dateLabel}{timeLabel && <><span style={{ color: C.t3 }}>·</span><Clock size={13} color={C.t3} />{timeLabel}</>}</div>}
+                  {e.lieu && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-xs)', color: C.t2 }}><MapPin size={13} color={C.t3} />{e.lieu}</div>}
                 </div>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function Evenements() {
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title mb-8">Supprimer cet événement ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: 13, color: C.t2 }}>{confirmDel.nom} sera définitivement supprimé.</p>
+            <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} sera définitivement supprimé.</p>
             <div className="dialog-footer">
               <button onClick={() => setConfirmDel(null)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>Annuler</button>
               <button onClick={confirmDelete} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Supprimer</button>

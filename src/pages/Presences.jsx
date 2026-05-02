@@ -162,15 +162,15 @@ export default function Presences({ user, userData }) {
       <div className="textured-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, background: C.bg, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
             {selectedEvent && (
-              <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>
                 {presentCount} / {membres.length} présent{presentCount !== 1 ? 's' : ''}
               </div>
             )}
           </div>
           {selectedEvent && membres.length > 0 && (
-            <button className="header-action" onClick={partager} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 12, fontWeight: 500 }}>
+            <button className="header-action" onClick={partager} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 'var(--font-xs)', fontWeight: 500 }}>
               <Share2 size={13} /> {copied ? 'Copié !' : 'Partager'}
             </button>
           )}
@@ -181,14 +181,14 @@ export default function Presences({ user, userData }) {
           <select
             value={selectedEvent?.id || ''}
             onChange={e => { const evt = evenements.find(ev => ev.id === e.target.value); setSelectedEvent(evt || null) }}
-            style={{ flex: 1, padding: '10px 12px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 13, outline: 'none' }}
+            style={{ flex: 1, padding: '10px 12px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }}
           >
             {evenements.length === 0 && <option value="">Aucun culte</option>}
             {evenements.map(ev => (
               <option key={ev.id} value={ev.id}>{ev.titre} — {toDisplayDate(ev.date)}</option>
             ))}
           </select>
-          <button className="header-action" onClick={() => setShowNewEvent(true)} style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <button className="header-action" onClick={() => setShowNewEvent(true)} style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600, whiteSpace: 'nowrap' }}>
             + Nouveau
           </button>
         </div>
@@ -204,7 +204,7 @@ export default function Presences({ user, userData }) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher un membre..."
-              style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }}
             />
           </div>
         )}
@@ -222,11 +222,11 @@ export default function Presences({ user, userData }) {
       {/* Liste membres */}
       <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
         {!selectedEvent ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             Créez un culte pour commencer le suivi des présences.
           </div>
         ) : membres.length === 0 ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             Aucun membre enregistré. Ajoutez des membres dans le module Membres.
           </div>
         ) : (
@@ -247,12 +247,12 @@ export default function Presences({ user, userData }) {
                     transition: 'background .2s, border-color .2s, opacity .2s', opacity: isSaving ? 0.6 : 1,
                   }}
                 >
-                  <div style={{ width: 38, height: 38, borderRadius: 14, flexShrink: 0, background: present ? C.tealD : C.surf2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: present ? C.teal : C.t2 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 14, flexShrink: 0, background: present ? C.tealD : C.surf2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)', color: present ? C.teal : C.t2 }}>
                     {(m.nom || '?')[0].toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
-                    {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{m.telephone}</div>}
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+                    {m.telephone && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{m.telephone}</div>}
                   </div>
                   <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1)', transform: present ? 'scale(1)' : 'scale(0.9)' }}>
                     {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}

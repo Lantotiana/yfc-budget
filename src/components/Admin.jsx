@@ -61,10 +61,10 @@ export default function Admin({ user }) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
         <div className="textured-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1 }}>Administration</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>Administration</div>
         </div>
         <div className="page-content">
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
             Cette page est réservée à l'admin.
           </div>
         </div>
@@ -80,8 +80,8 @@ export default function Admin({ user }) {
             <ArrowLeft size={18} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Administration</div>
-            <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>Gestion des demandes et des comptes</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Administration</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Gestion des demandes et des comptes</div>
           </div>
           <div style={{ width: 38, height: 38, borderRadius: 12, background: C.tealD, color: C.teal, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldCheck size={18} />

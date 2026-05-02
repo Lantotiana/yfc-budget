@@ -152,8 +152,8 @@ export default function Notifications({ user }) {
       {/* Header */}
       <div className="textured-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Notifications</div>
-          <div style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Notifications</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>
             {visibleNotifications.length} activité{visibleNotifications.length !== 1 ? 's' : ''} récente{visibleNotifications.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -164,14 +164,14 @@ export default function Notifications({ user }) {
 
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>Chargement...</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Chargement...</div>
         ) : visibleNotifications.length === 0 ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 13 }}>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
             Aucune notification pour le moment.
           </div>
         ) : Object.entries(grouped).map(([label, items]) => (
           <div key={label} style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 8px' }}>{label}</div>
+            <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 8px' }}>{label}</div>
             {items.map(notif => {
               const Icon = typeIcon[notif.type] || Bell
               const color = getNotificationColor(notif.type)
@@ -186,9 +186,9 @@ export default function Notifications({ user }) {
                     <Icon size={16} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 2 }}>{cleanText(notif.titre)}</div>
-                    {notif.detail && <div style={{ fontSize: 12, color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanText(notif.detail)}</div>}
-                    <div style={{ fontSize: 11, color: C.t3, marginTop: 4, display: 'flex', gap: 6 }}>
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{cleanText(notif.titre)}</div>
+                    {notif.detail && <div style={{ fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanText(notif.detail)}</div>}
+                    <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4, display: 'flex', gap: 6 }}>
                       <span>{cleanText(notif.actor?.nom) || 'Utilisateur'}</span>
                       <span>·</span>
                       <span>{formatTime(notif.createdAt)}</span>

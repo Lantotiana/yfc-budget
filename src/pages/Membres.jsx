@@ -181,8 +181,8 @@ export default function Membres({ user, userData }) {
       <div className="textured-page-header" style={{ '--header-color': '#f43f5e', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div className="header-title" style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Membres</div>
-            <div className="header-subtitle" style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>{membres.length} membre{membres.length !== 1 ? 's' : ''}</div>
+            <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Membres</div>
+            <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{membres.length} membre{membres.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             {membres.length > 0 && (
@@ -190,14 +190,14 @@ export default function Membres({ user, userData }) {
                 <Download size={16} />
               </button>
             )}
-            <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
               <Plus size={14} color="#fff" /> Ajouter
             </button>
           </div>
         </div>
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 14, outline: 'none' }} />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
         </div>
         <div className="member-role-filter" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
           {[
@@ -218,7 +218,7 @@ export default function Membres({ user, userData }) {
                   padding: '8px 6px',
                   background: active ? C.teal : 'transparent',
                   color: active ? '#fff' : C.t2,
-                  fontSize: 12,
+                  fontSize: 'var(--font-xs)',
                   fontWeight: 800,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -234,33 +234,33 @@ export default function Membres({ user, userData }) {
       {/* Liste */}
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 13 }}>Chargement...</div>
+          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>Chargement...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 13 }}>{search || roleFilter !== 'all' ? 'Aucun résultat' : 'Aucun membre enregistré'}</div>
+          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{search || roleFilter !== 'all' ? 'Aucun résultat' : 'Aucun membre enregistré'}</div>
         ) : filtered.map(m => {
           const avatarColor = getAvatarColor(m)
           const isStaff = isStaffMember(m)
           return (
           <div key={m.id} onClick={() => openEdit(m)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '13px 14px', marginBottom: 8, cursor: 'pointer' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, background: `${avatarColor}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: avatarColor }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, background: `${avatarColor}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)', color: avatarColor }}>
               {(m.nom || '?')[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
                 {isStaff && (
-                  <span style={{ flexShrink: 0, padding: '3px 7px', borderRadius: 999, background: 'rgba(16,185,129,0.12)', color: C.teal, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
+                  <span style={{ flexShrink: 0, padding: '3px 7px', borderRadius: 999, background: 'rgba(16,185,129,0.12)', color: C.teal, fontSize: 'var(--font-xs)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
                     Staff
                   </span>
                 )}
                 {isStaff && m.staffRole && (
-                  <span style={{ flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '3px 7px', borderRadius: 999, background: C.surf2, color: C.t2, fontSize: 9, fontWeight: 800 }}>
+                  <span style={{ flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '3px 7px', borderRadius: 999, background: C.surf2, color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 800 }}>
                     {m.staffRole}
                   </span>
                 )}
               </div>
-              {m.telephone && <div style={{ fontSize: 11, color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
-              {m.email && <div style={{ fontSize: 11, color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
+              {m.telephone && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
+              {m.email && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
             </div>
             <button onClick={e => { e.stopPropagation(); setConfirmDel(m) }} style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Trash2 size={14} color={C.coral} />
@@ -294,9 +294,9 @@ export default function Membres({ user, userData }) {
                   disabled={isFormApprovedUser}
                   style={{ width: 18, height: 18, accentColor: C.teal }}
                 />
-                <span style={{ color: C.t1, fontSize: 13, fontWeight: 400 }}>
+                <span style={{ color: C.t1, fontSize: 'var(--font-sm)', fontWeight: 400 }}>
                   Cette personne est Staff
-                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 11, fontWeight: 400 }}> (user approuvé)</span>}
+                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (user approuvé)</span>}
                 </span>
               </label>
               {isFormStaff && (
@@ -321,7 +321,7 @@ export default function Membres({ user, userData }) {
                         className="form-input"
                         style={{ color: C.t2 }}
                       />
-                      <div style={{ marginTop: 5, fontSize: 11, color: C.t3 }}>
+                      <div style={{ marginTop: 5, fontSize: 'var(--font-xs)', color: C.t3 }}>
                         Seul l'admin peut attribuer un rôle.
                       </div>
                     </>
@@ -344,7 +344,7 @@ export default function Membres({ user, userData }) {
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce membre ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: 13, color: C.t2 }}>{confirmDel.nom} {confirmDel.prenoms} sera définitivement supprimé.</p>
+            <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} {confirmDel.prenoms} sera définitivement supprimé.</p>
             <div className="dialog-footer">
               <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>
               <button onClick={confirmDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Supprimer</button>

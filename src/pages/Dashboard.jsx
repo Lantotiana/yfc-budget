@@ -62,8 +62,8 @@ function StatCard({ label, value, col, colD, Icon, type }) {
     <div style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px 14px 12px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div>
-          <div style={{ fontSize: 11, color: C.t2, marginBottom: 4 }}>{label}</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: col, letterSpacing: '-.5px' }}>{value}</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 4 }}>{label}</div>
+          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: col, letterSpacing: '-.5px' }}>{value}</div>
         </div>
         <div style={{ width: 30, height: 30, borderRadius: 10, background: colD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Icon size={14} color={col} />
@@ -126,10 +126,10 @@ export default function Dashboard() {
         textAlign: 'center',
         borderBottom: `1px solid ${C.bord}`,
       }}>
-        <div style={{ fontSize: 11, color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
-        <div style={{ fontSize: 36, fontWeight: 700, color: C.t1, letterSpacing: '-1.4px', lineHeight: 1 }}>
+        <div style={{ fontSize: 'var(--font-xs)', color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
+        <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-1.4px', lineHeight: 1 }}>
           {solde < 0 ? '-' : ''}<AnimatedMoney value={solde} suffix={false} />
-          <span style={{ fontSize: 18, fontWeight: 500, color: C.t2, marginLeft: 6 }}>Ar</span>
+          <span style={{ fontSize: 'var(--font-md)', fontWeight: 500, color: C.t2, marginLeft: 6 }}>Ar</span>
         </div>
       </div>
 
@@ -146,33 +146,33 @@ export default function Dashboard() {
             <div style={{ width: 30, height: 30, borderRadius: 10, background: C.violetD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <Users size={14} color={C.violet} />
             </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={membres.length} /></div>
-            <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Membres</div>
-            <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>total inscrits</div>
+            <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={membres.length} /></div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Membres</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>total inscrits</div>
           </button>
           <button onClick={() => navigate('/evenements')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
             <div style={{ width: 30, height: 30, borderRadius: 10, background: C.amberD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <CalendarDays size={14} color={C.amber} />
             </div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={upcomingCount} /></div>
-            <div style={{ fontSize: 11, color: C.t2, marginTop: 2 }}>Événements</div>
-            <div style={{ fontSize: 10, color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={upcomingCount} /></div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Événements</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
           </button>
         </div>
 
         {/* Transactions récentes */}
         <div className="f4">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
-            <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 12, color: C.amber, fontWeight: 500 }}>
+            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
+            <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 'var(--font-xs)', color: C.amber, fontWeight: 500 }}>
               Voir tout
             </button>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 13 }}>Chargement...</div>
+            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Chargement...</div>
           ) : recentTransactions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 13 }}>Aucune transaction</div>
+            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Aucune transaction</div>
           ) : (
             recentTransactions.map(tx => {
               const isEntree = tx.type === 'entree'
@@ -187,10 +187,10 @@ export default function Dashboard() {
                     {isEntree ? <ArrowDownLeft size={16} color={C.teal} /> : <ArrowUpRight size={16} color={C.coral} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
-                    <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
+                    <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
+                  <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
                     {isEntree ? '+' : '-'}{fmt(tx.montant)}
                   </div>
                 </button>

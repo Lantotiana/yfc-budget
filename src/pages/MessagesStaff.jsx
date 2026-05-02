@@ -15,16 +15,18 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { ArrowLeft, Check, Copy, Edit3, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Plus, Search, Send, Trash2, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
-import { canModerateStaffMessagesRole, sameEmail } from '../utils/access'
+import { canModerateStaffMessagesRole, normalizeAccessText, sameEmail } from '../utils/access'
 import { useTheme } from '../context/ThemeContext'
 
 const INITIAL_LIMIT = 30
 const PAGE_SIZE = 30
 const MAX_MESSAGE_LENGTH = 1000
+const MAX_ANNOUNCEMENT_TITLE = 80
+const MAX_ANNOUNCEMENT_DETAILS = 1000
 const MAX_MENTIONS = 10
 const EDIT_WINDOW_MS = 15 * 60 * 1000
 const REACTIONS = ['👍', '❤️', '🙏', '✅', '😂', '👀']
@@ -54,6 +56,13 @@ function cleanMessage(value) {
     .slice(0, MAX_MESSAGE_LENGTH)
 }
 
+function cleanField(value, maxLength) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength)
+}
+
 function getDisplayName(userDoc) {
   return userDoc?.nom || userDoc?.displayName || userDoc?.prenom || userDoc?.email?.split('@')[0] || 'Staff'
 }
@@ -79,6 +88,20 @@ function renderLinkedText(text) {
       </a>
     )
   })
+}
+
+function formatAnnouncementDate(value) {
+  if (!value) return ''
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function formatPublishedDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) + ' à ' + formatTime(value)
 }
 
 export default function MessagesStaff({ user, userData }) {
@@ -112,6 +135,16 @@ export default function MessagesStaff({ user, userData }) {
   const [showSearch, setShowSearch] = useState(false)
   const [groupPhotoURL, setGroupPhotoURL] = useState('')
   const [uploadingGroupPhoto, setUploadingGroupPhoto] = useState(false)
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
+  const [publishingAnnouncement, setPublishingAnnouncement] = useState(false)
+  const [announcementError, setAnnouncementError] = useState('')
+  const [announcementForm, setAnnouncementForm] = useState({
+    title: '',
+    details: '',
+    announcementDate: '',
+    announcementTime: '',
+    location: '',
+  })
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
@@ -168,14 +201,18 @@ export default function MessagesStaff({ user, userData }) {
   const currentStaff = useMemo(() => staffUsers.find(s => s.uid === user?.uid), [staffUsers, user?.uid])
   const isAdmin = user?.email === ADMIN_EMAIL
   const canModerate = isAdmin || canModerateStaffMessagesRole(currentMember?.staffRole)
+  const canModerateAnnouncement = isAdmin || ['president', 'vice-president'].includes(normalizeAccessText(currentMember?.staffRole))
   const canAccess = Boolean(user?.uid && userData?.approuve !== false)
 
   const pinnedMessage = pinnedMessages.find(m => !m.deleted) || null
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase()
-    if (!term) return messages
-    return messages.filter(m =>
+    const visible = messages.filter(m => !m.deleted)
+    if (!term) return visible
+    return visible.filter(m =>
       String(m.text || '').toLowerCase().includes(term) ||
+      String(m.title || '').toLowerCase().includes(term) ||
+      String(m.details || '').toLowerCase().includes(term) ||
       String(m.senderName || '').toLowerCase().includes(term)
     )
   }, [messages, search])
@@ -277,11 +314,19 @@ export default function MessagesStaff({ user, userData }) {
   }, [messages, pinnedMessages, contextMsg])
 
   function canEditMessage(message) {
-    return Boolean(message && message.senderId === user.uid && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS)
+    return Boolean(message && (message.type || 'message') === 'message' && message.senderId === user.uid && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS)
   }
 
   function canDeleteMessage(message) {
-    return Boolean(message && !message.deleted && (message.senderId === user.uid || canModerate))
+    if (!message || message.deleted) return false
+    if ((message.type || 'message') === 'announcement') return message.senderId === user.uid || canModerateAnnouncement
+    return message.senderId === user.uid || canModerate
+  }
+
+  function canPinMessage(message) {
+    if (!message || message.deleted) return false
+    if ((message.type || 'message') === 'announcement') return canModerateAnnouncement
+    return canModerate
   }
 
   function openContextMenu(message, rect) {
@@ -362,6 +407,7 @@ export default function MessagesStaff({ user, userData }) {
       const senderRole = currentMember?.staffRole || currentStaff?.role || 'Staff'
       const senderPhoto = userData?.photoURL || currentStaff?.photoURL || user?.photoURL || null
       await addDoc(collection(db, 'staffMessages'), {
+        type: 'message',
         text,
         senderId: user.uid,
         senderName,
@@ -426,13 +472,79 @@ export default function MessagesStaff({ user, userData }) {
     }
   }
 
+  async function createAnnouncement(e) {
+    e.preventDefault()
+    if (!canAccess || publishingAnnouncement) return
+    const title = cleanField(announcementForm.title, MAX_ANNOUNCEMENT_TITLE)
+    const details = cleanMessage(announcementForm.details).slice(0, MAX_ANNOUNCEMENT_DETAILS)
+    const announcementDate = cleanField(announcementForm.announcementDate, 20)
+    const announcementTime = cleanField(announcementForm.announcementTime, 10)
+    const location = cleanField(announcementForm.location, 120)
+
+    if (!title) {
+      setAnnouncementError('Le titre de l’annonce est obligatoire.')
+      return
+    }
+    if (!details) {
+      setAnnouncementError('Les détails de l’annonce sont obligatoires.')
+      return
+    }
+
+    setPublishingAnnouncement(true)
+    setAnnouncementError('')
+    try {
+      const senderName = userData?.nom || currentStaff?.name || user?.displayName || user?.email || 'Staff'
+      const senderRole = currentMember?.staffRole || currentStaff?.role || 'Staff'
+      const senderPhoto = userData?.photoURL || currentStaff?.photoURL || user?.photoURL || null
+      await addDoc(collection(db, 'staffMessages'), {
+        type: 'announcement',
+        title,
+        details,
+        announcementDate: announcementDate || null,
+        announcementTime: announcementTime || null,
+        location: location || null,
+        senderId: user.uid,
+        senderName,
+        senderRole,
+        senderPhoto,
+        reactions: {},
+        readBy: [user.uid],
+        pinned: false,
+        deleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        edited: false,
+        editedAt: null,
+        createdAt: new Date().toISOString(),
+      })
+      setAnnouncementForm({ title: '', details: '', announcementDate: '', announcementTime: '', location: '' })
+      setShowAnnouncementForm(false)
+    } catch (error) {
+      console.warn('Annonce non publiée', error)
+      setAnnouncementError('Impossible de publier l’annonce pour le moment.')
+    } finally {
+      setPublishingAnnouncement(false)
+    }
+  }
+
   async function toggleReaction(message, emoji) {
     if (!canAccess || message.deleted) return
-    const current = message.reactions?.[emoji] || []
     const ref = doc(db, 'staffMessages', message.id)
-    await updateDoc(ref, {
-      [`reactions.${emoji}`]: current.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid),
-    })
+    if ((message.type || 'message') === 'announcement') {
+      const next = { ...(message.reactions || {}) }
+      const sameActive = (next[emoji] || []).includes(user.uid)
+      Object.keys(next).forEach(key => {
+        next[key] = (next[key] || []).filter(id => id !== user.uid)
+        if (next[key].length === 0) delete next[key]
+      })
+      if (!sameActive) next[emoji] = [...(next[emoji] || []), user.uid]
+      await updateDoc(ref, { reactions: next })
+    } else {
+      const current = message.reactions?.[emoji] || []
+      await updateDoc(ref, {
+        [`reactions.${emoji}`]: current.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid),
+      })
+    }
   }
 
   function startEdit(message) {
@@ -443,7 +555,10 @@ export default function MessagesStaff({ user, userData }) {
   async function copyMessage(message) {
     if (!message || message.deleted) return
     try {
-      await navigator.clipboard?.writeText(message.text || '')
+      const text = (message.type || 'message') === 'announcement'
+        ? `${message.title || ''}\n\n${message.details || ''}`.trim()
+        : (message.text || '')
+      await navigator.clipboard?.writeText(text)
     } catch {
       console.warn('Copie impossible')
     }
@@ -464,8 +579,7 @@ export default function MessagesStaff({ user, userData }) {
   }
 
   async function softDelete(message) {
-    const ownsMessage = message.senderId === user.uid
-    if (!ownsMessage && !canModerate) return
+    if (!canDeleteMessage(message)) return
     await updateDoc(doc(db, 'staffMessages', message.id), {
       deleted: true,
       deletedAt: new Date().toISOString(),
@@ -475,7 +589,7 @@ export default function MessagesStaff({ user, userData }) {
   }
 
   async function togglePin(message) {
-    if (!canModerate || message.deleted) return
+    if (!canPinMessage(message)) return
     const batch = writeBatch(db)
     pinnedMessages.forEach(m => {
       if (m.id !== message.id) batch.update(doc(db, 'staffMessages', m.id), { pinned: false })
@@ -529,7 +643,114 @@ export default function MessagesStaff({ user, userData }) {
     })
   }
 
+  function renderReactionSummary(message) {
+    const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+    if (existingReactions.length === 0 || message.deleted) return null
+    return (
+      <div className="staff-reactions-summary">
+        {existingReactions.map(emoji => {
+          const users = message.reactions[emoji]
+          const active = users.includes(user.uid)
+          return (
+            <button
+              key={emoji}
+              type="button"
+              className={active ? 'active' : ''}
+              onClick={e => {
+                e.stopPropagation()
+                toggleReaction(message, emoji)
+              }}
+              title={getUsersByIds(users)}
+            >
+              <span>{emoji}</span>
+              <strong>{users.length}</strong>
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
+  function getReadUsers(message, limitCount = 3) {
+    return (message.readBy || [])
+      .filter(id => id !== message.senderId)
+      .map(id => staffUsers.find(s => s.uid === id))
+      .filter(Boolean)
+      .slice(0, limitCount)
+  }
+
+  function renderAnnouncement(message, compact = false) {
+    const readUsers = getReadUsers(message, 3)
+    const readTotal = (message.readBy || []).filter(id => id !== message.senderId).length
+    const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+
+    return (
+      <article key={message.id} className={`staff-announcement-row${compact ? ' pinned' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
+        <div className="staff-announcement-avatar">
+          {message.senderPhoto
+            ? <img src={message.senderPhoto} alt="" />
+            : <span>{(message.senderName || '?').charAt(0).toUpperCase()}</span>
+          }
+        </div>
+        <div className="staff-announcement-content">
+          <div className="staff-message-meta staff-announcement-meta">
+            <span>{(message.senderName || 'Staff').split(/\s+/)[0]}</span>
+            <small>{formatTime(message.createdAt)}</small>
+          </div>
+          <div
+            className={`staff-announcement-card${message.pinned ? ' pinned' : ''}`}
+            onPointerDown={e => startReactionPress(e, message, compact)}
+            onPointerMove={moveReactionPress}
+            onPointerUp={stopReactionPress}
+            onPointerCancel={stopReactionPress}
+            onPointerLeave={stopReactionPress}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {message.pinned && <div className="staff-announcement-pin"><Pin size={13} /> Épinglée</div>}
+            <div className="staff-announcement-label"><Megaphone size={15} /> Annonce</div>
+            <h2>{message.title || 'Annonce'}</h2>
+            <p className="staff-announcement-details">{renderLinkedText(message.details)}</p>
+
+            {(message.announcementDate || message.announcementTime || message.location) && (
+              <div className="staff-announcement-info">
+                {message.announcementDate && <span><Calendar size={14} /> {formatAnnouncementDate(message.announcementDate)}</span>}
+                {message.announcementTime && <span><Clock size={14} /> {message.announcementTime}</span>}
+                {message.location && <span><MapPin size={14} /> {message.location}</span>}
+              </div>
+            )}
+
+            {readUsers.length > 0 && (
+              <div className="staff-announcement-footer">
+                <button
+                  type="button"
+                  className="staff-announcement-reads"
+                  onClick={e => {
+                    e.stopPropagation()
+                    setDetailsId(detailsId === message.id ? null : message.id)
+                  }}
+                >
+                  {readUsers.map(staff => (
+                    <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+                  ))}
+                  {readTotal > 3 && <em>+{readTotal - 3}</em>}
+                </button>
+              </div>
+            )}
+
+            {detailsId === message.id && (
+              <div className="staff-announcement-seen">
+                Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+              </div>
+            )}
+          </div>
+          {renderReactionSummary(message)}
+        </div>
+      </article>
+    )
+  }
+
   function renderMessage(message, compact = false) {
+    if ((message.type || 'message') === 'announcement') return renderAnnouncement(message, compact)
     const mine = message.senderId === user?.uid
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
     const multiline = String(message.text || '').includes('\n')
@@ -554,7 +775,7 @@ export default function MessagesStaff({ user, userData }) {
         )}
         <div className="staff-message-bubble-wrap">
           <div className="staff-message-meta">
-            <span>{message.senderName || 'Staff'}</span>
+            <span>{(message.senderName || 'Staff').split(/\s+/)[0]}</span>
             <small>{formatTime(message.createdAt)}</small>
             {message.edited && <small>modifié</small>}
           </div>
@@ -569,9 +790,7 @@ export default function MessagesStaff({ user, userData }) {
               onPointerLeave={stopReactionPress}
               onContextMenu={e => e.preventDefault()}
             >
-              {message.deleted ? (
-                <span className="staff-message-deleted">Message supprimé</span>
-              ) : editingId === message.id ? (
+              {editingId === message.id ? (
                 <div className="staff-message-edit">
                   <textarea value={editText} onChange={e => setEditText(e.target.value.slice(0, MAX_MESSAGE_LENGTH))} maxLength={MAX_MESSAGE_LENGTH} />
                   <div className="staff-message-edit-actions">
@@ -584,63 +803,24 @@ export default function MessagesStaff({ user, userData }) {
               )}
             </div>
 
-            {existingReactions.length > 0 && !message.deleted && (
-              <div className="staff-reactions-summary">
-                {existingReactions.map(emoji => {
-                  const users = message.reactions[emoji]
-                  const active = users.includes(user.uid)
-                  return (
-                    <button
-                      key={emoji}
-                      type="button"
-                      className={active ? 'active' : ''}
-                      onClick={e => {
-                        e.stopPropagation()
-                        toggleReaction(message, emoji)
-                      }}
-                      title={getUsersByIds(users)}
-                    >
-                      <span>{emoji}</span>
-                      <strong>{users.length}</strong>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            {readAvatars.length > 0 && (
-              <div className={`staff-read-row${mine ? ' mine' : ''}`}>
-                {mine ? (
-                  <>
-                    {detailsId === message.id && (
-                      <span className="staff-read-details">
-                        Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
-                      </span>
-                    )}
-                    <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
-                      {readAvatars.map(staff => (
-                        <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
-                      ))}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
-                      {readAvatars.map(staff => (
-                        <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
-                      ))}
-                    </button>
-                    {detailsId === message.id && (
-                      <span className="staff-read-details">
-                        Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+            {renderReactionSummary(message)}
           </div>
         </div>
+
+        {readAvatars.length > 0 && (
+          <div className="staff-read-row">
+            {detailsId === message.id && (
+              <span className="staff-read-details">
+                Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+              </span>
+            )}
+            <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
+              {readAvatars.map(staff => (
+                <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+              ))}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -649,7 +829,7 @@ export default function MessagesStaff({ user, userData }) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
         <div className="textured-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-          <div className="header-title" style={{ fontSize: 22, fontWeight: 700, color: C.t1 }}>Messages Staff</div>
+          <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>Messages Staff</div>
         </div>
         <div className="page-content">
           <div className="staff-empty-state">Cette page est réservée aux Staffs approuvés.</div>
@@ -690,6 +870,16 @@ export default function MessagesStaff({ user, userData }) {
           <h1>Messages Staff</h1>
           <p>Discussion interne entre les Staffs de YFC</p>
         </div>
+        <button
+          type="button"
+          className="staff-announcement-action"
+          onClick={() => setShowAnnouncementForm(true)}
+          aria-label="Créer une annonce"
+          title="Créer une annonce"
+        >
+          <Megaphone size={18} />
+          <span>Annonce</span>
+        </button>
         <button
           type="button"
           className={`staff-header-icon${showSearch ? ' active' : ''}`}
@@ -783,13 +973,90 @@ export default function MessagesStaff({ user, userData }) {
                   <Trash2 size={15} /><span>Supprimer</span>
                 </button>
               )}
-              {canModerate && !contextMsg.deleted && (
+              {canPinMessage(contextMsg) && (
                 <button type="button" onClick={() => { togglePin(contextMsg); closeContextMenu() }}>
                   <Pin size={15} /><span>{contextMsg.pinned ? 'Désépingler' : 'Épingler'}</span>
                 </button>
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {showAnnouncementForm && (
+        <div className="staff-announcement-modal" onClick={() => !publishingAnnouncement && setShowAnnouncementForm(false)}>
+          <form className="staff-announcement-sheet" onClick={e => e.stopPropagation()} onSubmit={createAnnouncement}>
+            <div className="staff-announcement-sheet-head">
+              <div>
+                <span><Megaphone size={15} /> Nouvelle annonce</span>
+                <h2>Publier dans Messages Staff</h2>
+              </div>
+              <button type="button" onClick={() => !publishingAnnouncement && setShowAnnouncementForm(false)} aria-label="Fermer">
+                <X size={18} />
+              </button>
+            </div>
+
+            {announcementError && <div className="staff-announcement-error">{announcementError}</div>}
+
+            <label className="staff-announcement-field">
+              <span>Titre de l’annonce</span>
+              <input
+                value={announcementForm.title}
+                onChange={e => setAnnouncementForm(prev => ({ ...prev, title: e.target.value.slice(0, MAX_ANNOUNCEMENT_TITLE) }))}
+                maxLength={MAX_ANNOUNCEMENT_TITLE}
+                placeholder="Réunion générale"
+              />
+              <small>{announcementForm.title.length}/{MAX_ANNOUNCEMENT_TITLE}</small>
+            </label>
+
+            <label className="staff-announcement-field">
+              <span>Détails / description</span>
+              <textarea
+                value={announcementForm.details}
+                onChange={e => setAnnouncementForm(prev => ({ ...prev, details: e.target.value.slice(0, MAX_ANNOUNCEMENT_DETAILS) }))}
+                maxLength={MAX_ANNOUNCEMENT_DETAILS}
+                placeholder="Tous les responsables sont invités..."
+                rows={5}
+              />
+              <small>{announcementForm.details.length}/{MAX_ANNOUNCEMENT_DETAILS}</small>
+            </label>
+
+            <div className="staff-announcement-grid">
+              <label className="staff-announcement-field">
+                <span>Date</span>
+                <input
+                  type="date"
+                  value={announcementForm.announcementDate}
+                  onChange={e => setAnnouncementForm(prev => ({ ...prev, announcementDate: e.target.value }))}
+                />
+              </label>
+              <label className="staff-announcement-field">
+                <span>Heure</span>
+                <input
+                  type="time"
+                  value={announcementForm.announcementTime}
+                  onChange={e => setAnnouncementForm(prev => ({ ...prev, announcementTime: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            <label className="staff-announcement-field">
+              <span>Lieu</span>
+              <input
+                value={announcementForm.location}
+                onChange={e => setAnnouncementForm(prev => ({ ...prev, location: e.target.value.slice(0, 120) }))}
+                maxLength={120}
+                placeholder="Salle principale"
+              />
+            </label>
+
+            <div className="staff-announcement-form-actions">
+              <button type="button" onClick={() => !publishingAnnouncement && setShowAnnouncementForm(false)}>Annuler</button>
+              <button type="submit" disabled={publishingAnnouncement || !cleanField(announcementForm.title, MAX_ANNOUNCEMENT_TITLE) || !cleanMessage(announcementForm.details)}>
+                {publishingAnnouncement ? <MoreHorizontal size={18} /> : <><Megaphone size={16} /> Publier l’annonce</>}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

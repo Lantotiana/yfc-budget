@@ -219,14 +219,14 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
       {/* Header */}
       <div className="f1 textured-page-header" style={{ '--header-color': isEntree ? '#10b981' : '#f43f5e', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button hidden className="header-action" onClick={onBack} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button hidden className="header-action" onClick={onBack} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 'var(--font-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             ← Retour
           </button>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>
+          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.t1 }}>
             {isEntree ? 'Entrées' : 'Dépenses'}
           </div>
         </div>
-        <button className="header-action" onClick={exportExcel} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button className="header-action" onClick={exportExcel} style={{ padding: '7px 12px', borderRadius: 10, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, fontSize: 'var(--font-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
           Exporter
         </button>
       </div>
@@ -235,14 +235,14 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
       <div className="f2" style={{ padding: '0 20px 16px' }}>
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 11, color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>
               Total · {filtered.length} transaction{filtered.length > 1 ? 's' : ''}
             </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color }}>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color }}>
               {isEntree ? '+' : '−'}{fmt(total)}
             </div>
           </div>
-          <div style={{ width: 42, height: 42, borderRadius: 14, background: colorLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color }}>
+          <div style={{ width: 42, height: 42, borderRadius: 14, background: colorLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-md)', fontWeight: 700, color }}>
             {isEntree ? '+' : '−'}
           </div>
         </div>
@@ -252,10 +252,10 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
 
         {/* Graphique */}
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Évolution mensuelle</div>
+          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Évolution mensuelle</div>
           <div style={{ position: 'relative', height: 200 }}>
             {moisLabels.length === 0
-              ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 13, color: C.t2 }}>Aucune donnée</div>
+              ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 'var(--font-sm)', color: C.t2 }}>Aucune donnée</div>
               : <canvas ref={chartRef} />
             }
           </div>
@@ -263,7 +263,7 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
 
         {/* Filtre date */}
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Filtrer par date</div>
+          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Filtrer par date</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label className="form-label">Du</label>
@@ -275,7 +275,7 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
             </div>
           </div>
           {(dateDebut || dateFin) && (
-            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{ marginTop: 10, padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={() => { setDateDebut(''); setDateFin('') }} style={{ marginTop: 10, padding: '6px 12px', borderRadius: 8, border: `1px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontSize: 'var(--font-xs)', cursor: 'pointer', fontFamily: 'inherit' }}>
               Réinitialiser
             </button>
           )}
@@ -283,29 +283,29 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
 
         {/* Liste */}
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: 16, marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
+          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
           </div>
 
           {filtered.length === 0 && (
-            <div style={{ textAlign: 'center', color: C.t2, padding: '1rem', fontSize: 13 }}>Aucune transaction trouvée</div>
+            <div style={{ textAlign: 'center', color: C.t2, padding: '1rem', fontSize: 'var(--font-sm)' }}>Aucune transaction trouvée</div>
           )}
 
           {filtered.map((tx, i) => (
             <div key={tx.id} onClick={() => openEdit(tx)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', borderBottom: i < filtered.length - 1 ? `1px solid ${C.bord}` : 'none', padding: '11px 0' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: colorLight, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: colorLight, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)' }}>
                 {isEntree ? '+' : '−'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.t1 }}>{tx.motif}</div>
-                <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{tx.motif}</div>
+                <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>
                   {toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}
                 </div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 14, flexShrink: 0, color }}>
+              <div style={{ fontWeight: 700, fontSize: 'var(--font-sm)', flexShrink: 0, color }}>
                 {isEntree ? '+' : '−'}{fmt(tx.montant)}
               </div>
-              <div style={{ fontSize: 12, color: C.t3 }}>›</div>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t3 }}>›</div>
             </div>
           ))}
         </div>
@@ -330,13 +330,13 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
               {selected.createdBy.photoURL ? (
                 <img src={selected.createdBy.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${C.teal}` }} />
               ) : (
-                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, background: C.tealD, color: C.teal }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)', background: C.tealD, color: C.teal }}>
                   {(selected.createdBy.nom || '?').charAt(0).toUpperCase()}
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 10, color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Ajouté par</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.createdBy.nom}</div>
+                <div style={{ fontSize: 'var(--font-xs)', color: C.t3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>Ajouté par</div>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.createdBy.nom}</div>
               </div>
             </div>
           )}
@@ -376,10 +376,10 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
             <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" disabled={!canManageBudget} />
           </div>
 
-          <button onClick={handleSave} disabled={saving || !canManageBudget} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: saving || !canManageBudget ? 0.45 : 1, marginBottom: 8 }}>
+          <button onClick={handleSave} disabled={saving || !canManageBudget} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: saving || !canManageBudget ? 0.45 : 1, marginBottom: 8 }}>
             {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
-          <button onClick={handleDelete} disabled={!canManageBudget} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', opacity: !canManageBudget ? 0.45 : 1 }}>
+          <button onClick={handleDelete} disabled={!canManageBudget} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: !canManageBudget ? 0.45 : 1 }}>
             Supprimer la transaction
           </button>
         </div>

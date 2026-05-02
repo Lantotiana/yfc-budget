@@ -123,19 +123,19 @@ export default function Budget({ user }) {
     <div className="sin budget-page" style={{ minHeight: '100vh', background: C.bg }}>
       {/* Header */}
       <div className="f1 textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-        <div className="header-title" style={{ fontSize: 22, fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
-        <div className="header-subtitle" style={{ fontSize: 12, color: C.t2, marginTop: 2 }}>Young For Christ</div>
+        <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
+        <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Young For Christ</div>
       </div>
 
       {/* Entrées / Dépenses */}
       <div className="f2" style={{ padding: '0 20px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div onClick={() => navigate('/budget/entrees')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 10, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>ENTRÉES</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>ENTRÉES</div>
+          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
         </div>
         <div onClick={() => navigate('/budget/depenses')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 10, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>DÉPENSES</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: C.coral }}>{fmt(allDepenses)}</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>DÉPENSES</div>
+          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.coral }}>{fmt(allDepenses)}</div>
         </div>
       </div>
 
@@ -143,8 +143,8 @@ export default function Budget({ user }) {
       <div className="f3" style={{ padding: '0 20px 12px' }}>
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 11, color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>SOLDE ACTUEL</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>SOLDE ACTUEL</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
               {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function Budget({ user }) {
             >
               <Sparkles size={18} />
             </button>
-            <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
+            <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-md)', fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
               {solde >= 0 ? '+' : '−'}
             </div>
           </div>
@@ -187,12 +187,12 @@ export default function Budget({ user }) {
               {summaryLoading ? (
                 <div className="ai-summary-loading">
                   <div className="spin" style={{ width: 28, height: 28, border: `3px solid ${C.bord}`, borderTopColor: '#10b981', borderRadius: '50%' }} />
-                  <span style={{ fontSize: 13, color: C.t2 }}>Analyse en cours…</span>
+                  <span style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>Analyse en cours…</span>
                 </div>
               ) : summary ? (
                 <p className="ai-summary-text">{summary}</p>
               ) : (
-                <p style={{ fontSize: 14, color: C.t2, textAlign: 'center', padding: '24px 0' }}>Impossible de générer le résumé.</p>
+                <p style={{ fontSize: 'var(--font-sm)', color: C.t2, textAlign: 'center', padding: '24px 0' }}>Impossible de générer le résumé.</p>
               )}
             </div>
           </div>
