@@ -3233,7 +3233,7 @@ input:focus, select:focus {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 .staff-message-bubble.has-reactions {

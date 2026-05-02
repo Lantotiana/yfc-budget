@@ -89,6 +89,7 @@ export default function MessagesStaff({ user, userData }) {
   const longPressTimer = useRef(null)
   const longPressTriggered = useRef(false)
   const longPressRect = useRef(null)
+  const longPressStartPos = useRef(null)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -288,13 +289,24 @@ export default function MessagesStaff({ user, userData }) {
   function startReactionPress(e, message, compact) {
     clearTimeout(longPressTimer.current)
     if (message.deleted || compact) return
-    e.preventDefault()
     longPressRect.current = e.currentTarget?.getBoundingClientRect() || null
+    longPressStartPos.current = { x: e.clientX, y: e.clientY }
     longPressTimer.current = setTimeout(() => openContextMenu(message, longPressRect.current), 100)
+  }
+
+  function moveReactionPress(e) {
+    if (!longPressStartPos.current) return
+    const dx = e.clientX - longPressStartPos.current.x
+    const dy = e.clientY - longPressStartPos.current.y
+    if (Math.sqrt(dx * dx + dy * dy) > 8) {
+      clearTimeout(longPressTimer.current)
+      longPressStartPos.current = null
+    }
   }
 
   function stopReactionPress() {
     clearTimeout(longPressTimer.current)
+    longPressStartPos.current = null
   }
 
   function handleInputChange(value) {
@@ -512,6 +524,7 @@ export default function MessagesStaff({ user, userData }) {
             <div
               className={`staff-message-bubble${mine ? ' mine' : ''}${existingReactions.length > 0 ? ' has-reactions' : ''}${multiline ? ' multiline' : ''}`}
               onPointerDown={e => startReactionPress(e, message, compact)}
+              onPointerMove={moveReactionPress}
               onPointerUp={stopReactionPress}
               onPointerCancel={stopReactionPress}
               onPointerLeave={stopReactionPress}
