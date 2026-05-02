@@ -129,6 +129,13 @@ export default function MessagesStaff({ user, userData }) {
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
+  const [editAnnouncementForm, setEditAnnouncementForm] = useState({
+    title: '',
+    details: '',
+    announcementDate: '',
+    announcementTime: '',
+    location: '',
+  })
   const [detailsId, setDetailsId] = useState(null)
   const [contextMsg, setContextMsg] = useState(null)
   const [contextPos, setContextPos] = useState(null)
@@ -314,7 +321,9 @@ export default function MessagesStaff({ user, userData }) {
   }, [messages, pinnedMessages, contextMsg])
 
   function canEditMessage(message) {
-    return Boolean(message && (message.type || 'message') === 'message' && message.senderId === user.uid && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS)
+    if (!message || message.senderId !== user.uid || message.deleted) return false
+    if ((message.type || 'message') === 'announcement') return true
+    return Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS
   }
 
   function canDeleteMessage(message) {
@@ -549,7 +558,19 @@ export default function MessagesStaff({ user, userData }) {
 
   function startEdit(message) {
     setEditingId(message.id)
-    setEditText(message.text || '')
+    if ((message.type || 'message') === 'announcement') {
+      setEditText('')
+      setEditAnnouncementForm({
+        title: message.title || '',
+        details: message.details || '',
+        announcementDate: message.announcementDate || '',
+        announcementTime: message.announcementTime || '',
+        location: message.location || '',
+      })
+    } else {
+      setEditText(message.text || '')
+      setEditAnnouncementForm({ title: '', details: '', announcementDate: '', announcementTime: '', location: '' })
+    }
   }
 
   async function copyMessage(message) {
@@ -566,6 +587,26 @@ export default function MessagesStaff({ user, userData }) {
 
   async function saveEdit(message) {
     if (message.senderId !== user.uid) return
+    if ((message.type || 'message') === 'announcement') {
+      const title = cleanField(editAnnouncementForm.title, MAX_ANNOUNCEMENT_TITLE)
+      const details = cleanMessage(editAnnouncementForm.details).slice(0, MAX_ANNOUNCEMENT_DETAILS)
+      const announcementDate = cleanField(editAnnouncementForm.announcementDate, 20)
+      const announcementTime = cleanField(editAnnouncementForm.announcementTime, 10)
+      const location = cleanField(editAnnouncementForm.location, 120)
+      if (!title || !details) return
+      await updateDoc(doc(db, 'staffMessages', message.id), {
+        title,
+        details,
+        announcementDate: announcementDate || null,
+        announcementTime: announcementTime || null,
+        location: location || null,
+        edited: true,
+        editedAt: new Date().toISOString(),
+      })
+      setEditingId(null)
+      setEditAnnouncementForm({ title: '', details: '', announcementDate: '', announcementTime: '', location: '' })
+      return
+    }
     if (Date.now() - toMillis(message.createdAt) > EDIT_WINDOW_MS) return
     const text = cleanMessage(editText)
     if (!text) return
@@ -680,12 +721,18 @@ export default function MessagesStaff({ user, userData }) {
   }
 
   function renderAnnouncement(message, compact = false) {
-    const readUsers = getReadUsers(message, 3)
-    const readTotal = (message.readBy || []).filter(id => id !== message.senderId).length
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+    const readAvatars = !message.deleted && !compact
+      ? (message.readBy || [])
+        .filter(id => id !== message.senderId)
+        .filter(id => latestReadMessageByUser[id] === message.id)
+        .map(id => staffUsers.find(s => s.uid === id))
+        .filter(Boolean)
+        .slice(0, 3)
+      : []
 
     return (
-      <article key={message.id} className={`staff-announcement-row${compact ? ' pinned' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
+      <article key={message.id} className={`staff-announcement-row${compact ? ' pinned' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
         <div className="staff-announcement-avatar">
           {message.senderPhoto
             ? <img src={message.senderPhoto} alt="" />
@@ -707,44 +754,77 @@ export default function MessagesStaff({ user, userData }) {
             onContextMenu={e => e.preventDefault()}
           >
             {message.pinned && <div className="staff-announcement-pin"><Pin size={13} /> Épinglée</div>}
-            <div className="staff-announcement-label"><Megaphone size={15} /> Annonce</div>
-            <h2>{message.title || 'Annonce'}</h2>
-            <p className="staff-announcement-details">{renderLinkedText(message.details)}</p>
-
-            {(message.announcementDate || message.announcementTime || message.location) && (
-              <div className="staff-announcement-info">
-                {message.announcementDate && <span><Calendar size={14} /> {formatAnnouncementDate(message.announcementDate)}</span>}
-                {message.announcementTime && <span><Clock size={14} /> {message.announcementTime}</span>}
-                {message.location && <span><MapPin size={14} /> {message.location}</span>}
+            {editingId === message.id ? (
+              <div className="staff-announcement-edit" onPointerDown={e => e.stopPropagation()}>
+                <input
+                  value={editAnnouncementForm.title}
+                  onChange={e => setEditAnnouncementForm(prev => ({ ...prev, title: e.target.value.slice(0, MAX_ANNOUNCEMENT_TITLE) }))}
+                  maxLength={MAX_ANNOUNCEMENT_TITLE}
+                  placeholder="Titre de l'annonce"
+                />
+                <textarea
+                  value={editAnnouncementForm.details}
+                  onChange={e => setEditAnnouncementForm(prev => ({ ...prev, details: e.target.value.slice(0, MAX_ANNOUNCEMENT_DETAILS) }))}
+                  maxLength={MAX_ANNOUNCEMENT_DETAILS}
+                  placeholder="Détails"
+                  rows={4}
+                />
+                <div className="staff-announcement-edit-grid">
+                  <input
+                    type="date"
+                    value={editAnnouncementForm.announcementDate}
+                    onChange={e => setEditAnnouncementForm(prev => ({ ...prev, announcementDate: e.target.value }))}
+                  />
+                  <input
+                    type="time"
+                    value={editAnnouncementForm.announcementTime}
+                    onChange={e => setEditAnnouncementForm(prev => ({ ...prev, announcementTime: e.target.value }))}
+                  />
+                </div>
+                <input
+                  value={editAnnouncementForm.location}
+                  onChange={e => setEditAnnouncementForm(prev => ({ ...prev, location: e.target.value.slice(0, 120) }))}
+                  maxLength={120}
+                  placeholder="Lieu"
+                />
+                <div className="staff-message-edit-actions">
+                  <button type="button" onClick={() => saveEdit(message)}><Check size={14} /> Enregistrer</button>
+                  <button type="button" onClick={() => setEditingId(null)}><X size={14} /> Annuler</button>
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="staff-announcement-label"><Megaphone size={15} /> Annonce</div>
+                <h2>{message.title || 'Annonce'}</h2>
+                <p className="staff-announcement-details">{renderLinkedText(message.details)}</p>
 
-            {readUsers.length > 0 && (
-              <div className="staff-announcement-footer">
-                <button
-                  type="button"
-                  className="staff-announcement-reads"
-                  onClick={e => {
-                    e.stopPropagation()
-                    setDetailsId(detailsId === message.id ? null : message.id)
-                  }}
-                >
-                  {readUsers.map(staff => (
-                    <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
-                  ))}
-                  {readTotal > 3 && <em>+{readTotal - 3}</em>}
-                </button>
-              </div>
-            )}
-
-            {detailsId === message.id && (
-              <div className="staff-announcement-seen">
-                Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
-              </div>
+                {(message.announcementDate || message.announcementTime || message.location) && (
+                  <div className="staff-announcement-info">
+                    {message.announcementDate && <span><Calendar size={14} /> {formatAnnouncementDate(message.announcementDate)}</span>}
+                    {message.announcementTime && <span><Clock size={14} /> {message.announcementTime}</span>}
+                    {message.location && <span><MapPin size={14} /> {message.location}</span>}
+                  </div>
+                )}
+              </>
             )}
           </div>
           {renderReactionSummary(message)}
         </div>
+
+        {readAvatars.length > 0 && (
+          <div className="staff-read-row">
+            {detailsId === message.id && (
+              <span className="staff-read-details">
+                Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+              </span>
+            )}
+            <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
+              {readAvatars.map(staff => (
+                <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+              ))}
+            </button>
+          </div>
+        )}
       </article>
     )
   }
@@ -1075,18 +1155,15 @@ export default function MessagesStaff({ user, userData }) {
           </div>
         )}
         <div className="staff-composer-row">
-          <div className="staff-composer-box">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={e => handleInputChange(e.target.value)}
-              placeholder="Message"
-              maxLength={MAX_MESSAGE_LENGTH}
-              rows={1}
-            />
-            <span className="staff-composer-count">{input.length}/{MAX_MESSAGE_LENGTH}</span>
-          </div>
-          <button className="staff-composer-send" type="submit" disabled={sending || !cleanMessage(input)}>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={e => handleInputChange(e.target.value)}
+            placeholder="Message"
+            maxLength={MAX_MESSAGE_LENGTH}
+            rows={1}
+          />
+          <button type="submit" disabled={sending || !cleanMessage(input)}>
             {sending ? <MoreHorizontal size={18} /> : <Send size={18} />}
           </button>
         </div>
