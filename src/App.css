@@ -3436,12 +3436,16 @@ input:focus, select:focus {
 
 .staff-read-row {
   position: absolute;
-  right: 0;
+  left: 0;
   bottom: -20px;
   display: flex;
   align-items: center;
   gap: 6px;
   z-index: 1;
+}
+.staff-read-row.mine {
+  left: auto;
+  right: 0;
 }
 .staff-read-details {
   font-size: 10px;
@@ -3458,7 +3462,7 @@ input:focus, select:focus {
 }
 
 .staff-reactions-summary ~ .staff-read-row {
-  bottom: -38px;
+  bottom: -40px;
 }
 
 .staff-read-avatars span {
@@ -3628,6 +3632,13 @@ input:focus, select:focus {
   box-shadow: none;
 }
 
+.staff-mention {
+  font-weight: 700;
+  color: #2563eb;
+}
+.staff-message-bubble.mine .staff-mention {
+  color: #bfdbfe;
+}
 .staff-mention-menu {
   margin: 0 0 8px;
   background: var(--card-bg);

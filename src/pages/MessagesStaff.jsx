@@ -28,6 +28,8 @@ const MAX_MESSAGE_LENGTH = 1000
 const MAX_MENTIONS = 10
 const EDIT_WINDOW_MS = 15 * 60 * 1000
 const REACTIONS = ['👍', '❤️', '🙏', '✅', '😂', '👀']
+const MENTION_EVERYONE_ID = '__everyone__'
+const MENTION_EVERYONE = { uid: MENTION_EVERYONE_ID, name: 'Tous le monde', mention: '@Tous', role: 'Notifier tout le monde' }
 const StaffHeaderIcon = MessageCircle
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
@@ -181,11 +183,13 @@ export default function MessagesStaff({ user, userData }) {
   const mentionSuggestions = useMemo(() => {
     if (mentionQuery === null) return []
     const q = mentionQuery.toLowerCase()
-    return staffUsers
+    const showEveryone = 'tous le monde'.includes(q) && !mentions.some(m => m.uid === MENTION_EVERYONE_ID)
+    const individuals = staffUsers
       .filter(s => s.uid !== user?.uid)
       .filter(s => !mentions.some(m => m.uid === s.uid))
       .filter(s => s.name.toLowerCase().includes(q) || s.mention.toLowerCase().includes('@' + q))
-      .slice(0, 6)
+      .slice(0, 5)
+    return showEveryone ? [MENTION_EVERYONE, ...individuals] : individuals
   }, [mentionQuery, staffUsers, mentions, user?.uid])
 
   const latestReadMessageByUser = useMemo(() => {
@@ -343,6 +347,14 @@ export default function MessagesStaff({ user, userData }) {
     const validMentions = mentions
       .filter(m => text.includes(m.mention))
       .slice(0, MAX_MENTIONS)
+    const hasEveryone = validMentions.some(m => m.uid === MENTION_EVERYONE_ID)
+    const individualMentions = validMentions.filter(m => m.uid !== MENTION_EVERYONE_ID)
+    const notifyTargets = hasEveryone
+      ? staffUsers.filter(s => s.uid !== user.uid)
+      : individualMentions
+    const mentionUids = hasEveryone
+      ? staffUsers.filter(s => s.uid !== user.uid).map(s => s.uid)
+      : individualMentions.map(m => m.uid)
 
     setSending(true)
     try {
@@ -355,7 +367,7 @@ export default function MessagesStaff({ user, userData }) {
         senderName,
         senderRole,
         senderPhoto,
-        mentions: validMentions.map(m => m.uid),
+        mentions: mentionUids,
         reactions: {},
         readBy: [user.uid],
         pinned: false,
@@ -367,9 +379,9 @@ export default function MessagesStaff({ user, userData }) {
         createdAt: new Date().toISOString(),
       })
 
-      await Promise.all(validMentions.map(m => createNotification({
+      await Promise.all(notifyTargets.map(m => createNotification({
         type: 'message',
-        titre: `${senderName} vous a mentionné dans Messages Staff.`,
+        titre: hasEveryone ? `${senderName} a mentionné tout le monde dans Messages Staff.` : `${senderName} vous a mentionné dans Messages Staff.`,
         detail: text,
         cible: m.uid,
         route: '/messages',
@@ -496,6 +508,27 @@ export default function MessagesStaff({ user, userData }) {
       .join(', ')
   }
 
+  function renderMessageContent(text) {
+    const tokens = [...staffUsers.map(s => s.mention), MENTION_EVERYONE.mention]
+    if (!tokens.length) return renderLinkedText(text)
+    const escaped = tokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const mentionRegex = new RegExp(`(${escaped.join('|')})`, 'gi')
+    const mentionSet = new Set(tokens.map(t => t.toLowerCase()))
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+    return String(text || '').split(mentionRegex).map((seg, i) => {
+      if (mentionSet.has(seg.toLowerCase())) {
+        return <strong key={i} className="staff-mention">{seg}</strong>
+      }
+      return seg.split(urlRegex).map((part, j) => {
+        if (part.match(urlRegex)) {
+          const href = part.startsWith('www.') ? `https://${part}` : part
+          return <a key={`${i}-${j}`} href={href} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>{part}</a>
+        }
+        return part
+      })
+    })
+  }
+
   function renderMessage(message, compact = false) {
     const mine = message.senderId === user?.uid
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
@@ -547,7 +580,7 @@ export default function MessagesStaff({ user, userData }) {
                   </div>
                 </div>
               ) : (
-                <p>{renderLinkedText(message.text)}</p>
+                <p>{renderMessageContent(message.text)}</p>
               )}
             </div>
 
@@ -576,26 +609,34 @@ export default function MessagesStaff({ user, userData }) {
             )}
 
             {readAvatars.length > 0 && (
-              <div className="staff-read-row">
-                {detailsId === message.id && (
-                  <span className="staff-read-details">
-                    Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
-                  </span>
+              <div className={`staff-read-row${mine ? ' mine' : ''}`}>
+                {mine ? (
+                  <>
+                    {detailsId === message.id && (
+                      <span className="staff-read-details">
+                        Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+                      </span>
+                    )}
+                    <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
+                      {readAvatars.map(staff => (
+                        <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+                      ))}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
+                      {readAvatars.map(staff => (
+                        <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+                      ))}
+                    </button>
+                    {detailsId === message.id && (
+                      <span className="staff-read-details">
+                        Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+                      </span>
+                    )}
+                  </>
                 )}
-                <button
-                  type="button"
-                  className="staff-read-avatars"
-                  onClick={e => {
-                    e.stopPropagation()
-                    setDetailsId(detailsId === message.id ? null : message.id)
-                  }}
-                >
-                  {readAvatars.map(staff => (
-                    <span key={staff.uid}>
-                      {staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}
-                    </span>
-                  ))}
-                </button>
               </div>
             )}
           </div>
