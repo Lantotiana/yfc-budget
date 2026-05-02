@@ -295,7 +295,7 @@ export default function MessagesStaff({ user, userData }) {
     if (!composer) return
 
     const updateComposerSpace = () => {
-      document.documentElement.style.setProperty('--staff-composer-space', `${composer.offsetHeight + 24}px`)
+      document.documentElement.style.setProperty('--staff-composer-space', `${composer.offsetHeight + 68 + 24}px`)
     }
 
     updateComposerSpace()
