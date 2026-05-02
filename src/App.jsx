@@ -192,7 +192,7 @@ function BottomNav({ user }) {
             aria-label={item.label}
           >
             <span className="bottom-nav-icon">
-              <item.Icon size={24} strokeWidth={1.5} />
+              <item.Icon size={24} strokeWidth={2} />
             </span>
             <span className="bottom-nav-label">{item.label}</span>
           </button>

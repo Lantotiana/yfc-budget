@@ -951,17 +951,15 @@ export default function MessagesStaff({ user, userData }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {canModerateAnnouncement && (
-              <button
-                type="button"
-                className="header-action"
-                onClick={() => setShowAnnouncementForm(true)}
-                aria-label="Créer une annonce"
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 'var(--font-xs)', fontWeight: 600, fontFamily: 'inherit' }}
-              >
-                <Megaphone size={14} /><span>Annonce</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="staff-header-icon"
+              onClick={() => setShowAnnouncementForm(true)}
+              aria-label="Créer une annonce"
+              style={{ color: '#10b981' }}
+            >
+              <Megaphone size={19} />
+            </button>
             <button
               type="button"
               className={`staff-header-icon${showSearch ? ' active' : ''}`}
