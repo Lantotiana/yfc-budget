@@ -3465,7 +3465,7 @@ input:focus, select:focus {
   contain: paint;
   z-index: 90;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 4px;
   transition: background 0.35s, border-color 0.35s;
 }
@@ -3541,8 +3541,8 @@ input:focus, select:focus {
 }
 
 .bottom-nav-icon {
-  width: 31px;
-  height: 31px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;

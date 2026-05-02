@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, Headphones, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
@@ -231,7 +231,7 @@ export default function Home({ user, userData }) {
               style={{ width: 40, height: 40, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}
               aria-label="Assistant virtuel"
             >
-              <MessageCircle size={17} />
+              <Headphones size={17} />
             </button>
 
             {/* Notifications */}

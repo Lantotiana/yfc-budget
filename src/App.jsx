@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
-import { CalendarCheck, CalendarDays, FolderOpen, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
+import { CalendarCheck, CalendarDays, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -110,7 +110,6 @@ const bottomNavItems = [
   { path: '/presences', label: 'Présences', Icon: CalendarCheck },
   { path: '/membres', label: 'Membres', Icon: Users, color: '#f43f5e' },
   { path: '/evenements', label: 'Events', Icon: CalendarDays, color: '#f59e0b' },
-  { path: '/documents', label: 'Docs', Icon: FolderOpen, color: '#06b6d4' },
 ]
 
 function BottomNav({ user }) {
@@ -193,7 +192,7 @@ function BottomNav({ user }) {
             aria-label={item.label}
           >
             <span className="bottom-nav-icon">
-              <item.Icon size={19} />
+              <item.Icon size={24} />
             </span>
             <span className="bottom-nav-label">{item.label}</span>
           </button>
