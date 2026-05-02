@@ -88,6 +88,7 @@ export default function MessagesStaff({ user, userData }) {
   const groupPhotoInputRef = useRef(null)
   const longPressTimer = useRef(null)
   const longPressTriggered = useRef(false)
+  const longPressRect = useRef(null)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -102,10 +103,9 @@ export default function MessagesStaff({ user, userData }) {
   const [editingId, setEditingId] = useState(null)
   const [editText, setEditText] = useState('')
   const [detailsId, setDetailsId] = useState(null)
-  const [reactionPickerId, setReactionPickerId] = useState(null)
-  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0, mine: false })
+  const [contextMsg, setContextMsg] = useState(null)
+  const [contextPos, setContextPos] = useState(null)
   const [showSearch, setShowSearch] = useState(false)
-  const [selectedMessageId, setSelectedMessageId] = useState(null)
   const [groupPhotoURL, setGroupPhotoURL] = useState('')
   const [uploadingGroupPhoto, setUploadingGroupPhoto] = useState(false)
 
@@ -167,11 +167,6 @@ export default function MessagesStaff({ user, userData }) {
   const canAccess = Boolean(user?.uid && userData?.approuve !== false)
 
   const pinnedMessage = pinnedMessages.find(m => !m.deleted) || null
-  const selectedMessage = useMemo(() => {
-    if (!selectedMessageId) return null
-    return messages.find(m => m.id === selectedMessageId) || pinnedMessages.find(m => m.id === selectedMessageId) || null
-  }, [messages, pinnedMessages, selectedMessageId])
-
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase()
     if (!term) return messages
@@ -265,10 +260,10 @@ export default function MessagesStaff({ user, userData }) {
   }, [])
 
   useEffect(() => {
-    if (!selectedMessageId) return
-    const exists = messages.some(m => m.id === selectedMessageId) || pinnedMessages.some(m => m.id === selectedMessageId)
-    if (!exists) setSelectedMessageId(null)
-  }, [messages, pinnedMessages, selectedMessageId])
+    if (!contextMsg) return
+    const exists = messages.some(m => m.id === contextMsg.id) || pinnedMessages.some(m => m.id === contextMsg.id)
+    if (!exists) setContextMsg(null)
+  }, [messages, pinnedMessages, contextMsg])
 
   function canEditMessage(message) {
     return Boolean(message && message.senderId === user.uid && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS)
@@ -278,36 +273,26 @@ export default function MessagesStaff({ user, userData }) {
     return Boolean(message && !message.deleted && (message.senderId === user.uid || canModerate))
   }
 
-  function showReactionPicker(rect, message, mine) {
+  function openContextMenu(message, rect) {
     longPressTriggered.current = true
-    setSelectedMessageId(message.id)
-    setPickerPos({
-      top: Math.max(8, rect.top - 54),
-      left: mine ? 'auto' : rect.left,
-      right: mine ? window.innerWidth - rect.right : 'auto',
-      mine,
-    })
-    setReactionPickerId(message.id)
+    setContextMsg(message)
+    setContextPos(rect || null)
   }
 
-  function startReactionPress(e, message, mine, compact) {
+  function closeContextMenu() {
+    setContextMsg(null)
+    setContextPos(null)
+  }
+
+  function startReactionPress(e, message, compact) {
     clearTimeout(longPressTimer.current)
     if (message.deleted || compact) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    longPressTimer.current = setTimeout(() => showReactionPicker(rect, message, mine), 430)
+    longPressRect.current = e.currentTarget?.getBoundingClientRect() || null
+    longPressTimer.current = setTimeout(() => openContextMenu(message, longPressRect.current), 430)
   }
 
   function stopReactionPress() {
     clearTimeout(longPressTimer.current)
-  }
-
-  function selectMessage(message, compact, rect, mine) {
-    if (longPressTriggered.current) {
-      longPressTriggered.current = false
-      return
-    }
-    if (message.deleted || compact) return
-    showReactionPicker(rect, message, mine)
   }
 
   function handleInputChange(value) {
@@ -416,15 +401,11 @@ export default function MessagesStaff({ user, userData }) {
     await updateDoc(ref, {
       [`reactions.${emoji}`]: current.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid),
     })
-    setReactionPickerId(null)
-    setSelectedMessageId(null)
   }
 
   function startEdit(message) {
     setEditingId(message.id)
     setEditText(message.text || '')
-    setSelectedMessageId(null)
-    setReactionPickerId(null)
   }
 
   async function copyMessage(message) {
@@ -434,8 +415,6 @@ export default function MessagesStaff({ user, userData }) {
     } catch {
       console.warn('Copie impossible')
     }
-    setSelectedMessageId(null)
-    setReactionPickerId(null)
   }
 
   async function saveEdit(message) {
@@ -461,8 +440,6 @@ export default function MessagesStaff({ user, userData }) {
       deletedBy: user.uid,
       pinned: false,
     })
-    setSelectedMessageId(null)
-    setReactionPickerId(null)
   }
 
   async function togglePin(message) {
@@ -482,8 +459,6 @@ export default function MessagesStaff({ user, userData }) {
       pinnedMessageId: nextPinned ? message.id : null,
       updatedAt: new Date().toISOString(),
     }, { merge: true })
-    setSelectedMessageId(null)
-    setReactionPickerId(null)
   }
 
   function getUsersByIds(ids = []) {
@@ -503,9 +478,7 @@ export default function MessagesStaff({ user, userData }) {
 
   function renderMessage(message, compact = false) {
     const mine = message.senderId === user?.uid
-    const pickerOpen = reactionPickerId === message.id
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
-    const selected = selectedMessageId === message.id
     const multiline = String(message.text || '').includes('\n')
     const readAvatars = mine
       ? (message.readBy || [])
@@ -517,7 +490,7 @@ export default function MessagesStaff({ user, userData }) {
       : []
 
     return (
-      <div key={message.id} className={`staff-message-row${mine ? ' mine' : ''}${compact ? ' pinned' : ''}${selected ? ' selected' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
+      <div key={message.id} className={`staff-message-row${mine ? ' mine' : ''}${compact ? ' pinned' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
         {!mine && (
           <div className="staff-message-avatar">
             {message.senderPhoto
@@ -536,20 +509,11 @@ export default function MessagesStaff({ user, userData }) {
           <div className="staff-message-bubble-shell">
             <div
               className={`staff-message-bubble${mine ? ' mine' : ''}${existingReactions.length > 0 ? ' has-reactions' : ''}${multiline ? ' multiline' : ''}`}
-              onClick={e => {
-                if (pickerOpen) setReactionPickerId(null)
-                else selectMessage(message, compact, e.currentTarget.getBoundingClientRect(), mine)
-              }}
-              onPointerDown={e => startReactionPress(e, message, mine, compact)}
+              onPointerDown={e => startReactionPress(e, message, compact)}
               onPointerUp={stopReactionPress}
               onPointerCancel={stopReactionPress}
               onPointerLeave={stopReactionPress}
-              onContextMenu={e => {
-                e.preventDefault()
-                if (message.deleted || compact) return
-                showReactionPicker(e.currentTarget.getBoundingClientRect(), message, mine)
-              }}
-              style={{ cursor: message.deleted || compact ? 'default' : 'pointer' }}
+              onContextMenu={e => e.preventDefault()}
             >
               {message.deleted ? (
                 <span className="staff-message-deleted">Message supprimé</span>
@@ -634,72 +598,45 @@ export default function MessagesStaff({ user, userData }) {
 
   return (
     <div className="staff-messages-page sin" style={{ background: C.bg }}>
-      {selectedMessage ? (
-        <header className="staff-messages-header staff-selection-header">
-          <button type="button" onClick={() => { setSelectedMessageId(null); setReactionPickerId(null) }} className="staff-header-back" aria-label="Fermer la sélection">
-            <X size={19} />
-          </button>
-          <div className="staff-selection-title">1</div>
-          <button type="button" className="staff-header-icon" onClick={() => copyMessage(selectedMessage)} aria-label="Copier">
-            <Copy size={19} />
-          </button>
-          {canEditMessage(selectedMessage) && (
-            <button type="button" className="staff-header-icon" onClick={() => startEdit(selectedMessage)} aria-label="Modifier">
-              <Edit3 size={18} />
-            </button>
+      <header className="staff-messages-header">
+        <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
+          <ArrowLeft size={19} />
+        </button>
+        <button
+          type="button"
+          className="staff-header-avatar"
+          onClick={() => groupPhotoInputRef.current?.click()}
+          aria-label="Changer la photo du groupe"
+          title="Changer la photo du groupe"
+        >
+          {uploadingGroupPhoto ? (
+            <MoreHorizontal size={18} />
+          ) : groupPhotoURL ? (
+            <img src={groupPhotoURL} alt="" />
+          ) : (
+            <StaffHeaderIcon size={18} />
           )}
-          {canDeleteMessage(selectedMessage) && (
-            <button type="button" className="staff-header-icon" onClick={() => softDelete(selectedMessage)} aria-label="Supprimer">
-              <Trash2 size={18} />
-            </button>
-          )}
-          {canModerate && !selectedMessage.deleted && (
-            <button type="button" className="staff-header-icon" onClick={() => togglePin(selectedMessage)} aria-label={selectedMessage.pinned ? 'Désépingler' : 'Épingler'}>
-              <Pin size={18} />
-            </button>
-          )}
-        </header>
-      ) : (
-        <header className="staff-messages-header">
-          <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
-            <ArrowLeft size={19} />
-          </button>
-          <button
-            type="button"
-            className="staff-header-avatar"
-            onClick={() => groupPhotoInputRef.current?.click()}
-            aria-label="Changer la photo du groupe"
-            title="Changer la photo du groupe"
-          >
-            {uploadingGroupPhoto ? (
-              <MoreHorizontal size={18} />
-            ) : groupPhotoURL ? (
-              <img src={groupPhotoURL} alt="" />
-            ) : (
-              <StaffHeaderIcon size={18} />
-            )}
-          </button>
-          <input
-            ref={groupPhotoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={updateGroupPhoto}
-            style={{ display: 'none' }}
-          />
-          <div className="staff-header-title">
-            <h1>Messages Staff</h1>
-            <p>Discussion interne entre les Staffs de YFC</p>
-          </div>
-          <button
-            type="button"
-            className={`staff-header-icon${showSearch ? ' active' : ''}`}
-            onClick={() => setShowSearch(v => !v)}
-            aria-label="Rechercher un message"
-          >
-            <Search size={19} />
-          </button>
-        </header>
-      )}
+        </button>
+        <input
+          ref={groupPhotoInputRef}
+          type="file"
+          accept="image/*"
+          onChange={updateGroupPhoto}
+          style={{ display: 'none' }}
+        />
+        <div className="staff-header-title">
+          <h1>Messages Staff</h1>
+          <p>Discussion interne entre les Staffs de YFC</p>
+        </div>
+        <button
+          type="button"
+          className={`staff-header-icon${showSearch ? ' active' : ''}`}
+          onClick={() => setShowSearch(v => !v)}
+          aria-label="Rechercher un message"
+        >
+          <Search size={19} />
+        </button>
+      </header>
 
       {(showSearch || search) && (
         <div className="staff-message-search" onClick={e => e.stopPropagation()}>
@@ -720,8 +657,8 @@ export default function MessagesStaff({ user, userData }) {
         </section>
       )}
 
-      <main className="staff-message-list" ref={listRef} onClick={e => {
-        if (!e.target.closest('.staff-message-bubble, .staff-reaction-picker')) setReactionPickerId(null)
+      <main className="staff-message-list" ref={listRef} onClick={() => {
+        closeContextMenu()
         if (showSearch || search) {
           setShowSearch(false)
           setSearch('')
@@ -741,25 +678,54 @@ export default function MessagesStaff({ user, userData }) {
         )}
       </main>
 
-      {reactionPickerId && (() => {
-        const msg = messages.find(m => m.id === reactionPickerId)
-        if (!msg) return null
-        return (
-          <div
-            className="staff-reaction-picker"
-            style={{ position: 'fixed', top: pickerPos.top, left: pickerPos.mine ? 'auto' : pickerPos.left, right: pickerPos.mine ? pickerPos.right : 'auto' }}
-          >
-            {REACTIONS.map(emoji => {
-              const active = (msg.reactions?.[emoji] || []).includes(user.uid)
-              return (
-                <button key={emoji} type="button" className={active ? 'active' : ''} onClick={() => toggleReaction(msg, emoji)}>
-                  {emoji}
+      {contextMsg && !contextMsg.deleted && (
+        <div className="staff-context-overlay" onClick={closeContextMenu}>
+          {contextPos && (
+            <div
+              className="staff-reaction-picker"
+              style={{
+                position: 'fixed',
+                top: Math.max(8, contextPos.top - 58),
+                left: contextMsg.senderId !== user?.uid ? contextPos.left : 'auto',
+                right: contextMsg.senderId === user?.uid ? (window.innerWidth - contextPos.right) : 'auto',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {REACTIONS.map(emoji => {
+                const active = (contextMsg.reactions?.[emoji] || []).includes(user.uid)
+                return (
+                  <button key={emoji} type="button" className={active ? 'active' : ''}
+                    onClick={() => { toggleReaction(contextMsg, emoji); closeContextMenu() }}>
+                    {emoji}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <div className="staff-context-panel" onClick={e => e.stopPropagation()}>
+            <div className="staff-context-actions">
+              <button type="button" onClick={() => { copyMessage(contextMsg); closeContextMenu() }}>
+                <Copy size={15} /><span>Copier</span>
+              </button>
+              {canEditMessage(contextMsg) && (
+                <button type="button" onClick={() => { startEdit(contextMsg); closeContextMenu() }}>
+                  <Edit3 size={15} /><span>Modifier</span>
                 </button>
-              )
-            })}
+              )}
+              {canDeleteMessage(contextMsg) && (
+                <button type="button" className="danger" onClick={() => { softDelete(contextMsg); closeContextMenu() }}>
+                  <Trash2 size={15} /><span>Supprimer</span>
+                </button>
+              )}
+              {canModerate && !contextMsg.deleted && (
+                <button type="button" onClick={() => { togglePin(contextMsg); closeContextMenu() }}>
+                  <Pin size={15} /><span>{contextMsg.pinned ? 'Désépingler' : 'Épingler'}</span>
+                </button>
+              )}
+            </div>
           </div>
-        )
-      })()}
+        </div>
+      )}
 
       <form className="staff-message-composer" ref={composerRef} onClick={e => e.stopPropagation()} onSubmit={sendMessage}>
         {mentionSuggestions.length > 0 && (
