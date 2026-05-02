@@ -275,6 +275,7 @@ export default function MessagesStaff({ user, userData }) {
 
   function openContextMenu(message, rect) {
     longPressTriggered.current = true
+    navigator.vibrate?.(40)
     setContextMsg(message)
     setContextPos(rect || null)
   }
@@ -659,6 +660,7 @@ export default function MessagesStaff({ user, userData }) {
       )}
 
       <main className="staff-message-list" ref={listRef} onClick={() => {
+        if (longPressTriggered.current) { longPressTriggered.current = false; return }
         closeContextMenu()
         if (showSearch || search) {
           setShowSearch(false)
@@ -680,7 +682,10 @@ export default function MessagesStaff({ user, userData }) {
       </main>
 
       {contextMsg && !contextMsg.deleted && (
-        <div className="staff-context-overlay" onClick={closeContextMenu}>
+        <div className="staff-context-overlay" onClick={() => {
+          if (longPressTriggered.current) { longPressTriggered.current = false; return }
+          closeContextMenu()
+        }}>
           {contextPos && (
             <div
               className="staff-reaction-picker"
