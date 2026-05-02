@@ -947,8 +947,8 @@ export default function MessagesStaff({ user, userData }) {
           style={{ display: 'none' }}
         />
         <div className="staff-header-title">
+          <p>YFC App</p>
           <h1>Messages Staff</h1>
-          <p>Discussion interne entre les Staffs de YFC</p>
         </div>
         <button
           type="button"
