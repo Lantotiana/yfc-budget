@@ -3434,21 +3434,30 @@ input:focus, select:focus {
   z-index: 2;
 }
 
-.staff-read-avatars {
+.staff-read-row {
   position: absolute;
   right: 0;
   bottom: -20px;
   display: flex;
   align-items: center;
-  flex-direction: row-reverse;
+  gap: 6px;
   z-index: 1;
+}
+.staff-read-details {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.staff-read-avatars {
+  display: flex;
+  align-items: center;
   border: none;
   background: transparent;
   padding: 0;
   cursor: pointer;
 }
 
-.staff-reactions-summary + .staff-read-avatars {
+.staff-reactions-summary ~ .staff-read-row {
   bottom: -38px;
 }
 
@@ -3537,14 +3546,6 @@ input:focus, select:focus {
   margin-left: auto;
 }
 
-.staff-read-details {
-  margin-top: 4px;
-  padding: 0 2px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 11px;
-  line-height: 1.35;
-}
 
 .staff-message-composer {
   position: fixed;

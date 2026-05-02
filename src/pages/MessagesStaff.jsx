@@ -90,6 +90,7 @@ export default function MessagesStaff({ user, userData }) {
   const longPressTriggered = useRef(false)
   const longPressRect = useRef(null)
   const longPressStartPos = useRef(null)
+  const initialScrollDone = useRef(false)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -190,14 +191,14 @@ export default function MessagesStaff({ user, userData }) {
   const latestReadMessageByUser = useMemo(() => {
     const latest = {}
     messages.forEach(message => {
-      if (message.senderId !== user?.uid || message.deleted) return
+      if (message.deleted) return
       ;(message.readBy || []).forEach(readerId => {
         if (readerId === message.senderId) return
         latest[readerId] = message.id
       })
     })
     return latest
-  }, [messages, user?.uid])
+  }, [messages])
 
   useEffect(() => {
     if (!user?.uid || messages.length === 0) return
@@ -225,7 +226,12 @@ export default function MessagesStaff({ user, userData }) {
     const el = listRef.current
     if (!el) return
     requestAnimationFrame(() => {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      if (!initialScrollDone.current) {
+        el.scrollTop = el.scrollHeight
+        initialScrollDone.current = true
+      } else {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      }
     })
   }, [messages.length, input])
 
@@ -494,7 +500,7 @@ export default function MessagesStaff({ user, userData }) {
     const mine = message.senderId === user?.uid
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
     const multiline = String(message.text || '').includes('\n')
-    const readAvatars = mine
+    const readAvatars = !message.deleted && !compact
       ? (message.readBy || [])
         .filter(id => id !== message.senderId)
         .filter(id => latestReadMessageByUser[id] === message.id)
@@ -570,29 +576,29 @@ export default function MessagesStaff({ user, userData }) {
             )}
 
             {readAvatars.length > 0 && (
-              <button
-                type="button"
-                className="staff-read-avatars"
-                title={`Vu par ${readAvatars.map(s => s.name.split(/\s+/)[0]).join(', ')}`}
-                onClick={e => {
-                  e.stopPropagation()
-                  setDetailsId(detailsId === message.id ? null : message.id)
-                }}
-              >
-                {readAvatars.map(staff => (
-                  <span key={staff.uid}>
-                    {staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}
+              <div className="staff-read-row">
+                {detailsId === message.id && (
+                  <span className="staff-read-details">
+                    Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
                   </span>
-                ))}
-              </button>
+                )}
+                <button
+                  type="button"
+                  className="staff-read-avatars"
+                  onClick={e => {
+                    e.stopPropagation()
+                    setDetailsId(detailsId === message.id ? null : message.id)
+                  }}
+                >
+                  {readAvatars.map(staff => (
+                    <span key={staff.uid}>
+                      {staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}
+                    </span>
+                  ))}
+                </button>
+              </div>
             )}
           </div>
-
-          {detailsId === message.id && (
-            <div className="staff-read-details">
-              Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
-            </div>
-          )}
         </div>
       </div>
     )
