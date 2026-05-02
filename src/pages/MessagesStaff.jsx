@@ -55,6 +55,8 @@ export default function MessagesStaff({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const listRef = useRef(null)
+  const inputRef = useRef(null)
+  const longPressTimer = useRef(null)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -71,6 +73,7 @@ export default function MessagesStaff({ user, userData }) {
   const [detailsId, setDetailsId] = useState(null)
   const [reactionPickerId, setReactionPickerId] = useState(null)
   const [pickerPos, setPickerPos] = useState({ top: 0, left: 0, mine: false })
+  const [showSearch, setShowSearch] = useState(false)
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
@@ -169,6 +172,38 @@ export default function MessagesStaff({ user, userData }) {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages.length])
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 108)}px`
+  }, [input])
+
+  useEffect(() => {
+    return () => clearTimeout(longPressTimer.current)
+  }, [])
+
+  function showReactionPicker(rect, message, mine) {
+    setPickerPos({
+      top: Math.max(8, rect.top - 54),
+      left: mine ? 'auto' : rect.left,
+      right: mine ? window.innerWidth - rect.right : 'auto',
+      mine,
+    })
+    setReactionPickerId(message.id)
+  }
+
+  function startReactionPress(e, message, mine, compact) {
+    clearTimeout(longPressTimer.current)
+    if (message.deleted || compact) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    longPressTimer.current = setTimeout(() => showReactionPicker(rect, message, mine), 430)
+  }
+
+  function stopReactionPress() {
+    clearTimeout(longPressTimer.current)
+  }
 
   function handleInputChange(value) {
     const next = value.slice(0, MAX_MESSAGE_LENGTH)
@@ -327,20 +362,24 @@ export default function MessagesStaff({ user, userData }) {
         <div className="staff-message-bubble-wrap">
           <div className="staff-message-meta">
             <span>{message.senderName || 'Staff'}</span>
-            {message.senderRole && <em>{message.senderRole}</em>}
             <small>{formatTime(message.createdAt)}</small>
             {message.edited && <small>modifié</small>}
           </div>
 
-          <div style={{ position: 'relative' }}>
+          <div className="staff-message-bubble-shell">
             <div
-              className={`staff-message-bubble${mine ? ' mine' : ''}`}
-              onClick={e => {
+              className={`staff-message-bubble${mine ? ' mine' : ''}${existingReactions.length > 0 ? ' has-reactions' : ''}`}
+              onClick={() => {
+                if (pickerOpen) setReactionPickerId(null)
+              }}
+              onPointerDown={e => startReactionPress(e, message, mine, compact)}
+              onPointerUp={stopReactionPress}
+              onPointerCancel={stopReactionPress}
+              onPointerLeave={stopReactionPress}
+              onContextMenu={e => {
+                e.preventDefault()
                 if (message.deleted || compact) return
-                if (pickerOpen) { setReactionPickerId(null); return }
-                const rect = e.currentTarget.getBoundingClientRect()
-                setPickerPos({ top: rect.top - 54, left: mine ? 'auto' : rect.left, right: mine ? window.innerWidth - rect.right : 'auto', mine })
-                setReactionPickerId(message.id)
+                showReactionPicker(e.currentTarget.getBoundingClientRect(), message, mine)
               }}
               style={{ cursor: message.deleted || compact ? 'default' : 'pointer' }}
             >
@@ -358,28 +397,28 @@ export default function MessagesStaff({ user, userData }) {
                 <p>{message.text}</p>
               )}
             </div>
-          </div>
 
-          {existingReactions.length > 0 && !message.deleted && (
-            <div className="staff-reactions-summary">
-              {existingReactions.map(emoji => {
-                const users = message.reactions[emoji]
-                const active = users.includes(user.uid)
-                return (
-                  <button
-                    key={emoji}
-                    type="button"
-                    className={active ? 'active' : ''}
-                    onClick={() => toggleReaction(message, emoji)}
-                    title={getUsersByIds(users)}
-                  >
-                    <span>{emoji}</span>
-                    <strong>{users.length}</strong>
-                  </button>
-                )
-              })}
-            </div>
-          )}
+            {existingReactions.length > 0 && !message.deleted && (
+              <div className="staff-reactions-summary">
+                {existingReactions.map(emoji => {
+                  const users = message.reactions[emoji]
+                  const active = users.includes(user.uid)
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className={active ? 'active' : ''}
+                      onClick={() => toggleReaction(message, emoji)}
+                      title={getUsersByIds(users)}
+                    >
+                      <span>{emoji}</span>
+                      <strong>{users.length}</strong>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {!message.deleted && (
             <div className="staff-message-tools">
@@ -421,18 +460,34 @@ export default function MessagesStaff({ user, userData }) {
         <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
           <ArrowLeft size={19} />
         </button>
+        <div className="staff-header-avatar">
+          <MessageCircle size={18} />
+        </div>
         <div className="staff-header-title">
-          <span>YFC App</span>
           <h1>Messages Staff</h1>
           <p>Discussion interne entre les Staffs de YFC</p>
         </div>
-        <div className="staff-header-icon"><MessageCircle size={19} /></div>
+        <button
+          type="button"
+          className={`staff-header-icon${showSearch ? ' active' : ''}`}
+          onClick={() => setShowSearch(v => !v)}
+          aria-label="Rechercher un message"
+        >
+          <Search size={19} />
+        </button>
       </header>
 
-      <div className="staff-message-search">
-        <Search size={15} />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un message..." />
-      </div>
+      {(showSearch || search) && (
+        <div className="staff-message-search">
+          <Search size={15} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un message..." autoFocus />
+          {search && (
+            <button type="button" onClick={() => setSearch('')} aria-label="Effacer la recherche">
+              <X size={15} />
+            </button>
+          )}
+        </div>
+      )}
 
       {pinnedMessage && (
         <section className="staff-pinned-card">
@@ -490,20 +545,21 @@ export default function MessagesStaff({ user, userData }) {
             ))}
           </div>
         )}
-        <div className="staff-composer-box">
-          <textarea
-            value={input}
-            onChange={e => handleInputChange(e.target.value)}
-            placeholder="Écrire un message..."
-            maxLength={MAX_MESSAGE_LENGTH}
-            rows={1}
-          />
-          <div className="staff-composer-footer">
-            <span>{input.length}/{MAX_MESSAGE_LENGTH}</span>
-            <button type="submit" disabled={sending || !cleanMessage(input)}>
-              {sending ? <MoreHorizontal size={18} /> : <Send size={18} />}
-            </button>
+        <div className="staff-composer-row">
+          <div className="staff-composer-box">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => handleInputChange(e.target.value)}
+              placeholder="Message"
+              maxLength={MAX_MESSAGE_LENGTH}
+              rows={1}
+            />
+            <span className="staff-composer-count">{input.length}/{MAX_MESSAGE_LENGTH}</span>
           </div>
+          <button className="staff-composer-send" type="submit" disabled={sending || !cleanMessage(input)}>
+            {sending ? <MoreHorizontal size={18} /> : <Send size={18} />}
+          </button>
         </div>
       </form>
     </div>
