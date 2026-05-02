@@ -15,7 +15,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { ArrowLeft, Check, Edit3, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Edit3, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
@@ -28,6 +28,9 @@ const MAX_MESSAGE_LENGTH = 1000
 const MAX_MENTIONS = 10
 const EDIT_WINDOW_MS = 15 * 60 * 1000
 const REACTIONS = ['👍', '❤️', '🙏', '✅', '😂', '👀']
+const StaffHeaderIcon = MessageCircle
+const CLOUDINARY_CLOUD = 'dtthz84ie'
+const CLOUDINARY_PRESET = 'yfc_profiles'
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -40,7 +43,13 @@ function toMillis(iso) {
 }
 
 function cleanMessage(value) {
-  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, MAX_MESSAGE_LENGTH)
+  return String(value || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim()
+    .slice(0, MAX_MESSAGE_LENGTH)
 }
 
 function getDisplayName(userDoc) {
@@ -51,12 +60,34 @@ function getMentionToken(name) {
   return '@' + String(name || 'Staff').trim().split(/\s+/)[0]
 }
 
+function renderLinkedText(text) {
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+  return String(text || '').split(urlRegex).map((part, index) => {
+    if (!part.match(urlRegex)) return part
+    const href = part.startsWith('www.') ? `https://${part}` : part
+    return (
+      <a
+        key={`${part}-${index}`}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        onClick={e => e.stopPropagation()}
+      >
+        {part}
+      </a>
+    )
+  })
+}
+
 export default function MessagesStaff({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const listRef = useRef(null)
   const inputRef = useRef(null)
+  const composerRef = useRef(null)
+  const groupPhotoInputRef = useRef(null)
   const longPressTimer = useRef(null)
+  const longPressTriggered = useRef(false)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -74,6 +105,9 @@ export default function MessagesStaff({ user, userData }) {
   const [reactionPickerId, setReactionPickerId] = useState(null)
   const [pickerPos, setPickerPos] = useState({ top: 0, left: 0, mine: false })
   const [showSearch, setShowSearch] = useState(false)
+  const [selectedMessageId, setSelectedMessageId] = useState(null)
+  const [groupPhotoURL, setGroupPhotoURL] = useState('')
+  const [uploadingGroupPhoto, setUploadingGroupPhoto] = useState(false)
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
@@ -104,6 +138,12 @@ export default function MessagesStaff({ user, userData }) {
     })
   }, [])
 
+  useEffect(() => {
+    return onSnapshot(doc(db, 'appSettings', 'messages'), snap => {
+      setGroupPhotoURL(snap.exists() ? (snap.data().groupPhotoURL || '') : '')
+    })
+  }, [])
+
   const staffUsers = useMemo(() => {
     return users.map(u => {
       const member = membres.find(m => sameEmail(m.email, u.email))
@@ -127,6 +167,10 @@ export default function MessagesStaff({ user, userData }) {
   const canAccess = Boolean(user?.uid && userData?.approuve !== false)
 
   const pinnedMessage = pinnedMessages.find(m => !m.deleted) || null
+  const selectedMessage = useMemo(() => {
+    if (!selectedMessageId) return null
+    return messages.find(m => m.id === selectedMessageId) || pinnedMessages.find(m => m.id === selectedMessageId) || null
+  }, [messages, pinnedMessages, selectedMessageId])
 
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -146,6 +190,18 @@ export default function MessagesStaff({ user, userData }) {
       .filter(s => s.name.toLowerCase().includes(q) || s.mention.toLowerCase().includes('@' + q))
       .slice(0, 6)
   }, [mentionQuery, staffUsers, mentions, user?.uid])
+
+  const latestReadMessageByUser = useMemo(() => {
+    const latest = {}
+    messages.forEach(message => {
+      if (message.senderId !== user?.uid || message.deleted) return
+      ;(message.readBy || []).forEach(readerId => {
+        if (readerId === message.senderId) return
+        latest[readerId] = message.id
+      })
+    })
+    return latest
+  }, [messages, user?.uid])
 
   useEffect(() => {
     if (!user?.uid || messages.length === 0) return
@@ -170,8 +226,12 @@ export default function MessagesStaff({ user, userData }) {
   }, [messages, user?.uid])
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages.length])
+    const el = listRef.current
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    })
+  }, [messages.length, input])
 
   useEffect(() => {
     const el = inputRef.current
@@ -181,10 +241,46 @@ export default function MessagesStaff({ user, userData }) {
   }, [input])
 
   useEffect(() => {
+    const composer = composerRef.current
+    if (!composer) return
+
+    const updateComposerSpace = () => {
+      document.documentElement.style.setProperty('--staff-composer-space', `${composer.offsetHeight + 24}px`)
+    }
+
+    updateComposerSpace()
+    const observer = new ResizeObserver(updateComposerSpace)
+    observer.observe(composer)
+    window.addEventListener('resize', updateComposerSpace)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', updateComposerSpace)
+      document.documentElement.style.removeProperty('--staff-composer-space')
+    }
+  }, [])
+
+  useEffect(() => {
     return () => clearTimeout(longPressTimer.current)
   }, [])
 
+  useEffect(() => {
+    if (!selectedMessageId) return
+    const exists = messages.some(m => m.id === selectedMessageId) || pinnedMessages.some(m => m.id === selectedMessageId)
+    if (!exists) setSelectedMessageId(null)
+  }, [messages, pinnedMessages, selectedMessageId])
+
+  function canEditMessage(message) {
+    return Boolean(message && message.senderId === user.uid && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS)
+  }
+
+  function canDeleteMessage(message) {
+    return Boolean(message && !message.deleted && (message.senderId === user.uid || canModerate))
+  }
+
   function showReactionPicker(rect, message, mine) {
+    longPressTriggered.current = true
+    setSelectedMessageId(message.id)
     setPickerPos({
       top: Math.max(8, rect.top - 54),
       left: mine ? 'auto' : rect.left,
@@ -203,6 +299,15 @@ export default function MessagesStaff({ user, userData }) {
 
   function stopReactionPress() {
     clearTimeout(longPressTimer.current)
+  }
+
+  function selectMessage(message, compact, rect, mine) {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false
+      return
+    }
+    if (message.deleted || compact) return
+    showReactionPicker(rect, message, mine)
   }
 
   function handleInputChange(value) {
@@ -275,6 +380,35 @@ export default function MessagesStaff({ user, userData }) {
     }
   }
 
+  async function updateGroupPhoto(e) {
+    const file = e.target.files?.[0]
+    if (!file || uploadingGroupPhoto) return
+    setUploadingGroupPhoto(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('upload_preset', CLOUDINARY_PRESET)
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+        method: 'POST',
+        body: fd,
+      })
+      const data = await res.json()
+      if (!data.secure_url) throw new Error('Upload Cloudinary invalide')
+
+      await setDoc(doc(db, 'appSettings', 'messages'), {
+        groupPhotoURL: data.secure_url,
+        groupPhotoUpdatedAt: new Date().toISOString(),
+        groupPhotoUpdatedBy: user.uid,
+      }, { merge: true })
+      setGroupPhotoURL(data.secure_url)
+    } catch (error) {
+      console.warn('Photo de groupe non mise à jour', error)
+    } finally {
+      setUploadingGroupPhoto(false)
+      e.target.value = ''
+    }
+  }
+
   async function toggleReaction(message, emoji) {
     if (!canAccess || message.deleted) return
     const current = message.reactions?.[emoji] || []
@@ -283,11 +417,25 @@ export default function MessagesStaff({ user, userData }) {
       [`reactions.${emoji}`]: current.includes(user.uid) ? arrayRemove(user.uid) : arrayUnion(user.uid),
     })
     setReactionPickerId(null)
+    setSelectedMessageId(null)
   }
 
   function startEdit(message) {
     setEditingId(message.id)
     setEditText(message.text || '')
+    setSelectedMessageId(null)
+    setReactionPickerId(null)
+  }
+
+  async function copyMessage(message) {
+    if (!message || message.deleted) return
+    try {
+      await navigator.clipboard?.writeText(message.text || '')
+    } catch {
+      console.warn('Copie impossible')
+    }
+    setSelectedMessageId(null)
+    setReactionPickerId(null)
   }
 
   async function saveEdit(message) {
@@ -313,6 +461,8 @@ export default function MessagesStaff({ user, userData }) {
       deletedBy: user.uid,
       pinned: false,
     })
+    setSelectedMessageId(null)
+    setReactionPickerId(null)
   }
 
   async function togglePin(message) {
@@ -332,6 +482,8 @@ export default function MessagesStaff({ user, userData }) {
       pinnedMessageId: nextPinned ? message.id : null,
       updatedAt: new Date().toISOString(),
     }, { merge: true })
+    setSelectedMessageId(null)
+    setReactionPickerId(null)
   }
 
   function getUsersByIds(ids = []) {
@@ -341,16 +493,31 @@ export default function MessagesStaff({ user, userData }) {
       .join(', ')
   }
 
+  function getFirstNamesByIds(ids = []) {
+    return ids
+      .map(id => staffUsers.find(s => s.uid === id)?.name)
+      .filter(Boolean)
+      .map(name => name.split(/\s+/)[0])
+      .join(', ')
+  }
+
   function renderMessage(message, compact = false) {
     const mine = message.senderId === user?.uid
-    const canEdit = mine && !message.deleted && Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS
-    const canDelete = !message.deleted && (mine || canModerate)
-    const readCount = (message.readBy || []).length
     const pickerOpen = reactionPickerId === message.id
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+    const selected = selectedMessageId === message.id
+    const multiline = String(message.text || '').includes('\n')
+    const readAvatars = mine
+      ? (message.readBy || [])
+        .filter(id => id !== message.senderId)
+        .filter(id => latestReadMessageByUser[id] === message.id)
+        .map(id => staffUsers.find(s => s.uid === id))
+        .filter(Boolean)
+        .slice(0, 3)
+      : []
 
     return (
-      <div key={message.id} className={`staff-message-row${mine ? ' mine' : ''}${compact ? ' pinned' : ''}`}>
+      <div key={message.id} className={`staff-message-row${mine ? ' mine' : ''}${compact ? ' pinned' : ''}${selected ? ' selected' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
         {!mine && (
           <div className="staff-message-avatar">
             {message.senderPhoto
@@ -368,9 +535,10 @@ export default function MessagesStaff({ user, userData }) {
 
           <div className="staff-message-bubble-shell">
             <div
-              className={`staff-message-bubble${mine ? ' mine' : ''}${existingReactions.length > 0 ? ' has-reactions' : ''}`}
-              onClick={() => {
+              className={`staff-message-bubble${mine ? ' mine' : ''}${existingReactions.length > 0 ? ' has-reactions' : ''}${multiline ? ' multiline' : ''}`}
+              onClick={e => {
                 if (pickerOpen) setReactionPickerId(null)
+                else selectMessage(message, compact, e.currentTarget.getBoundingClientRect(), mine)
               }}
               onPointerDown={e => startReactionPress(e, message, mine, compact)}
               onPointerUp={stopReactionPress}
@@ -394,7 +562,7 @@ export default function MessagesStaff({ user, userData }) {
                   </div>
                 </div>
               ) : (
-                <p>{message.text}</p>
+                <p>{renderLinkedText(message.text)}</p>
               )}
             </div>
 
@@ -408,7 +576,10 @@ export default function MessagesStaff({ user, userData }) {
                       key={emoji}
                       type="button"
                       className={active ? 'active' : ''}
-                      onClick={() => toggleReaction(message, emoji)}
+                      onClick={e => {
+                        e.stopPropagation()
+                        toggleReaction(message, emoji)
+                      }}
                       title={getUsersByIds(users)}
                     >
                       <span>{emoji}</span>
@@ -418,22 +589,29 @@ export default function MessagesStaff({ user, userData }) {
                 })}
               </div>
             )}
+
+            {readAvatars.length > 0 && (
+              <button
+                type="button"
+                className="staff-read-avatars"
+                title={`Vu par ${readAvatars.map(s => s.name.split(/\s+/)[0]).join(', ')}`}
+                onClick={e => {
+                  e.stopPropagation()
+                  setDetailsId(detailsId === message.id ? null : message.id)
+                }}
+              >
+                {readAvatars.map(staff => (
+                  <span key={staff.uid}>
+                    {staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}
+                  </span>
+                ))}
+              </button>
+            )}
           </div>
 
-          {!message.deleted && (
-            <div className="staff-message-tools">
-              {canEdit && <button type="button" onClick={() => startEdit(message)} title="Modifier"><Edit3 size={14} /></button>}
-              {canDelete && <button type="button" onClick={() => softDelete(message)} title="Supprimer"><Trash2 size={14} /></button>}
-              {canModerate && <button type="button" onClick={() => togglePin(message)} title={message.pinned ? 'Désépingler' : 'Épingler'}><Pin size={14} /></button>}
-            </div>
-          )}
-
-          <button type="button" className="staff-read-indicator" onClick={() => setDetailsId(detailsId === message.id ? null : message.id)}>
-            {readCount > 1 ? `Vu par ${readCount}` : 'Lu'}
-          </button>
           {detailsId === message.id && (
             <div className="staff-read-details">
-              {getUsersByIds(message.readBy) || 'Aucun lecteur'}
+              Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
             </div>
           )}
         </div>
@@ -456,29 +634,75 @@ export default function MessagesStaff({ user, userData }) {
 
   return (
     <div className="staff-messages-page sin" style={{ background: C.bg }}>
-      <header className="staff-messages-header">
-        <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
-          <ArrowLeft size={19} />
-        </button>
-        <div className="staff-header-avatar">
-          <MessageCircle size={18} />
-        </div>
-        <div className="staff-header-title">
-          <h1>Messages Staff</h1>
-          <p>Discussion interne entre les Staffs de YFC</p>
-        </div>
-        <button
-          type="button"
-          className={`staff-header-icon${showSearch ? ' active' : ''}`}
-          onClick={() => setShowSearch(v => !v)}
-          aria-label="Rechercher un message"
-        >
-          <Search size={19} />
-        </button>
-      </header>
+      {selectedMessage ? (
+        <header className="staff-messages-header staff-selection-header">
+          <button type="button" onClick={() => { setSelectedMessageId(null); setReactionPickerId(null) }} className="staff-header-back" aria-label="Fermer la sélection">
+            <X size={19} />
+          </button>
+          <div className="staff-selection-title">1</div>
+          <button type="button" className="staff-header-icon" onClick={() => copyMessage(selectedMessage)} aria-label="Copier">
+            <Copy size={19} />
+          </button>
+          {canEditMessage(selectedMessage) && (
+            <button type="button" className="staff-header-icon" onClick={() => startEdit(selectedMessage)} aria-label="Modifier">
+              <Edit3 size={18} />
+            </button>
+          )}
+          {canDeleteMessage(selectedMessage) && (
+            <button type="button" className="staff-header-icon" onClick={() => softDelete(selectedMessage)} aria-label="Supprimer">
+              <Trash2 size={18} />
+            </button>
+          )}
+          {canModerate && !selectedMessage.deleted && (
+            <button type="button" className="staff-header-icon" onClick={() => togglePin(selectedMessage)} aria-label={selectedMessage.pinned ? 'Désépingler' : 'Épingler'}>
+              <Pin size={18} />
+            </button>
+          )}
+        </header>
+      ) : (
+        <header className="staff-messages-header">
+          <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
+            <ArrowLeft size={19} />
+          </button>
+          <button
+            type="button"
+            className="staff-header-avatar"
+            onClick={() => groupPhotoInputRef.current?.click()}
+            aria-label="Changer la photo du groupe"
+            title="Changer la photo du groupe"
+          >
+            {uploadingGroupPhoto ? (
+              <MoreHorizontal size={18} />
+            ) : groupPhotoURL ? (
+              <img src={groupPhotoURL} alt="" />
+            ) : (
+              <StaffHeaderIcon size={18} />
+            )}
+          </button>
+          <input
+            ref={groupPhotoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={updateGroupPhoto}
+            style={{ display: 'none' }}
+          />
+          <div className="staff-header-title">
+            <h1>Messages Staff</h1>
+            <p>Discussion interne entre les Staffs de YFC</p>
+          </div>
+          <button
+            type="button"
+            className={`staff-header-icon${showSearch ? ' active' : ''}`}
+            onClick={() => setShowSearch(v => !v)}
+            aria-label="Rechercher un message"
+          >
+            <Search size={19} />
+          </button>
+        </header>
+      )}
 
       {(showSearch || search) && (
-        <div className="staff-message-search">
+        <div className="staff-message-search" onClick={e => e.stopPropagation()}>
           <Search size={15} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un message..." autoFocus />
           {search && (
@@ -496,7 +720,13 @@ export default function MessagesStaff({ user, userData }) {
         </section>
       )}
 
-      <main className="staff-message-list" ref={listRef} onClick={e => { if (!e.target.closest('.staff-message-bubble, .staff-reaction-picker')) setReactionPickerId(null) }} onScroll={() => setReactionPickerId(null)}>
+      <main className="staff-message-list" ref={listRef} onClick={e => {
+        if (!e.target.closest('.staff-message-bubble, .staff-reaction-picker')) setReactionPickerId(null)
+        if (showSearch || search) {
+          setShowSearch(false)
+          setSearch('')
+        }
+      }}>
         {messages.length >= messageLimit && (
           <button type="button" className="staff-load-more" onClick={() => setMessageLimit(v => v + PAGE_SIZE)}>
             Voir plus
@@ -531,7 +761,7 @@ export default function MessagesStaff({ user, userData }) {
         )
       })()}
 
-      <form className="staff-message-composer" onSubmit={sendMessage}>
+      <form className="staff-message-composer" ref={composerRef} onClick={e => e.stopPropagation()} onSubmit={sendMessage}>
         {mentionSuggestions.length > 0 && (
           <div className="staff-mention-menu">
             {mentionSuggestions.map(staff => (
