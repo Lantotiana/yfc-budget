@@ -921,9 +921,6 @@ export default function MessagesStaff({ user, userData }) {
   return (
     <div className="staff-messages-page sin" style={{ background: C.bg }}>
       <header className="staff-messages-header">
-        <button type="button" onClick={() => navigate('/')} className="staff-header-back" aria-label="Retour">
-          <ArrowLeft size={19} />
-        </button>
         <button
           type="button"
           className="staff-header-avatar"

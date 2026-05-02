@@ -4064,7 +4064,7 @@ input:focus, select:focus {
 .staff-message-composer {
   position: fixed;
   left: 50%;
-  bottom: max(10px, env(safe-area-inset-bottom));
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 68px);
   transform: translateX(-50%);
   width: min(calc(100% - 28px), 500px);
   z-index: 85;

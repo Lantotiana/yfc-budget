@@ -116,7 +116,7 @@ function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const swipeStart = useRef(null)
-  const baseVisible = Boolean(user && location.pathname !== '/login' && location.pathname !== '/messages')
+  const baseVisible = Boolean(user && location.pathname !== '/login')
   const visible = baseVisible
 
   useEffect(() => {
