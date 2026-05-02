@@ -288,7 +288,7 @@ export default function MessagesStaff({ user, userData }) {
     clearTimeout(longPressTimer.current)
     if (message.deleted || compact) return
     longPressRect.current = e.currentTarget?.getBoundingClientRect() || null
-    longPressTimer.current = setTimeout(() => openContextMenu(message, longPressRect.current), 280)
+    longPressTimer.current = setTimeout(() => openContextMenu(message, longPressRect.current), 100)
   }
 
   function stopReactionPress() {
