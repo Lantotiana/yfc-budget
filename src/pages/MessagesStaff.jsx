@@ -920,51 +920,58 @@ export default function MessagesStaff({ user, userData }) {
 
   return (
     <div className="staff-messages-page sin" style={{ background: C.bg }}>
-      <header className="staff-messages-header">
-        <button
-          type="button"
-          className="staff-header-avatar"
-          onClick={() => groupPhotoInputRef.current?.click()}
-          aria-label="Changer la photo du groupe"
-          title="Changer la photo du groupe"
-        >
-          {uploadingGroupPhoto ? (
-            <MoreHorizontal size={18} />
-          ) : groupPhotoURL ? (
-            <img src={groupPhotoURL} alt="" />
-          ) : (
-            <StaffHeaderIcon size={18} />
-          )}
-        </button>
-        <input
-          ref={groupPhotoInputRef}
-          type="file"
-          accept="image/*"
-          onChange={updateGroupPhoto}
-          style={{ display: 'none' }}
-        />
-        <div className="staff-header-title">
-          <p>YFC App</p>
-          <h1>Messages Staff</h1>
+      <header className="staff-messages-header textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="button"
+              className="staff-header-avatar"
+              onClick={() => groupPhotoInputRef.current?.click()}
+              aria-label="Changer la photo du groupe"
+              title="Changer la photo du groupe"
+            >
+              {uploadingGroupPhoto ? (
+                <MoreHorizontal size={18} />
+              ) : groupPhotoURL ? (
+                <img src={groupPhotoURL} alt="" />
+              ) : (
+                <StaffHeaderIcon size={18} />
+              )}
+            </button>
+            <input
+              ref={groupPhotoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={updateGroupPhoto}
+              style={{ display: 'none' }}
+            />
+            <div>
+              <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Messages Staff</div>
+              <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{staffUsers.length} membre{staffUsers.length !== 1 ? 's' : ''}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {canModerateAnnouncement && (
+              <button
+                type="button"
+                className="header-action"
+                onClick={() => setShowAnnouncementForm(true)}
+                aria-label="Créer une annonce"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', fontSize: 'var(--font-xs)', fontWeight: 600, fontFamily: 'inherit' }}
+              >
+                <Megaphone size={14} /><span>Annonce</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className={`staff-header-icon${showSearch ? ' active' : ''}`}
+              onClick={() => setShowSearch(v => !v)}
+              aria-label="Rechercher un message"
+            >
+              <Search size={19} />
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          className="staff-announcement-action"
-          onClick={() => setShowAnnouncementForm(true)}
-          aria-label="Créer une annonce"
-          title="Créer une annonce"
-        >
-          <Megaphone size={18} />
-          <span>Annonce</span>
-        </button>
-        <button
-          type="button"
-          className={`staff-header-icon${showSearch ? ' active' : ''}`}
-          onClick={() => setShowSearch(v => !v)}
-          aria-label="Rechercher un message"
-        >
-          <Search size={19} />
-        </button>
       </header>
 
       {(showSearch || search) && (
