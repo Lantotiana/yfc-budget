@@ -3456,13 +3456,13 @@ input:focus, select:focus {
   margin-top: 11px;
   padding: 10px;
   border-radius: 15px;
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.14);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.07);
 }
 
 [data-theme="dark"] .staff-announcement-info {
-  background: rgba(16,185,129,0.12);
-  border-color: rgba(16,185,129,0.22);
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.09);
 }
 
 .staff-announcement-info span {
@@ -3479,7 +3479,7 @@ input:focus, select:focus {
 }
 
 .staff-announcement-info svg {
-  color: #10b981;
+  color: var(--text-muted);
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -3492,8 +3492,8 @@ input:focus, select:focus {
 }
 
 .staff-presence-report-box.presents {
-  background: rgba(0,0,0,0.03);
-  border-color: rgba(0,0,0,0.08);
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.2);
 }
 
 .staff-presence-report-box.absents {
@@ -3502,8 +3502,8 @@ input:focus, select:focus {
 }
 
 [data-theme="dark"] .staff-presence-report-box.presents {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.1);
+  background: rgba(16,185,129,0.13);
+  border-color: rgba(16,185,129,0.26);
 }
 
 [data-theme="dark"] .staff-presence-report-box.absents {
@@ -3518,7 +3518,7 @@ input:focus, select:focus {
   color: var(--text-primary);
 }
 
-.staff-presence-report-box.presents .staff-presence-report-box-header { color: var(--text-primary); }
+.staff-presence-report-box.presents .staff-presence-report-box-header { color: #059669; }
 .staff-presence-report-box.absents .staff-presence-report-box-header  { color: #f43f5e; }
 
 .staff-presence-report-names {
