@@ -3492,8 +3492,8 @@ input:focus, select:focus {
 }
 
 .staff-presence-report-box.presents {
-  background: rgba(16,185,129,0.08);
-  border-color: rgba(16,185,129,0.2);
+  background: rgba(0,0,0,0.03);
+  border-color: rgba(0,0,0,0.08);
 }
 
 .staff-presence-report-box.absents {
@@ -3502,8 +3502,8 @@ input:focus, select:focus {
 }
 
 [data-theme="dark"] .staff-presence-report-box.presents {
-  background: rgba(16,185,129,0.13);
-  border-color: rgba(16,185,129,0.26);
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.1);
 }
 
 [data-theme="dark"] .staff-presence-report-box.absents {
@@ -3518,7 +3518,7 @@ input:focus, select:focus {
   color: var(--text-primary);
 }
 
-.staff-presence-report-box.presents .staff-presence-report-box-header { color: #059669; }
+.staff-presence-report-box.presents .staff-presence-report-box-header { color: var(--text-primary); }
 .staff-presence-report-box.absents .staff-presence-report-box-header  { color: #f43f5e; }
 
 .staff-presence-report-names {
