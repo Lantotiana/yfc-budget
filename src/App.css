@@ -3484,6 +3484,61 @@ input:focus, select:focus {
   margin-top: 1px;
 }
 
+.staff-presence-report-box {
+  margin-top: 10px;
+  border-radius: 13px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+}
+
+.staff-presence-report-box.presents {
+  background: rgba(16,185,129,0.08);
+  border-color: rgba(16,185,129,0.2);
+}
+
+.staff-presence-report-box.absents {
+  background: rgba(244,63,94,0.07);
+  border-color: rgba(244,63,94,0.18);
+}
+
+[data-theme="dark"] .staff-presence-report-box.presents {
+  background: rgba(16,185,129,0.13);
+  border-color: rgba(16,185,129,0.26);
+}
+
+[data-theme="dark"] .staff-presence-report-box.absents {
+  background: rgba(244,63,94,0.13);
+  border-color: rgba(244,63,94,0.24);
+}
+
+.staff-presence-report-box-header {
+  font-size: var(--font-xs);
+  font-weight: 800;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+}
+
+.staff-presence-report-box.presents .staff-presence-report-box-header { color: #059669; }
+.staff-presence-report-box.absents .staff-presence-report-box-header  { color: #f43f5e; }
+
+.staff-presence-report-names {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.staff-presence-report-rate {
+  margin-top: 10px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.staff-presence-report-rate strong {
+  color: var(--text-primary);
+}
+
 .staff-announcement-edit {
   display: grid;
   gap: 9px;

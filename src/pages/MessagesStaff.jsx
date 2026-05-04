@@ -14,7 +14,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { Calendar, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, X } from 'lucide-react'
+import { Calendar, CalendarCheck, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, Users, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
@@ -314,6 +314,7 @@ export default function MessagesStaff({ user, userData }) {
 
   function canEditMessage(message) {
     if (!message || message.senderId !== user.uid || message.deleted) return false
+    if ((message.type || 'message') === 'presence_report') return false
     if ((message.type || 'message') === 'announcement') return true
     return Date.now() - toMillis(message.createdAt) <= EDIT_WINDOW_MS
   }
@@ -321,12 +322,14 @@ export default function MessagesStaff({ user, userData }) {
   function canDeleteMessage(message) {
     if (!message || message.deleted) return false
     if ((message.type || 'message') === 'announcement') return message.senderId === user.uid || canModerateAnnouncement
+    if ((message.type || 'message') === 'presence_report') return message.senderId === user.uid || canModerateAnnouncement
     return message.senderId === user.uid || canModerate
   }
 
   function canPinMessage(message) {
     if (!message || message.deleted) return false
     if ((message.type || 'message') === 'announcement') return canModerateAnnouncement
+    if ((message.type || 'message') === 'presence_report') return canModerateAnnouncement
     return canModerate
   }
 
@@ -814,8 +817,104 @@ export default function MessagesStaff({ user, userData }) {
     )
   }
 
+  function renderPresenceReport(message, compact = false) {
+    const readAvatars = !message.deleted && !compact
+      ? (message.readBy || [])
+          .filter(id => id !== message.senderId)
+          .filter(id => latestReadMessageByUser[id] === message.id)
+          .map(id => staffUsers.find(s => s.uid === id))
+          .filter(Boolean)
+          .slice(0, 3)
+      : []
+    const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+
+    return (
+      <article key={message.id} className={`staff-announcement-row${compact ? ' pinned' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
+        <div className="staff-announcement-avatar">
+          {message.senderPhoto
+            ? <img src={message.senderPhoto} alt="" />
+            : <span>{(message.senderName || '?').charAt(0).toUpperCase()}</span>
+          }
+        </div>
+        <div className="staff-announcement-content">
+          <div className="staff-message-meta staff-announcement-meta">
+            <span>{(message.senderName || 'Staff').split(/\s+/)[0]}</span>
+            <small>{formatTime(message.createdAt)}</small>
+          </div>
+          <div
+            className="staff-announcement-card"
+            onPointerDown={e => startReactionPress(e, message, compact)}
+            onPointerMove={moveReactionPress}
+            onPointerUp={stopReactionPress}
+            onPointerCancel={stopReactionPress}
+            onPointerLeave={stopReactionPress}
+            onContextMenu={e => e.preventDefault()}
+          >
+            <div className="staff-announcement-label" style={{ color: '#7c3aed' }}>
+              <CalendarCheck size={15} /> Rapport de présence
+            </div>
+            <h2>{message.eventTitle || 'Rapport'}</h2>
+
+            <div className="staff-announcement-info">
+              <span><Calendar size={14} /> {formatAnnouncementDate(message.eventDate)}</span>
+              {message.eventTags?.length > 0 && (
+                <span><Users size={14} /> {message.groupLabel || message.eventTags.join(', ')}</span>
+              )}
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 700 }}>
+                👥 Total : {message.totalCount} personne{message.totalCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="staff-presence-report-box presents">
+              <div className="staff-presence-report-box-header">
+                ✅ Présents : {message.presentCount}
+              </div>
+              {message.presents?.length > 0 && (
+                <div className="staff-presence-report-names">
+                  {message.presents.map(p => p.displayName).join(', ')}
+                </div>
+              )}
+            </div>
+
+            <div className="staff-presence-report-box absents">
+              <div className="staff-presence-report-box-header">
+                ❌ Absents : {(message.totalCount || 0) - (message.presentCount || 0)}
+              </div>
+              {message.absents?.length > 0 && (
+                <div className="staff-presence-report-names">
+                  {message.absents.map(p => p.displayName).join(', ')}
+                </div>
+              )}
+            </div>
+
+            <div className="staff-presence-report-rate">
+              Taux de présence : <strong>{message.presencePercent ?? 0} %</strong>
+            </div>
+          </div>
+          {renderReactionSummary(message)}
+        </div>
+
+        {readAvatars.length > 0 && (
+          <div className="staff-read-row">
+            {detailsId === message.id && (
+              <span className="staff-read-details">
+                Vu par {getFirstNamesByIds((message.readBy || []).filter(id => id !== message.senderId)) || 'personne'}
+              </span>
+            )}
+            <button type="button" className="staff-read-avatars" onClick={e => { e.stopPropagation(); setDetailsId(detailsId === message.id ? null : message.id) }}>
+              {readAvatars.map(staff => (
+                <span key={staff.uid}>{staff.photoURL ? <img src={staff.photoURL} alt="" /> : staff.name.charAt(0).toUpperCase()}</span>
+              ))}
+            </button>
+          </div>
+        )}
+      </article>
+    )
+  }
+
   function renderMessage(message, compact = false) {
     if ((message.type || 'message') === 'announcement') return renderAnnouncement(message, compact)
+    if ((message.type || 'message') === 'presence_report') return renderPresenceReport(message, compact)
     const mine = message.senderId === user?.uid
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
     const multiline = String(message.text || '').includes('\n')

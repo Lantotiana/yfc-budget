@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { ArrowLeft, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
 
-export default function PresenceDetail({ user }) {
+export default function PresenceDetail({ user, userData }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const { C } = useTheme()
@@ -17,10 +17,13 @@ export default function PresenceDetail({ user }) {
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(null)
-  const [copied, setCopied] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [editForm, setEditForm] = useState(null)
   const [savingEdit, setSavingEdit] = useState(false)
+  const [isSharingReport, setIsSharingReport] = useState(false)
+  const [showPublishAfterShareModal, setShowPublishAfterShareModal] = useState(false)
+  const [sharedReportPendingPublish, setSharedReportPendingPublish] = useState(null)
+  const [publishingReport, setPublishingReport] = useState(false)
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
@@ -136,24 +139,80 @@ export default function PresenceDetail({ user }) {
     return m.nomPrefere?.trim() || m.prenoms?.trim() || m.nom
   }
 
-  async function partager() {
-    if (!event || tagFilteredMembres.length === 0) return
-    const presents = tagFilteredMembres.filter(m => presences[m.id] === true)
-    const absents = tagFilteredMembres.filter(m => presences[m.id] !== true)
+  function buildReportText(presents, absents) {
     const tagLabel = eventTags.length ? ` [${eventTags.join(', ')}]` : ''
     let t = `Présence ${event.titre}${tagLabel} — ${formatDateFR(event.date)}\n\n`
-    t += `✅ Présents\n${presents.length ? presents.map(displayName).join('\n') : 'Aucun'}`
-    t += `\n\n❌ Absents\n${absents.length ? absents.map(displayName).join('\n') : 'Aucun'}`
-    t += `\n\n👥 Total : ${presents.length} présent${presents.length !== 1 ? 's' : ''} / ${tagFilteredMembres.length} membre${tagFilteredMembres.length !== 1 ? 's' : ''}`
-    if (navigator.share) {
-      try { await navigator.share({ text: t }) } catch {}
-    } else {
-      try {
-        await navigator.clipboard.writeText(t)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2500)
-      } catch {}
+    t += `✅ Présents (${presents.length})\n${presents.length ? presents.map(displayName).join('\n') : 'Aucun'}`
+    t += `\n\n❌ Absents (${absents.length})\n${absents.length ? absents.map(displayName).join('\n') : 'Aucun'}`
+    t += `\n\n👥 Total : ${tagFilteredMembres.length} — Taux : ${presencePercent} %`
+    return t
+  }
+
+  async function partager() {
+    if (!event || tagFilteredMembres.length === 0 || isSharingReport) return
+    const presents = tagFilteredMembres.filter(m => presences[m.id] === true)
+    const absents  = tagFilteredMembres.filter(m => presences[m.id] !== true)
+    const text = buildReportText(presents, absents)
+    const pendingReport = { presents, absents }
+
+    setIsSharingReport(true)
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Présence – ${event.titre}`, text })
+        // share resolved without error = user completed the share
+        setSharedReportPendingPublish(pendingReport)
+        setShowPublishAfterShareModal(true)
+      } else {
+        await navigator.clipboard.writeText(text)
+        setSharedReportPendingPublish(pendingReport)
+        setShowPublishAfterShareModal(true)
+      }
+    } catch (err) {
+      // AbortError = user cancelled the share sheet — do nothing
+      if (err?.name !== 'AbortError') console.error('Share error:', err)
+    } finally {
+      setIsSharingReport(false)
     }
+  }
+
+  async function publishReportToMessages() {
+    if (!sharedReportPendingPublish || !event || publishingReport) return
+    setPublishingReport(true)
+    try {
+      const { presents, absents } = sharedReportPendingPublish
+      const senderName = userData?.nom || user?.displayName || user?.email || 'Staff'
+      const senderPhoto = userData?.photoURL || user?.photoURL || null
+      const groupLabel = eventTags.length ? eventTags.join(', ') : 'Tous les membres'
+
+      const docRef = await addDoc(collection(db, 'staffMessages'), {
+        type: 'presence_report',
+        eventId: id,
+        eventTitle: event.titre,
+        eventDate: event.date,
+        eventTags,
+        groupLabel,
+        presents: presents.map(m => ({ id: m.id, displayName: displayName(m) })),
+        absents:  absents.map(m => ({ id: m.id, displayName: displayName(m) })),
+        totalCount: tagFilteredMembres.length,
+        presentCount: presents.length,
+        presencePercent,
+        senderId: user.uid,
+        senderName,
+        senderPhoto,
+        reactions: {},
+        readBy: [user.uid],
+        pinned: false,
+        deleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        createdAt: new Date().toISOString(),
+      })
+
+      await updateDoc(doc(db, 'evenements', id), { publishedMessageId: docRef.id })
+      setShowPublishAfterShareModal(false)
+      setSharedReportPendingPublish(null)
+    } catch (e) { console.error(e) }
+    setPublishingReport(false)
   }
 
   if (!event) {
@@ -193,7 +252,8 @@ export default function PresenceDetail({ user }) {
             {tagFilteredMembres.length > 0 && (
               <button
                 onClick={partager}
-                style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: copied ? C.teal : C.t2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                disabled={isSharingReport}
+                style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: isSharingReport ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isSharingReport ? 0.5 : 1 }}
               >
                 <Share2 size={16} />
               </button>
@@ -360,6 +420,52 @@ export default function PresenceDetail({ user }) {
                 {savingEdit ? 'Enregistrement...' : 'Enregistrer'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Publish-after-share modal */}
+      {showPublishAfterShareModal && (
+        <div className="modal-overlay" onClick={() => { setShowPublishAfterShareModal(false); setSharedReportPendingPublish(null) }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            {event.publishedMessageId ? (
+              <>
+                <h3 className="dialog-title" style={{ marginBottom: 8 }}>Déjà publié</h3>
+                <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>
+                  Ce rapport a déjà été publié dans Messages.
+                </p>
+                <div className="dialog-footer">
+                  <button
+                    onClick={() => { setShowPublishAfterShareModal(false); setSharedReportPendingPublish(null) }}
+                    style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    OK
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="dialog-title" style={{ marginBottom: 8 }}>Publier dans Messages ?</h3>
+                <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>
+                  Voulez-vous aussi publier ce rapport dans Messages Staff ?
+                </p>
+                <div className="dialog-footer">
+                  <button
+                    onClick={() => { setShowPublishAfterShareModal(false); setSharedReportPendingPublish(null) }}
+                    style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    Non merci
+                  </button>
+                  <button
+                    onClick={publishReportToMessages}
+                    disabled={publishingReport}
+                    style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: publishingReport ? 0.7 : 1 }}
+                  >
+                    {publishingReport ? 'Publication...' : 'Publier dans Messages'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

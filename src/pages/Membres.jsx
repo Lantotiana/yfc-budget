@@ -12,6 +12,14 @@ const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: ''
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 const AVATAR_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#f43f5e', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6', '#ef4444']
 
+const TAG_PALETTE = {
+  'Mpitarika YFC': { bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },
+  'Logistique':    { bg: 'rgba(16,185,129,0.12)', color: '#10b981' },
+  'Autre':         { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+}
+const DEFAULT_TAG_STYLE = { bg: 'rgba(99,102,241,0.1)', color: '#6366f1' }
+function tagStyle(tag) { return TAG_PALETTE[tag] || DEFAULT_TAG_STYLE }
+
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }

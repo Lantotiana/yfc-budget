@@ -78,6 +78,7 @@ export default function Home({ user, userData }) {
   const [verseClosing, setVerseClosing] = useState(false)
   const [verseHistoryPushed, setVerseHistoryPushed] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
   const [fallbackOffset, setFallbackOffset] = useState(0)
@@ -131,6 +132,18 @@ export default function Home({ user, userData }) {
 
 
   const prenom = getPrenom(userData?.nom) || user?.email?.split('@')[0]
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const q = query(collection(db, 'staffMessages'), orderBy('createdAt', 'desc'), limit(60))
+    return onSnapshot(q, snap => {
+      const count = snap.docs.filter(d => {
+        const m = d.data()
+        return !m.deleted && !(m.readBy || []).includes(user.uid)
+      }).length
+      setUnreadMsgCount(count)
+    }, () => setUnreadMsgCount(0))
+  }, [user?.uid])
 
   useEffect(() => {
     if (!user?.uid) return
@@ -343,6 +356,18 @@ export default function Home({ user, userData }) {
           title="Messages Staff"
         >
           <MessageCircle size={23} />
+          {unreadMsgCount > 0 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -4,
+              minWidth: 18, height: 18, padding: '0 4px',
+              borderRadius: 999, background: '#f43f5e', color: '#fff',
+              fontSize: 11, fontWeight: 800, lineHeight: '18px',
+              textAlign: 'center', pointerEvents: 'none',
+              border: '2px solid var(--bg, #fff)',
+            }}>
+              {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
+            </span>
+          )}
         </button>
       ), document.body)}
 
