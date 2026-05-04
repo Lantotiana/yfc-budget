@@ -3356,7 +3356,7 @@ input:focus, select:focus {
 
 .staff-announcement-content {
   position: relative;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   max-width: min(82%, 430px);
   min-width: 0;
 }
@@ -3375,7 +3375,7 @@ input:focus, select:focus {
 
 .staff-announcement-card {
   position: relative;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
   min-width: min(220px, 70vw);
   border-radius: 18px;

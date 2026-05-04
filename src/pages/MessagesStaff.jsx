@@ -945,7 +945,6 @@ export default function MessagesStaff({ user, userData }) {
           </div>
           <div
             className="staff-announcement-card"
-            style={{ width: '100%' }}
             onPointerDown={e => startReactionPress(e, message, compact)}
             onPointerMove={moveReactionPress}
             onPointerUp={stopReactionPress}
