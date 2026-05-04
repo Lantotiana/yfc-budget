@@ -840,6 +840,7 @@ export default function MessagesStaff({ user, userData }) {
           <div className="staff-message-meta staff-announcement-meta">
             <span>{(message.senderName || 'Staff').split(/\s+/)[0]}</span>
             <small>{formatTime(message.createdAt)}</small>
+            {message.edited && <small>modifié</small>}
           </div>
           <div
             className="staff-announcement-card"
