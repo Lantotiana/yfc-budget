@@ -246,10 +246,9 @@ export default function Membres({ user, userData }) {
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
         </div>
-        <div className="member-role-filter" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+        <div className="member-role-filter" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
           {[
             { key: 'all', label: 'Tous', count: membres.length },
-            { key: 'membre', label: 'Membres', count: memberOnlyCount },
             { key: 'staff', label: 'Staff', count: staffCount },
           ].map(item => {
             const active = roleFilter === item.key
@@ -293,28 +292,16 @@ export default function Membres({ user, userData }) {
               {(m.nom || '?')[0].toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
                 {isStaff && (
-                  <span style={{ flexShrink: 0, padding: '3px 7px', borderRadius: 999, background: 'rgba(16,185,129,0.12)', color: C.teal, fontSize: 'var(--font-xs)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
+                  <span style={{ flexShrink: 0, padding: '2px 5px', borderRadius: 999, background: 'rgba(16,185,129,0.12)', color: C.teal, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 0 }}>
                     Staff
-                  </span>
-                )}
-                {isStaff && m.staffRole && (
-                  <span style={{ flexShrink: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '3px 7px', borderRadius: 999, background: C.surf2, color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 800 }}>
-                    {m.staffRole}
                   </span>
                 )}
               </div>
               {m.telephone && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
               {m.email && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
-              {Array.isArray(m.tags) && m.tags.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
-                  {m.tags.map(tag => (
-                    <span key={tag} style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(99,102,241,0.1)', color: '#6366f1', fontSize: 'var(--font-xs)', fontWeight: 700 }}>{tag}</span>
-                  ))}
-                </div>
-              )}
             </div>
             <button onClick={e => { e.stopPropagation(); setConfirmDel(m) }} style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Trash2 size={14} color={C.coral} />
