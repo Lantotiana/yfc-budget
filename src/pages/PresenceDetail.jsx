@@ -401,24 +401,24 @@ export default function PresenceDetail({ user, userData }) {
                 )}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 2fr' : '1fr 2fr', gap: 10, marginTop: '1.5rem' }}>
-              {isAdmin && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <button
                   onClick={deleteEvent}
                   style={{ padding: '13px', borderRadius: 12, border: 'none', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
                   <Trash2 size={14} /> Supprimer
                 </button>
-              )}
-              {!isAdmin && (
-                <button onClick={() => setShowEdit(false)} className="btn-secondary" style={{ padding: '13px' }}>Annuler</button>
-              )}
-              <button
-                onClick={saveEdit}
-                disabled={savingEdit || !editForm.titre.trim()}
-                style={{ padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEdit || !editForm.titre.trim()) ? 0.6 : 1 }}
-              >
-                {savingEdit ? 'Enregistrement...' : 'Enregistrer'}
+                <button
+                  onClick={saveEdit}
+                  disabled={savingEdit || !editForm.titre.trim()}
+                  style={{ padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEdit || !editForm.titre.trim()) ? 0.6 : 1 }}
+                >
+                  {savingEdit ? '...' : 'Enregistrer'}
+                </button>
+              </div>
+              <button onClick={() => setShowEdit(false)} className="btn-secondary" style={{ width: '100%', padding: '13px' }}>
+                Annuler
               </button>
             </div>
           </div>
