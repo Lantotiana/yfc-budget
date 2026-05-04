@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, setDoc } from 'firebase/firestore'
+import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
@@ -23,7 +23,6 @@ export default function Budget({ user, userData }) {
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
   const [editTx, setEditTx] = useState(null)
-  const [publishedBudgetMsgId, setPublishedBudgetMsgId] = useState(null)
   const showDetail = detailType === 'entrees' ? 'entree' : detailType === 'depenses' ? 'depense' : null
 
 
@@ -52,13 +51,6 @@ export default function Budget({ user, userData }) {
     return () => unsub()
   }, [])
 
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'appSettings', 'budgetReport'), snap => {
-      setPublishedBudgetMsgId(snap.exists() ? (snap.data().publishedMessageId || null) : null)
-    })
-    return () => unsub()
-  }, [])
-
   const currentMember = membres.find(m => sameEmail(m.email, user?.email))
   const canManageBudget = canManageBudgetRole(currentMember?.staffRole)
 
@@ -78,28 +70,18 @@ export default function Budget({ user, userData }) {
       senderPhoto,
     }
     try {
-      if (publishedBudgetMsgId) {
-        await updateDoc(doc(db, 'staffMessages', publishedBudgetMsgId), {
-          ...payload,
-          edited: true,
-          editedAt: new Date().toISOString(),
-        })
-      } else {
-        const docRef = await addDoc(collection(db, 'staffMessages'), {
-          ...payload,
-          reactions: {},
-          readBy: [user.uid],
-          pinned: false,
-          deleted: false,
-          deletedAt: null,
-          deletedBy: null,
-          edited: false,
-          editedAt: null,
-          createdAt: new Date().toISOString(),
-        })
-        await setDoc(doc(db, 'appSettings', 'budgetReport'), { publishedMessageId: docRef.id })
-        setPublishedBudgetMsgId(docRef.id)
-      }
+      await addDoc(collection(db, 'staffMessages'), {
+        ...payload,
+        reactions: {},
+        readBy: [user.uid],
+        pinned: false,
+        deleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        edited: false,
+        editedAt: null,
+        createdAt: new Date().toISOString(),
+      })
     } catch (e) { console.error(e) }
   }
 
