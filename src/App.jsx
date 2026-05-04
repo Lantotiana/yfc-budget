@@ -11,6 +11,7 @@ import Home from './pages/Home'
 import Budget from './pages/Budget'
 import Membres from './pages/Membres'
 import Presences from './pages/Presences'
+import PresenceDetail from './pages/PresenceDetail'
 import Parametres from './pages/Parametres'
 import Evenements from './pages/Evenements'
 import Dashboard from './pages/Dashboard'
@@ -268,6 +269,11 @@ export default function App() {
         <Route path="/presences" element={
           <ProtectedRoute user={user}>
             <Presences user={user} userData={userData} />
+          </ProtectedRoute>
+        } />
+        <Route path="/presences/:id" element={
+          <ProtectedRoute user={user}>
+            <PresenceDetail user={user} userData={userData} />
           </ProtectedRoute>
         } />
         <Route path="/dashboard" element={

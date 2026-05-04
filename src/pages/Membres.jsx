@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Plus, Search, Trash2, Download } from 'lucide-react'
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
+import { Plus, Search, Trash2, Download, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
-import { ADMIN_EMAIL } from '../constants'
+import { ADMIN_EMAIL, STAFF_ROLES, DEFAULT_MEMBRE_TAGS } from '../constants'
 
-const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '' }
+const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '', tags: [] }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 const AVATAR_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#f43f5e', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6', '#ef4444']
-const STAFF_ROLES = ['Président', 'Vice-président', 'Secrétaire', 'Trésorier', 'Responsable communication', 'Responsable logistique', 'Mentor']
 
 function normalize(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -39,6 +38,8 @@ export default function Membres({ user, userData }) {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
+  const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
+  const [newTagInput, setNewTagInput] = useState('')
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
@@ -61,9 +62,18 @@ export default function Membres({ user, userData }) {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'appSettings', 'membreTags'), snap => {
+      if (snap.exists() && Array.isArray(snap.data().list) && snap.data().list.length > 0) {
+        setAvailableTags(snap.data().list)
+      }
+    })
+    return () => unsub()
+  }, [])
+
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
-    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email), staffRole: m.staffRole || '' })
+    setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email), staffRole: m.staffRole || '', tags: Array.isArray(m.tags) ? m.tags : [] })
     setSheet(m)
   }
   function closeSheet() { setSheet(null); setForm(EMPTY) }
@@ -87,6 +97,7 @@ export default function Membres({ user, userData }) {
           tailleTshirt: form.tailleTshirt,
           staff: isStaff,
           staffRole,
+          tags: form.tags,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
         await createNotification({
@@ -103,7 +114,12 @@ export default function Membres({ user, userData }) {
           tailleTshirt: form.tailleTshirt,
           staff: isStaff,
           staffRole,
+          tags: form.tags,
         })
+        if (isAdmin && form.email.trim()) {
+          const userSnap = await getDocs(query(collection(db, 'users'), where('email', '==', form.email.trim())))
+          if (!userSnap.empty) await updateDoc(userSnap.docs[0].ref, { staffRole })
+        }
         await createNotification({
           type: 'membre',
           titre: 'Membre modifié',
@@ -173,6 +189,29 @@ export default function Membres({ user, userData }) {
   const memberOnlyCount = membres.length - staffCount
 
   const isEditing = sheet && sheet !== 'add'
+
+  async function addNewTag() {
+    const tag = newTagInput.trim()
+    if (!tag || availableTags.includes(tag)) return
+    const next = [...availableTags, tag]
+    setAvailableTags(next)
+    setNewTagInput('')
+    setForm(f => ({ ...f, tags: [...f.tags, tag] }))
+    await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+  }
+
+  async function removeAvailableTag(tag) {
+    const next = availableTags.filter(t => t !== tag)
+    setAvailableTags(next)
+    await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+  }
+
+  function toggleTag(tag) {
+    setForm(f => ({
+      ...f,
+      tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
+    }))
+  }
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
@@ -261,6 +300,13 @@ export default function Membres({ user, userData }) {
               </div>
               {m.telephone && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
               {m.email && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
+              {Array.isArray(m.tags) && m.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                  {m.tags.map(tag => (
+                    <span key={tag} style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(99,102,241,0.1)', color: '#6366f1', fontSize: 'var(--font-xs)', fontWeight: 700 }}>{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={e => { e.stopPropagation(); setConfirmDel(m) }} style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Trash2 size={14} color={C.coral} />
@@ -328,6 +374,77 @@ export default function Membres({ user, userData }) {
                   )}
                 </div>
               )}
+
+              <div>
+                <label className="form-label">Tags</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                  {availableTags.map(tag => {
+                    const selected = form.tags.includes(tag)
+                    return (
+                      <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: isAdmin ? '999px 0 0 999px' : 999,
+                            border: `1.5px solid ${selected ? '#6366f1' : C.bord}`,
+                            borderRight: isAdmin ? 'none' : undefined,
+                            background: selected ? 'rgba(99,102,241,0.12)' : C.surf2,
+                            color: selected ? '#6366f1' : C.t2,
+                            fontSize: 'var(--font-xs)',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          {tag}
+                        </button>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => removeAvailableTag(tag)}
+                            style={{
+                              width: 26, height: 32,
+                              borderRadius: '0 999px 999px 0',
+                              border: `1.5px solid ${selected ? '#6366f1' : C.bord}`,
+                              borderLeft: 'none',
+                              background: selected ? 'rgba(99,102,241,0.12)' : C.surf2,
+                              color: selected ? '#6366f1' : C.t3,
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              padding: 0,
+                            }}
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {isAdmin && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      value={newTagInput}
+                      onChange={e => setNewTagInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
+                      placeholder="Nouveau tag..."
+                      className="form-input"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addNewTag}
+                      disabled={!newTagInput.trim()}
+                      style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', opacity: newTagInput.trim() ? 1 : 0.5 }}
+                    >
+                      + Ajouter
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
               <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>

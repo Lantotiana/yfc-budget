@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   addDoc,
   arrayRemove,
@@ -15,7 +14,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { ArrowLeft, Calendar, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Plus, Search, Send, Trash2, X } from 'lucide-react'
+import { Calendar, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
@@ -97,15 +96,8 @@ function formatAnnouncementDate(value) {
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
 }
 
-function formatPublishedDate(value) {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) + ' à ' + formatTime(value)
-}
 
 export default function MessagesStaff({ user, userData }) {
-  const navigate = useNavigate()
   const { C } = useTheme()
   const listRef = useRef(null)
   const inputRef = useRef(null)
@@ -208,7 +200,7 @@ export default function MessagesStaff({ user, userData }) {
   const currentStaff = useMemo(() => staffUsers.find(s => s.uid === user?.uid), [staffUsers, user?.uid])
   const isAdmin = user?.email === ADMIN_EMAIL
   const canModerate = isAdmin || canModerateStaffMessagesRole(currentMember?.staffRole)
-  const canModerateAnnouncement = isAdmin || ['president', 'vice-president'].includes(normalizeAccessText(currentMember?.staffRole))
+  const canModerateAnnouncement = isAdmin || ['president', 'vice president'].includes(normalizeAccessText(currentMember?.staffRole))
   const canAccess = Boolean(user?.uid && userData?.approuve !== false)
 
   const pinnedMessage = pinnedMessages.find(m => !m.deleted) || null
@@ -712,13 +704,6 @@ export default function MessagesStaff({ user, userData }) {
     )
   }
 
-  function getReadUsers(message, limitCount = 3) {
-    return (message.readBy || [])
-      .filter(id => id !== message.senderId)
-      .map(id => staffUsers.find(s => s.uid === id))
-      .filter(Boolean)
-      .slice(0, limitCount)
-  }
 
   function renderAnnouncement(message, compact = false) {
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)

@@ -1,4 +1,4 @@
-export const BUDGET_MANAGER_ROLES = ['president', 'vice-president', 'tresorier']
+export const BUDGET_MANAGER_ROLES = ['president', 'vice president', 'responsable financier']
 export const STAFF_MESSAGE_MODERATOR_ROLES = ['president']
 
 export function normalizeAccessText(value) {
