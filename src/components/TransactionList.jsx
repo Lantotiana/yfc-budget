@@ -306,7 +306,11 @@ export default function TransactionList({
         setShareFeedback('Copié !')
         setTimeout(() => setShareFeedback(''), 2500)
       }
-      onShared?.({ totalEntrees, totalDepenses, solde, filterMonth })
+      onShared?.({
+        totalEntrees, totalDepenses, solde, filterMonth,
+        entrees: entrees.map(t => ({ motif: t.motif, montant: Number(t.montant || 0), date: t.date })),
+        depenses: depenses.map(t => ({ motif: t.motif, montant: Number(t.montant || 0), date: t.date })),
+      })
     } catch (err) {
       if (err?.name !== 'AbortError') console.error('Share error:', err)
     }

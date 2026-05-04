@@ -958,13 +958,35 @@ export default function MessagesStaff({ user, userData }) {
             <h2>Budget YFC{message.filterMonth ? ` — ${new Date(message.filterMonth + '-01T00:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}` : ''}</h2>
 
             <div className="staff-presence-report-box presents">
-              <div className="staff-presence-report-box-header">💰 Entrées</div>
-              <div className="staff-presence-report-names">{fmtAr(message.totalEntrees)}</div>
+              <div className="staff-presence-report-box-header">💰 Entrées — {fmtAr(message.totalEntrees)}</div>
+              {message.entrees?.length > 0 ? (
+                <div className="staff-budget-report-lines">
+                  {message.entrees.map((t, i) => (
+                    <div key={i} className="staff-budget-report-line">
+                      <span>{t.motif}</span>
+                      <span>{fmtAr(t.montant)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="staff-presence-report-names">Aucune entrée</div>
+              )}
             </div>
 
             <div className="staff-presence-report-box absents">
-              <div className="staff-presence-report-box-header">📉 Dépenses</div>
-              <div className="staff-presence-report-names">{fmtAr(message.totalDepenses)}</div>
+              <div className="staff-presence-report-box-header">📉 Dépenses — {fmtAr(message.totalDepenses)}</div>
+              {message.depenses?.length > 0 ? (
+                <div className="staff-budget-report-lines">
+                  {message.depenses.map((t, i) => (
+                    <div key={i} className="staff-budget-report-line">
+                      <span>{t.motif}</span>
+                      <span>{fmtAr(t.montant)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="staff-presence-report-names">Aucune dépense</div>
+              )}
             </div>
 
             <div className="staff-presence-report-rate">

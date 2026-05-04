@@ -3539,6 +3539,36 @@ input:focus, select:focus {
   color: var(--text-primary);
 }
 
+.staff-budget-report-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.staff-budget-report-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.staff-budget-report-line span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-budget-report-line span:last-child {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .staff-announcement-edit {
   display: grid;
   gap: 9px;
