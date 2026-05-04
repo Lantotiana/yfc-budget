@@ -9,4 +9,4 @@ export const STAFF_ROLES = [
   'Mentor',
 ]
 
-export const DEFAULT_MEMBRE_TAGS = ['Mpitarika YFC', 'Logistique', 'Autre']
+export const DEFAULT_MEMBRE_TAGS = ['Membre', 'Mpitarika YFC', 'Logistique', 'Autre']

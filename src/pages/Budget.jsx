@@ -1,22 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createPortal } from 'react-dom'
 import { db } from '../firebase'
-import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Sparkles, X, RefreshCw } from 'lucide-react'
+import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, setDoc } from 'firebase/firestore'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
-import { generateBudgetSummary } from '../services/budgetSummary'
 import { canManageBudgetRole, sameEmail } from '../utils/access'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
 }
 
-export default function Budget({ user }) {
+export default function Budget({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const { detailType } = useParams()
@@ -26,24 +23,9 @@ export default function Budget({ user }) {
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
   const [editTx, setEditTx] = useState(null)
-  const [summary, setSummary] = useState(null)
-  const [summaryLoading, setSummaryLoading] = useState(false)
-  const [summaryOpen, setSummaryOpen] = useState(false)
-  const [summaryMonth, setSummaryMonth] = useState('')
+  const [publishedBudgetMsgId, setPublishedBudgetMsgId] = useState(null)
   const showDetail = detailType === 'entrees' ? 'entree' : detailType === 'depenses' ? 'depense' : null
 
-  async function openSummary(force = false) {
-    setSummaryOpen(true)
-    if (summary && !force) return
-    setSummaryLoading(true)
-    const currentMonth = new Date().toISOString().slice(0, 7)
-    const hasCurrentMonth = transactions.some(t => t.date?.startsWith(currentMonth))
-    const month = hasCurrentMonth ? currentMonth : months[0] ?? currentMonth
-    setSummaryMonth(month)
-    const text = await generateBudgetSummary(transactions, month, force)
-    setSummary(text)
-    setSummaryLoading(false)
-  }
 
   useEffect(() => {
     setLoading(true)
@@ -70,8 +52,54 @@ export default function Budget({ user }) {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'appSettings', 'budgetReport'), snap => {
+      setPublishedBudgetMsgId(snap.exists() ? (snap.data().publishedMessageId || null) : null)
+    })
+    return () => unsub()
+  }, [])
+
   const currentMember = membres.find(m => sameEmail(m.email, user?.email))
   const canManageBudget = canManageBudgetRole(currentMember?.staffRole)
+
+  async function publishBudgetToMessages({ totalEntrees, totalDepenses, solde: soldeFiltré, filterMonth: mois } = {}) {
+    const senderName = userData?.nom || user?.displayName || user?.email || 'Staff'
+    const senderPhoto = userData?.photoURL || user?.photoURL || null
+    const payload = {
+      type: 'budget_report',
+      totalEntrees,
+      totalDepenses,
+      solde: soldeFiltré,
+      filterMonth: mois || null,
+      senderId: user.uid,
+      senderName,
+      senderPhoto,
+    }
+    try {
+      if (publishedBudgetMsgId) {
+        await updateDoc(doc(db, 'staffMessages', publishedBudgetMsgId), {
+          ...payload,
+          edited: true,
+          editedAt: new Date().toISOString(),
+        })
+      } else {
+        const docRef = await addDoc(collection(db, 'staffMessages'), {
+          ...payload,
+          reactions: {},
+          readBy: [user.uid],
+          pinned: false,
+          deleted: false,
+          deletedAt: null,
+          deletedBy: null,
+          edited: false,
+          editedAt: null,
+          createdAt: new Date().toISOString(),
+        })
+        await setDoc(doc(db, 'appSettings', 'budgetReport'), { publishedMessageId: docRef.id })
+        setPublishedBudgetMsgId(docRef.id)
+      }
+    } catch (e) { console.error(e) }
+  }
 
   async function addTransaction(tx) {
     if (!canManageBudget) return
@@ -148,56 +176,12 @@ export default function Budget({ user }) {
               {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => openSummary()}
-              style={{ width: 42, height: 42, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}
-              title="Résumé IA"
-            >
-              <Sparkles size={18} />
-            </button>
-            <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-md)', fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
-              {solde >= 0 ? '+' : '−'}
-            </div>
+          <div style={{ width: 42, height: 42, borderRadius: 14, background: solde >= 0 ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--font-md)', fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
+            {solde >= 0 ? '+' : '−'}
           </div>
         </div>
       </div>
 
-      {/* Résumé IA modal */}
-      {summaryOpen && createPortal((
-        <div className="modal-overlay" onClick={() => setSummaryOpen(false)}>
-          <div className="modal ai-summary-modal popup-float" onClick={e => e.stopPropagation()}>
-            <div className="dialog-header ai-summary-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Sparkles size={15} color="#10b981" />
-                <h2 className="dialog-title">
-                  Résumé IA — {summaryMonth ? new Date(summaryMonth + '-01').toLocaleString('fr-FR', { month: 'long', year: 'numeric' }) : '…'}
-                </h2>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                <button onClick={() => openSummary(true)} className="dialog-close-btn">
-                  <RefreshCw size={15} className={summaryLoading ? 'spin' : ''} />
-                </button>
-                <button onClick={() => setSummaryOpen(false)} className="dialog-close-btn">
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <div className="ai-summary-body">
-              {summaryLoading ? (
-                <div className="ai-summary-loading">
-                  <div className="spin" style={{ width: 28, height: 28, border: `3px solid ${C.bord}`, borderTopColor: '#10b981', borderRadius: '50%' }} />
-                  <span style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>Analyse en cours…</span>
-                </div>
-              ) : summary ? (
-                <p className="ai-summary-text">{summary}</p>
-              ) : (
-                <p style={{ fontSize: 'var(--font-sm)', color: C.t2, textAlign: 'center', padding: '24px 0' }}>Impossible de générer le résumé.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      ), document.body)}
 
       <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {loading && <div className="loading">Chargement...</div>}
@@ -214,6 +198,7 @@ export default function Budget({ user }) {
           editTx={editTx}
           onEditDone={() => setEditTx(null)}
           canManageBudget={canManageBudget}
+          onShared={publishBudgetToMessages}
         />
       </div>
     </div>

@@ -15,7 +15,7 @@ export default function Presences({ user, userData }) {
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [showNewEvent, setShowNewEvent] = useState(false)
-  const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0, 10), tags: [] })
+  const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0, 10), tags: ['Membre'] })
   const [savingEvent, setSavingEvent] = useState(false)
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function Presences({ user, userData }) {
         createdAt: new Date().toISOString(),
       })
       setShowNewEvent(false)
-      setNewEventForm({ titre: '', date: new Date().toISOString().slice(0, 10), tags: [] })
+      setNewEventForm({ titre: '', date: new Date().toISOString().slice(0, 10), tags: ['Membre'] })
       navigate(`/presences/${ref.id}`)
     } catch (e) { console.error(e) }
     setSavingEvent(false)

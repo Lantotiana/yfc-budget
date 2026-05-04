@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
-import { Plus, Search, Trash2, Download, X } from 'lucide-react'
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc, writeBatch, arrayUnion } from 'firebase/firestore'
+import { Plus, Search, Trash2, Download, Settings } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import { ADMIN_EMAIL, STAFF_ROLES, DEFAULT_MEMBRE_TAGS } from '../constants'
 
-const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '', tags: [] }
+const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '', tags: ['Membre'] }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 const AVATAR_COLORS = ['#2563eb', '#10b981', '#7c3aed', '#f43f5e', '#f59e0b', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6', '#ef4444']
 
 const TAG_PALETTE = {
+  'Membre':        { bg: 'rgba(37,99,235,0.1)',   color: '#2563eb' },
   'Mpitarika YFC': { bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },
   'Logistique':    { bg: 'rgba(16,185,129,0.12)', color: '#10b981' },
   'Autre':         { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
@@ -48,6 +49,9 @@ export default function Membres({ user, userData }) {
   const [confirmDel, setConfirmDel] = useState(null)
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [newTagInput, setNewTagInput] = useState('')
+  const [showTagSettings, setShowTagSettings] = useState(false)
+  const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
+  const migrationDone = useRef(false)
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
@@ -72,12 +76,26 @@ export default function Membres({ user, userData }) {
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'appSettings', 'membreTags'), snap => {
-      if (snap.exists() && Array.isArray(snap.data().list) && snap.data().list.length > 0) {
-        setAvailableTags(snap.data().list)
+      const raw = snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : []
+      const normalized = ['Membre', ...raw.filter(t => t !== 'Membre')]
+      setAvailableTags(normalized)
+      if (!raw.includes('Membre')) {
+        setDoc(doc(db, 'appSettings', 'membreTags'), { list: normalized }).catch(console.error)
       }
     })
     return () => unsub()
   }, [])
+
+  // One-time migration: add 'Membre' tag to all existing members that don't have it
+  useEffect(() => {
+    if (migrationDone.current || membres.length === 0) return
+    const needsTag = membres.filter(m => !Array.isArray(m.tags) || !m.tags.includes('Membre'))
+    migrationDone.current = true
+    if (needsTag.length === 0) return
+    const batch = writeBatch(db)
+    needsTag.forEach(m => batch.update(doc(db, 'membres', m.id), { tags: arrayUnion('Membre') }))
+    batch.commit().catch(console.error)
+  }, [membres])
 
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
@@ -201,18 +219,19 @@ export default function Membres({ user, userData }) {
   async function addNewTag() {
     const tag = newTagInput.trim()
     if (!tag || availableTags.includes(tag)) return
-    const next = [...availableTags, tag]
+    const next = ['Membre', ...availableTags.filter(t => t !== 'Membre'), tag]
     setAvailableTags(next)
     setNewTagInput('')
-    setForm(f => ({ ...f, tags: [...f.tags, tag] }))
     await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
   }
 
   async function removeAvailableTag(tag) {
+    if (tag === 'Membre') return
     const next = availableTags.filter(t => t !== tag)
-    setAvailableTags(next)
+    setConfirmDeleteTag(null)
     await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
   }
+
 
   function toggleTag(tag) {
     setForm(f => ({
@@ -370,75 +389,45 @@ export default function Membres({ user, userData }) {
                 </div>
               )}
 
-              <div>
-                <label className="form-label">Tags</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+              <div style={{ borderTop: `1px solid ${C.bord}`, marginTop: 4, paddingTop: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Tags</span>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTagSettings(true)}
+                      style={{ padding: 5, borderRadius: 8, border: 'none', background: C.surf2, color: C.t3, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    >
+                      <Settings size={13} />
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {availableTags.map(tag => {
                     const selected = form.tags.includes(tag)
                     return (
-                      <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                        <button
-                          type="button"
-                          onClick={() => toggleTag(tag)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: isAdmin ? '999px 0 0 999px' : 999,
-                            border: `1.5px solid ${selected ? '#6366f1' : C.bord}`,
-                            borderRight: isAdmin ? 'none' : undefined,
-                            background: selected ? 'rgba(99,102,241,0.12)' : C.surf2,
-                            color: selected ? '#6366f1' : C.t2,
-                            fontSize: 'var(--font-xs)',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          {tag}
-                        </button>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => removeAvailableTag(tag)}
-                            style={{
-                              width: 26, height: 32,
-                              borderRadius: '0 999px 999px 0',
-                              border: `1.5px solid ${selected ? '#6366f1' : C.bord}`,
-                              borderLeft: 'none',
-                              background: selected ? 'rgba(99,102,241,0.12)' : C.surf2,
-                              color: selected ? '#6366f1' : C.t3,
-                              cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              padding: 0,
-                            }}
-                          >
-                            <X size={10} />
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 999,
+                          border: `1.5px solid ${selected ? tagStyle(tag).color : C.bord}`,
+                          background: selected ? tagStyle(tag).bg : C.surf2,
+                          color: selected ? tagStyle(tag).color : C.t2,
+                          fontSize: 'var(--font-xs)',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {tag}
+                      </button>
                     )
                   })}
                 </div>
-                {isAdmin && (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="text"
-                      value={newTagInput}
-                      onChange={e => setNewTagInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
-                      placeholder="Nouveau tag..."
-                      className="form-input"
-                      style={{ flex: 1 }}
-                    />
-                    <button
-                      type="button"
-                      onClick={addNewTag}
-                      disabled={!newTagInput.trim()}
-                      style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', opacity: newTagInput.trim() ? 1 : 0.5 }}
-                    >
-                      + Ajouter
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
@@ -447,6 +436,76 @@ export default function Membres({ user, userData }) {
                 {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tag settings modal */}
+      {showTagSettings && (
+        <div className="modal-overlay" onClick={() => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
+            <h3 className="dialog-title" style={{ marginBottom: '1rem' }}>Paramètres des tags</h3>
+
+            {confirmDeleteTag ? (
+              <div style={{ marginBottom: '1rem', padding: '12px 14px', borderRadius: 12, background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
+                <div style={{ fontSize: 'var(--font-sm)', color: C.t1, fontWeight: 600, marginBottom: 8 }}>
+                  Supprimer le tag «&nbsp;{confirmDeleteTag}&nbsp;» ?
+                </div>
+                <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 12 }}>
+                  Ce tag sera retiré de la liste. Les membres qui l'ont conserveront leur donnée existante.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Annuler</button>
+                  <button onClick={() => removeAvailableTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Supprimer</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: '1rem' }}>
+                {availableTags.map(tag => (
+                  <div key={tag} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, background: C.surf2, border: `1px solid ${C.bord}` }}>
+                    <span style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: tagStyle(tag).color }}>{tag}</span>
+                    {tag !== 'Membre' ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteTag(tag)}
+                        style={{ padding: 5, borderRadius: 7, border: 'none', background: 'transparent', color: C.coral, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>protégé</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: '1rem' }}>
+              <input
+                type="text"
+                value={newTagInput}
+                onChange={e => setNewTagInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
+                placeholder="Nouveau tag..."
+                className="form-input"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={addNewTag}
+                disabled={!newTagInput.trim() || availableTags.includes(newTagInput.trim())}
+                style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', opacity: (newTagInput.trim() && !availableTags.includes(newTagInput.trim())) ? 1 : 0.5 }}
+              >
+                + Ajouter
+              </button>
+            </div>
+
+            <button
+              onClick={() => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') }}
+              style={{ width: '100%', padding: '12px', borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

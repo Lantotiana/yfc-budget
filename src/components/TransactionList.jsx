@@ -37,7 +37,7 @@ function fuzzyMatch(text, query) {
 
 export default function TransactionList({
   transactions, months, filterMonth, filterType,
-  onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true
+  onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true, onShared
 }) {
   const { C } = useTheme()
   const [selected, setSelected] = useState(null)
@@ -298,12 +298,17 @@ export default function TransactionList({
 
     const text = lines.join('\n')
 
-    if (navigator.share) {
-      await navigator.share({ text })
-    } else {
-      await navigator.clipboard.writeText(text)
-      setShareFeedback('Copié !')
-      setTimeout(() => setShareFeedback(''), 2500)
+    try {
+      if (navigator.share) {
+        await navigator.share({ text })
+      } else {
+        await navigator.clipboard.writeText(text)
+        setShareFeedback('Copié !')
+        setTimeout(() => setShareFeedback(''), 2500)
+      }
+      onShared?.({ totalEntrees, totalDepenses, solde, filterMonth })
+    } catch (err) {
+      if (err?.name !== 'AbortError') console.error('Share error:', err)
     }
   }
 

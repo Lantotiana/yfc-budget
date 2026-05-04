@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Trash2 } from 'lucide-react'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
-import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 import { sameEmail } from '../utils/access'
-import { ADMIN_EMAIL } from '../constants'
+import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
@@ -32,6 +32,11 @@ export default function Parametres({ user, userData, setUserData }) {
   const [savingPwd, setSavingPwd] = useState(false)
   const [showOld, setShowOld] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
+  const [newTagInput, setNewTagInput] = useState('')
+  const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
+
+  const isAdmin = user?.email === ADMIN_EMAIL
 
   function flash(text, ok = true) {
     setMsg({ text, ok })
@@ -49,6 +54,29 @@ export default function Parametres({ user, userData, setUserData }) {
     })
     return () => unsub()
   }, [user?.email])
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'appSettings', 'membreTags'), snap => {
+      const raw = snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : []
+      setAvailableTags(['Membre', ...raw.filter(t => t !== 'Membre')])
+    })
+    return () => unsub()
+  }, [])
+
+  async function addNewTag() {
+    const tag = newTagInput.trim()
+    if (!tag || availableTags.includes(tag)) return
+    const next = ['Membre', ...availableTags.filter(t => t !== 'Membre'), tag]
+    setNewTagInput('')
+    await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+  }
+
+  async function removeTag(tag) {
+    if (tag === 'Membre') return
+    const next = availableTags.filter(t => t !== tag)
+    setConfirmDeleteTag(null)
+    await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+  }
 
   async function saveProfile() {
     if (!nom.trim()) return
@@ -233,6 +261,66 @@ export default function Parametres({ user, userData, setUserData }) {
             >
               Ouvrir la page admin
             </button>
+          </div>
+        )}
+
+        {/* Tags des membres */}
+        {isAdmin && (
+          <div style={section}>
+            <div style={sectionLabel}>Tags des membres</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+              {availableTags.map(tag => (
+                <div key={tag} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, background: C.surf2, border: `1px solid ${C.bord}` }}>
+                  <span style={{ fontSize: 'var(--font-sm)', color: C.t1 }}>{tag}</span>
+                  {tag !== 'Membre' ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteTag(confirmDeleteTag === tag ? null : tag)}
+                      style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: C.coral, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>protégé</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {confirmDeleteTag && (
+              <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'rgba(244,63,94,0.07)', border: '1px solid rgba(244,63,94,0.2)' }}>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 4 }}>
+                  Supprimer «&nbsp;{confirmDeleteTag}&nbsp;» ?
+                </div>
+                <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 12 }}>
+                  Les membres qui ont ce tag conserveront leur donnée existante.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Annuler</button>
+                  <button onClick={() => removeTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Supprimer</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={newTagInput}
+                onChange={e => setNewTagInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
+                placeholder="Nouveau tag..."
+                style={{ ...inp, flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={addNewTag}
+                disabled={!newTagInput.trim() || availableTags.includes(newTagInput.trim())}
+                style={{ padding: '10px 16px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-sm)', opacity: (newTagInput.trim() && !availableTags.includes(newTagInput.trim())) ? 1 : 0.5, whiteSpace: 'nowrap' }}
+              >
+                + Ajouter
+              </button>
+            </div>
           </div>
         )}
 
