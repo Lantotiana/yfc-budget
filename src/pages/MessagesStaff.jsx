@@ -108,6 +108,7 @@ export default function MessagesStaff({ user, userData }) {
   const longPressRect = useRef(null)
   const longPressStartPos = useRef(null)
   const initialScrollDone = useRef(false)
+  const scrollAnchor = useRef(null)
   const [users, setUsers] = useState([])
   const [membres, setMembres] = useState([])
   const [messages, setMessages] = useState([])
@@ -266,7 +267,10 @@ export default function MessagesStaff({ user, userData }) {
     const el = listRef.current
     if (!el) return
     requestAnimationFrame(() => {
-      if (!initialScrollDone.current) {
+      if (scrollAnchor.current !== null) {
+        el.scrollTop = el.scrollHeight - scrollAnchor.current
+        scrollAnchor.current = null
+      } else if (!initialScrollDone.current) {
         el.scrollTop = el.scrollHeight
         initialScrollDone.current = true
       } else {
@@ -1187,7 +1191,11 @@ export default function MessagesStaff({ user, userData }) {
         }
       }}>
         {messages.length >= messageLimit && (
-          <button type="button" className="staff-load-more" onClick={() => setMessageLimit(v => v + PAGE_SIZE)}>
+          <button type="button" className="staff-load-more" onClick={() => {
+            const el = listRef.current
+            if (el) scrollAnchor.current = el.scrollHeight - el.scrollTop
+            setMessageLimit(v => v + PAGE_SIZE)
+          }}>
             Voir plus
           </button>
         )}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, Headphones, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
@@ -244,7 +244,7 @@ export default function Home({ user, userData }) {
               style={{ width: 40, height: 40, borderRadius: 14, border: `1px solid ${C.bord}`, background: C.surf, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}
               aria-label="Assistant virtuel"
             >
-              <Headphones size={17} />
+              <Headset size={17} />
             </button>
 
             {/* Notifications */}
@@ -361,8 +361,9 @@ export default function Home({ user, userData }) {
               position: 'absolute', top: -4, right: -4,
               minWidth: 18, height: 18, padding: '0 4px',
               borderRadius: 999, background: '#f43f5e', color: '#fff',
-              fontSize: 11, fontWeight: 800, lineHeight: '18px',
-              textAlign: 'center', pointerEvents: 'none',
+              fontSize: 11, fontWeight: 800,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
               border: '2px solid var(--bg, #fff)',
             }}>
               {unreadMsgCount > 99 ? '99+' : unreadMsgCount}

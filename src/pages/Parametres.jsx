@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Trash2, Share2, Copy, Check } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
@@ -35,6 +36,8 @@ export default function Parametres({ user, userData, setUserData }) {
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [newTagInput, setNewTagInput] = useState('')
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const appUrl = 'https://yfc-budget.vercel.app/'
 
   const isAdmin = user?.email === ADMIN_EMAIL
 
@@ -69,6 +72,16 @@ export default function Parametres({ user, userData, setUserData }) {
     const next = ['Membre', ...availableTags.filter(t => t !== 'Membre'), tag]
     setNewTagInput('')
     await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+  }
+
+  async function shareAppLink() {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'YFC Budget', url: appUrl }) } catch {}
+    } else {
+      await navigator.clipboard.writeText(appUrl)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    }
   }
 
   async function removeTag(tag) {
@@ -183,6 +196,29 @@ export default function Parametres({ user, userData, setUserData }) {
             {msg.text}
           </div>
         )}
+
+        {/* Application */}
+        <div style={section}>
+          <div style={sectionLabel}>Application</div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}`, marginBottom: 14 }}>
+            <span style={{ flex: 1, fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appUrl}</span>
+            <button
+              onClick={shareAppLink}
+              style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-xs)', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              {linkCopied ? <Check size={13} /> : <Share2 size={13} />}
+              {linkCopied ? 'Copié !' : 'Partager'}
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '16px', borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, fontWeight: 600 }}>Scanner pour accéder à l'app</div>
+            <div style={{ padding: 10, borderRadius: 12, background: '#fff' }}>
+              <QRCodeSVG value={appUrl} size={160} fgColor="#0f172a" bgColor="#ffffff" />
+            </div>
+          </div>
+        </div>
 
         {/* Apparence */}
         <div style={section}>

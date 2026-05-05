@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -419,7 +420,7 @@ export default function TransactionList({
         )}
       </div>
 
-      {selected && (
+      {selected && createPortal(
         <div className="modal-overlay">
           <div className="modal">
 
@@ -517,7 +518,7 @@ export default function TransactionList({
             </button>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   )
 }

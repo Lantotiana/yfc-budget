@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc, writeBatch, arrayUnion } from 'firebase/firestore'
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
 import { Plus, Search, Trash2, Download, Settings } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
@@ -51,7 +51,6 @@ export default function Membres({ user, userData }) {
   const [newTagInput, setNewTagInput] = useState('')
   const [showTagSettings, setShowTagSettings] = useState(false)
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
-  const migrationDone = useRef(false)
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
@@ -86,16 +85,6 @@ export default function Membres({ user, userData }) {
     return () => unsub()
   }, [])
 
-  // One-time migration: add 'Membre' tag to all existing members that don't have it
-  useEffect(() => {
-    if (migrationDone.current || membres.length === 0) return
-    const needsTag = membres.filter(m => !Array.isArray(m.tags) || !m.tags.includes('Membre'))
-    migrationDone.current = true
-    if (needsTag.length === 0) return
-    const batch = writeBatch(db)
-    needsTag.forEach(m => batch.update(doc(db, 'membres', m.id), { tags: arrayUnion('Membre') }))
-    batch.commit().catch(console.error)
-  }, [membres])
 
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(m) {
