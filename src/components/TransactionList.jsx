@@ -271,11 +271,29 @@ export default function TransactionList({
     const totalDepenses = depenses.reduce((s, t) => s + Number(t.montant || 0), 0)
     const solde = totalEntrees - totalDepenses
 
+    let soldePrecedent = null
+    if (filterMonth) {
+      const prev = allTransactions.filter(t => t.date && t.date.slice(0, 7) < filterMonth)
+      const prevE = prev.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+      const prevD = prev.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
+      soldePrecedent = prevE - prevD
+    }
+
     const periodLabel = filterMonth
       ? `${MONTHS[parseInt(filterMonth.split('-')[1]) - 1]} ${filterMonth.split('-')[0]}`
       : 'toutes périodes'
 
     const fmtAr = n => Number(n).toLocaleString('fr-FR') + ' Ar'
+
+    let prevMonthLabel = null
+    if (filterMonth) {
+      const [y, mo] = filterMonth.split('-').map(Number)
+      prevMonthLabel = new Date(y, mo - 2).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    }
+
+    const allE = allTransactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const allD = allTransactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const soldeActuel = allE - allD
 
     const lines = [
       `📊 *Rapport Budget YFC*`,
@@ -294,7 +312,9 @@ export default function TransactionList({
       `📤 *Total dépenses : ${fmtAr(totalDepenses)}*`,
       ``,
       `━━━━━━━━━━━━━━━━━━━━`,
-      `${solde >= 0 ? '✅' : '⚠️'} *Solde actuel : ${solde < 0 ? '−' : ''}${fmtAr(Math.abs(solde))}*`,
+      ...(soldePrecedent !== null ? [`🏦 *Solde fin ${prevMonthLabel} : ${soldePrecedent < 0 ? '−' : ''}${fmtAr(Math.abs(soldePrecedent))}*`] : []),
+      `📊 *Solde ${periodLabel} : ${solde >= 0 ? '+' : '−'}${fmtAr(Math.abs(solde))}*`,
+      `${soldeActuel >= 0 ? '✅' : '⚠️'} *Solde actuel : ${soldeActuel < 0 ? '−' : ''}${fmtAr(Math.abs(soldeActuel))}*`,
     ].filter(l => l !== undefined)
 
     const text = lines.join('\n')
@@ -308,7 +328,7 @@ export default function TransactionList({
         setTimeout(() => setShareFeedback(''), 2500)
       }
       onShared?.({
-        totalEntrees, totalDepenses, solde, filterMonth,
+        totalEntrees, totalDepenses, solde, filterMonth, soldePrecedent, soldeActuel,
         entrees: entrees.map(t => ({ motif: t.motif, montant: Number(t.montant || 0), date: t.date })),
         depenses: depenses.map(t => ({ motif: t.motif, montant: Number(t.montant || 0), date: t.date })),
       })

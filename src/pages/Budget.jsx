@@ -54,7 +54,7 @@ export default function Budget({ user, userData }) {
   const currentMember = membres.find(m => sameEmail(m.email, user?.email))
   const canManageBudget = canManageBudgetRole(currentMember?.staffRole)
 
-  async function publishBudgetToMessages({ totalEntrees, totalDepenses, solde: soldeFiltré, filterMonth: mois, entrees = [], depenses = [] } = {}) {
+  async function publishBudgetToMessages({ totalEntrees, totalDepenses, solde: soldeFiltré, filterMonth: mois, entrees = [], depenses = [], soldePrecedent = null, soldeActuel = null } = {}) {
     const senderName = userData?.nom || user?.displayName || user?.email || 'Staff'
     const senderPhoto = userData?.photoURL || user?.photoURL || null
     const payload = {
@@ -62,6 +62,8 @@ export default function Budget({ user, userData }) {
       totalEntrees,
       totalDepenses,
       solde: soldeFiltré,
+      soldePrecedent,
+      soldeActuel,
       filterMonth: mois || null,
       entrees,
       depenses,

@@ -923,6 +923,17 @@ export default function MessagesStaff({ user, userData }) {
   function renderBudgetReport(message, compact = false) {
     const fmtAr = n => Number(n || 0).toLocaleString('fr-FR') + ' Ar'
     const s = message.solde ?? 0
+    const hasSoldePrecedent = message.soldePrecedent !== null && message.soldePrecedent !== undefined && message.filterMonth
+    const soldeFin = hasSoldePrecedent ? message.soldePrecedent + s : s
+
+    let prevMonthLabel = null
+    let currentMonthLabel = null
+    if (message.filterMonth) {
+      const [y, mo] = message.filterMonth.split('-').map(Number)
+      prevMonthLabel = new Date(y, mo - 2).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+      currentMonthLabel = new Date(message.filterMonth + '-01T00:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+    }
+
     const readAvatars = !message.deleted && !compact
       ? (message.readBy || [])
           .filter(id => id !== message.senderId)
@@ -959,7 +970,7 @@ export default function MessagesStaff({ user, userData }) {
             <div className="staff-announcement-label" style={{ color: '#10b981' }}>
               <TrendingUp size={15} /> Rapport de budget
             </div>
-            <h2>Budget YFC{message.filterMonth ? ` — ${new Date(message.filterMonth + '-01T00:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}` : ''}</h2>
+            <h2>Budget YFC{currentMonthLabel ? ` — ${currentMonthLabel}` : ''}</h2>
 
             <div className="staff-presence-report-box presents">
               <div className="staff-presence-report-box-header">💰 Entrées — {fmtAr(message.totalEntrees)}</div>
@@ -993,9 +1004,19 @@ export default function MessagesStaff({ user, userData }) {
               )}
             </div>
 
-            <div className="staff-presence-report-rate">
-              Solde : <strong style={{ color: s >= 0 ? '#059669' : '#f43f5e' }}>{s < 0 ? '−' : '+'}{fmtAr(Math.abs(s))}</strong>
+            {hasSoldePrecedent && (
+              <div className="staff-presence-report-rate">
+                Solde fin {prevMonthLabel} : <strong style={{ color: message.soldePrecedent >= 0 ? '#059669' : '#f43f5e' }}>{message.soldePrecedent < 0 ? '−' : ''}{fmtAr(Math.abs(message.soldePrecedent))}</strong>
+              </div>
+            )}
+            <div className="staff-presence-report-rate" style={{ marginTop: hasSoldePrecedent ? 4 : 0 }}>
+              Solde {currentMonthLabel || 'mensuel'} : <strong style={{ color: s >= 0 ? '#059669' : '#f43f5e' }}>{s >= 0 ? '+' : '−'}{fmtAr(Math.abs(s))}</strong>
             </div>
+            {message.soldeActuel !== null && message.soldeActuel !== undefined && (
+              <div className="staff-presence-report-rate" style={{ marginTop: 4 }}>
+                Solde actuel : <strong style={{ color: message.soldeActuel >= 0 ? '#059669' : '#f43f5e' }}>{message.soldeActuel < 0 ? '−' : ''}{fmtAr(Math.abs(message.soldeActuel))}</strong>
+              </div>
+            )}
           </div>
           {renderReactionSummary(message)}
         </div>
