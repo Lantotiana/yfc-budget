@@ -227,7 +227,7 @@ export default function Home({ user, userData }) {
 
           {/* Greeting */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 2 }}>Bonjour</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 2 }}>{new Date().getHours() >= 18 || new Date().getHours() < 5 ? 'Bonsoir' : 'Bonjour'}</div>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, lineHeight: 1.1, letterSpacing: '-.4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {prenom}
             </div>

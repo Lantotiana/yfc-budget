@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Trash2, Share2, Copy, Check } from 'lucide-react'
+import { Eye, EyeOff, Trash2, Share2, Check, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { auth } from '../auth'
 import { db } from '../firebase'
@@ -37,6 +37,7 @@ export default function Parametres({ user, userData, setUserData }) {
   const [newTagInput, setNewTagInput] = useState('')
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
   const appUrl = 'https://yfc-budget.vercel.app/'
 
   const isAdmin = user?.email === ADMIN_EMAIL
@@ -201,8 +202,14 @@ export default function Parametres({ user, userData, setUserData }) {
         <div style={section}>
           <div style={sectionLabel}>Application</div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}`, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}` }}>
             <span style={{ flex: 1, fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appUrl}</span>
+            <button
+              onClick={() => setShowQR(true)}
+              style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.bord2}`, background: C.surf, color: C.t2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <QrCode size={15} />
+            </button>
             <button
               onClick={shareAppLink}
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-xs)', cursor: 'pointer', fontFamily: 'inherit' }}
@@ -212,12 +219,56 @@ export default function Parametres({ user, userData, setUserData }) {
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '16px', borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, fontWeight: 600 }}>Scanner pour accéder à l'app</div>
-            <div style={{ padding: 10, borderRadius: 12, background: '#fff' }}>
-              <QRCodeSVG value={appUrl} size={160} fgColor="#0f172a" bgColor="#ffffff" />
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 8 }}>
+            {[
+              {
+                label: 'YouTube',
+                url: 'https://www.youtube.com/@YFCTanora_hoani_KristyJMItaosy',
+                icon: (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
+                    <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>
+                  </svg>
+                ),
+              },
+              {
+                label: 'Facebook',
+                url: 'https://www.facebook.com/groups/1877840085786311',
+                icon: (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                  </svg>
+                ),
+              },
+            ].map(({ label, url, icon }) => (
+              <a
+                key={label}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, color: C.t3, textDecoration: 'none', fontSize: 'var(--font-sm)' }}
+              >
+                <span style={{ flexShrink: 0, color: C.t3 }}>{icon}</span>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.4 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+              </a>
+            ))}
           </div>
+
+          {showQR && (
+            <div className="modal-overlay" onClick={() => setShowQR(false)}>
+              <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 280, textAlign: 'center' }}>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, marginBottom: 16 }}>Scanner pour accéder à l'app</div>
+                <div style={{ display: 'inline-block', padding: 12, borderRadius: 16, background: '#fff' }}>
+                  <QRCodeSVG value={appUrl} size={180} fgColor="#0f172a" bgColor="#ffffff" />
+                </div>
+                <div style={{ marginTop: 12, fontSize: 'var(--font-xs)', color: C.t3 }}>{appUrl}</div>
+                <button onClick={() => setShowQR(false)} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Fermer</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Apparence */}

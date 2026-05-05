@@ -13,25 +13,46 @@ const EMAILJS_PUBLIC_KEY = 'DBkP2rCi6WMgXW9kq'
 const APP_URL = 'https://yfc-budget.vercel.app'
 
 
-function Avatar({ u, size = 38 }) {
+function isOnline(u) {
+  if (!u.lastSeen?.toDate) return false
+  return Date.now() - u.lastSeen.toDate().getTime() < 5 * 60 * 1000
+}
+
+function Avatar({ u, size = 38, online = false }) {
+  const dot = online ? (
+    <span style={{
+      position: 'absolute', bottom: 1, right: 1,
+      width: size * 0.28, height: size * 0.28,
+      borderRadius: '50%', background: '#10b981',
+      border: '2px solid var(--bg, #fff)',
+      flexShrink: 0,
+    }} />
+  ) : null
+
   if (u.photoURL) {
     return (
-      <img
-        src={u.photoURL}
-        alt=""
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-      />
+      <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+        <img
+          src={u.photoURL}
+          alt=""
+          style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }}
+        />
+        {dot}
+      </span>
     )
   }
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: 'rgba(16,185,129,0.14)', color: '#10b981',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontWeight: 700, fontSize: size * 0.38,
-    }}>
-      {(u.nom || u.email || '?')[0].toUpperCase()}
-    </div>
+    <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      <span style={{
+        width: size, height: size, borderRadius: '50%',
+        background: 'rgba(16,185,129,0.14)', color: '#10b981',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontWeight: 700, fontSize: size * 0.38,
+      }}>
+        {(u.nom || u.email || '?')[0].toUpperCase()}
+      </span>
+      {dot}
+    </span>
   )
 }
 
@@ -261,7 +282,7 @@ export default function Admin({ user }) {
               onClick={() => setSelectedUser(u)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 12, marginBottom: 8, background: C.surf2, border: `1px solid ${C.bord}`, cursor: 'pointer', textAlign: 'left' }}
             >
-              <Avatar u={u} size={40} />
+              <Avatar u={u} size={40} online={isOnline(u)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{u.nom || 'Sans nom'}</div>
                 <div style={{ fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</div>

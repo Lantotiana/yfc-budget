@@ -5,7 +5,7 @@ import { CalendarCheck, CalendarDays, Home as HomeIcon, LayoutDashboard, Users, 
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import Login from './components/Login'
 import Home from './pages/Home'
 import Budget from './pages/Budget'
@@ -232,6 +232,14 @@ export default function App() {
     })
     return () => unsub()
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    const write = () => updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(() => {})
+    write()
+    const id = setInterval(write, 60_000)
+    return () => clearInterval(id)
+  }, [user])
 
   if (authLoading) return (
     <div className="app-loader-screen" aria-label="Chargement">
