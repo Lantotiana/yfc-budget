@@ -1012,6 +1012,11 @@ export default function MessagesStaff({ user, userData }) {
             <div className="staff-presence-report-rate" style={{ marginTop: hasSoldePrecedent ? 4 : 0 }}>
               Solde {currentMonthLabel || 'mensuel'} : <strong style={{ color: s >= 0 ? '#059669' : '#f43f5e' }}>{s >= 0 ? '+' : '−'}{fmtAr(Math.abs(s))}</strong>
             </div>
+            {hasSoldePrecedent && (
+              <div className="staff-presence-report-rate" style={{ marginTop: 4 }}>
+                Solde fin {currentMonthLabel} : <strong style={{ color: soldeFin >= 0 ? '#059669' : '#f43f5e' }}>{soldeFin < 0 ? '−' : ''}{fmtAr(Math.abs(soldeFin))}</strong>
+              </div>
+            )}
             {message.soldeActuel !== null && message.soldeActuel !== undefined && (
               <div className="staff-presence-report-rate" style={{ marginTop: 4 }}>
                 Solde actuel : <strong style={{ color: message.soldeActuel >= 0 ? '#059669' : '#f43f5e' }}>{message.soldeActuel < 0 ? '−' : ''}{fmtAr(Math.abs(message.soldeActuel))}</strong>

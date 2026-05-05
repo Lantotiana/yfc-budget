@@ -312,8 +312,13 @@ export default function TransactionList({
       `📤 *Total dépenses : ${fmtAr(totalDepenses)}*`,
       ``,
       `━━━━━━━━━━━━━━━━━━━━`,
-      ...(soldePrecedent !== null ? [`🏦 *Solde fin ${prevMonthLabel} : ${soldePrecedent < 0 ? '−' : ''}${fmtAr(Math.abs(soldePrecedent))}*`] : []),
-      `📊 *Solde ${periodLabel} : ${solde >= 0 ? '+' : '−'}${fmtAr(Math.abs(solde))}*`,
+      ...(soldePrecedent !== null ? [
+        `🏦 Solde fin ${prevMonthLabel} : ${soldePrecedent < 0 ? '−' : ''}${fmtAr(Math.abs(soldePrecedent))}`,
+        `📊 Solde ${periodLabel} : ${solde >= 0 ? '+' : '−'}${fmtAr(Math.abs(solde))}`,
+        `🏦 *Solde fin ${periodLabel} : ${(soldePrecedent + solde) < 0 ? '−' : ''}${fmtAr(Math.abs(soldePrecedent + solde))}*`,
+      ] : [
+        `📊 Solde ${periodLabel} : ${solde >= 0 ? '+' : '−'}${fmtAr(Math.abs(solde))}`,
+      ]),
       `${soldeActuel >= 0 ? '✅' : '⚠️'} *Solde actuel : ${soldeActuel < 0 ? '−' : ''}${fmtAr(Math.abs(soldeActuel))}*`,
     ].filter(l => l !== undefined)
 
