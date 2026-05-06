@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom'
 import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { Search, X, Download, Share2 } from 'lucide-react'
+import { Search, X, Download, Share2, FileText } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
+import ReceiptModal from './ReceiptModal'
 
 const DEFAULT_MOTIFS = {
   entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
@@ -38,10 +39,12 @@ function fuzzyMatch(text, query) {
 
 export default function TransactionList({
   transactions, months, filterMonth, filterType,
-  onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true, onShared
+  onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true, onShared,
+  user, userData, currentMember
 }) {
   const { C } = useTheme()
   const [selected, setSelected] = useState(null)
+  const [receiptTx, setReceiptTx] = useState(null)
   const [editType, setEditType] = useState('entree')
   const [editDate, setEditDate] = useState('')
   const [editMontant, setEditMontant] = useState('')
@@ -417,6 +420,15 @@ export default function TransactionList({
             <div className={`tx-amount ${tx.type}`}>
               {tx.type === 'depense' ? '−' : '+'}{fmt(tx.montant)}
             </div>
+            {tx.type === 'entree' && (
+              <button
+                className="tx-receipt-btn"
+                title="Reçu de don"
+                onClick={e => { e.stopPropagation(); setReceiptTx(tx) }}
+              >
+                <FileText size={13} />
+              </button>
+            )}
           </div>
         ))}
 
@@ -444,6 +456,16 @@ export default function TransactionList({
           </div>
         )}
       </div>
+
+      {receiptTx && (
+        <ReceiptModal
+          tx={receiptTx}
+          onClose={() => setReceiptTx(null)}
+          user={user}
+          userData={userData}
+          currentMember={currentMember}
+        />
+      )}
 
       {selected && createPortal(
         <div className="modal-overlay">

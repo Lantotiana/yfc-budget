@@ -185,6 +185,9 @@ export default function Budget({ user, userData }) {
           onEditDone={() => setEditTx(null)}
           canManageBudget={canManageBudget}
           onShared={publishBudgetToMessages}
+          user={user}
+          userData={userData}
+          currentMember={currentMember}
         />
       </div>
     </div>
