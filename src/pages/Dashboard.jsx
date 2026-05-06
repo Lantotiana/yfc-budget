@@ -56,10 +56,10 @@ function MiniIllustration({ color, type }) {
   )
 }
 
-function StatCard({ label, value, col, colD, Icon, type }) {
+function StatCard({ label, value, col, colD, Icon, type, onClick }) {
   const { C } = useTheme()
   return (
-    <div style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px 14px 12px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, overflow: 'hidden' }}>
+    <button onClick={onClick} className="border-none text-left cursor-pointer" style={{ flex: 1, minWidth: 0, borderRadius: 18, padding: '16px 14px 12px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, overflow: 'hidden', fontFamily: 'inherit' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
         <div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 4 }}>{label}</div>
@@ -70,7 +70,7 @@ function StatCard({ label, value, col, colD, Icon, type }) {
         </div>
       </div>
       <MiniIllustration color={col} type={type} />
-    </div>
+    </button>
   )
 }
 
@@ -105,7 +105,7 @@ export default function Dashboard() {
   const totalEntrees = transactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
   const totalDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
   const solde = totalEntrees - totalDepenses
-  const recentTransactions = transactions.slice(0, 5)
+  const recentTransactions = transactions.slice(0, 10)
 
   const { upcomingCount, finishedCount } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -117,7 +117,7 @@ export default function Dashboard() {
   }, [evenements])
 
   return (
-    <div className="sin" style={{ minHeight: '100vh', background: C.bg, padding: '0 0 calc(86px + env(safe-area-inset-bottom))' }}>
+    <div className="sin" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: C.bg }}>
       {/* Hero solde */}
       <div className="f1 textured-page-header" style={{
         '--header-color': '#2563eb',
@@ -125,6 +125,7 @@ export default function Dashboard() {
         paddingTop: 'max(28px, env(safe-area-inset-top))',
         textAlign: 'center',
         borderBottom: `1px solid ${C.bord}`,
+        flexShrink: 0,
       }}>
         <div style={{ fontSize: 'var(--font-xs)', color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
         <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-1.4px', lineHeight: 1 }}>
@@ -133,15 +134,15 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '12px 20px 0', gap: 12 }}>
         {/* Entrées / Dépenses */}
-        <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <StatCard label="Entrées"  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income" />
-          <StatCard label="Dépenses" value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" />
+        <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
+          <StatCard label="Entrées"  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income"  onClick={() => navigate('/budget')} />
+          <StatCard label="Dépenses" value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" onClick={() => navigate('/budget')} />
         </div>
 
         {/* Membres / Événements */}
-        <div className="f3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="f3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
           <button onClick={() => navigate('/membres')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
             <div style={{ width: 30, height: 30, borderRadius: 10, background: C.violetD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
               <Users size={14} color={C.violet} />
@@ -161,42 +162,44 @@ export default function Dashboard() {
         </div>
 
         {/* Transactions récentes */}
-        <div className="f4">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div className="f4" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexShrink: 0 }}>
             <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
             <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 'var(--font-xs)', color: C.amber, fontWeight: 500 }}>
               Voir tout
             </button>
           </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Chargement...</div>
-          ) : recentTransactions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Aucune transaction</div>
-          ) : (
-            recentTransactions.map(tx => {
-              const isEntree = tx.type === 'entree'
-              return (
-                <button
-                  key={tx.id}
-                  onClick={() => navigate('/budget')}
-                  className="border-none text-left cursor-pointer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, marginBottom: 8, width: '100%' }}
-                >
-                  <div style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0, background: isEntree ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {isEntree ? <ArrowDownLeft size={16} color={C.teal} /> : <ArrowUpRight size={16} color={C.coral} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
-                    <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
-                  </div>
-                  <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
-                    {isEntree ? '+' : '-'}{fmt(tx.montant)}
-                  </div>
-                </button>
-              )
-            })
-          )}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Chargement...</div>
+            ) : recentTransactions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Aucune transaction</div>
+            ) : (
+              recentTransactions.map(tx => {
+                const isEntree = tx.type === 'entree'
+                return (
+                  <button
+                    key={tx.id}
+                    onClick={() => navigate('/budget')}
+                    className="border-none text-left cursor-pointer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, marginBottom: 8, width: '100%' }}
+                  >
+                    <div style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0, background: isEntree ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {isEntree ? <ArrowDownLeft size={16} color={C.teal} /> : <ArrowUpRight size={16} color={C.coral} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
+                      <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
+                    </div>
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
+                      {isEntree ? '+' : '-'}{fmt(tx.montant)}
+                    </div>
+                  </button>
+                )
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
