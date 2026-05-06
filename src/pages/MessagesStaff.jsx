@@ -14,7 +14,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore'
-import { Calendar, CalendarCheck, Check, Clock, Copy, Edit3, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, TrendingUp, Users, X } from 'lucide-react'
+import { Calendar, CalendarCheck, Check, Clock, Copy, Edit3, ExternalLink, MapPin, Megaphone, MessageCircle, MoreHorizontal, Pin, Search, Send, Trash2, TrendingUp, Users, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
@@ -87,6 +87,12 @@ function renderLinkedText(text) {
       </a>
     )
   })
+}
+
+function extractFirstUrl(text) {
+  const match = String(text || '').match(/(https?:\/\/[^\s]+|www\.[^\s]+)/i)
+  if (!match) return null
+  return match[0].startsWith('www.') ? `https://${match[0]}` : match[0]
 }
 
 function formatAnnouncementDate(value) {
@@ -800,6 +806,23 @@ export default function MessagesStaff({ user, userData }) {
                     {message.location && <span><MapPin size={14} /> {message.location}</span>}
                   </div>
                 )}
+
+                {(() => {
+                  const url = extractFirstUrl(message.title) || extractFirstUrl(message.details) || extractFirstUrl(message.location)
+                  if (!url) return null
+                  return (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="staff-announcement-link-btn"
+                      onPointerDown={e => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <ExternalLink size={14} /> Ouvrir le lien
+                    </a>
+                  )
+                })()}
               </>
             )}
           </div>

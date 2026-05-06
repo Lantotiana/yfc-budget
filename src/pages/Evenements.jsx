@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
+import { Pin, Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
@@ -125,17 +125,25 @@ export default function Evenements() {
     setConfirmDel(null)
   }
 
+  async function togglePin(e) {
+    await updateDoc(doc(db, 'evenements_agenda', e.id), { pinned: !e.pinned })
+  }
+
+  const pinned = []
   const upcoming = []
   const past = []
   evenements.forEach(e => {
     const endDate   = parseDate(e.dateFin || e.dateDebut, e.heureFin, true)
     const startDate = parseDate(e.dateDebut, e.heureDebut)
-    if (endDate && endDate > now) upcoming.push({ ...e, _start: startDate, _end: endDate })
-    else past.push({ ...e, _start: startDate, _end: endDate })
+    const item = { ...e, _start: startDate, _end: endDate }
+    if (e.pinned) pinned.push(item)
+    else if (endDate && endDate > now) upcoming.push(item)
+    else past.push(item)
   })
+  pinned.sort((a, b) => a._start - b._start)
   upcoming.sort((a, b) => a._start - b._start)
   past.sort((a, b) => b._end - a._end)
-  const sorted = [...upcoming, ...past]
+  const sorted = [...pinned, ...upcoming, ...past]
 
   const isEditing = sheet && sheet !== 'add'
 
@@ -177,6 +185,9 @@ export default function Evenements() {
                       ? <div style={{ padding: '3px 9px', borderRadius: 20, background: C.surf3, fontSize: 'var(--font-xs)', fontWeight: 500, color: C.t3 }}>Terminé</div>
                       : countdown && <div style={{ padding: '3px 9px', borderRadius: 20, background: C.tealD, border: `1px solid ${C.teal}50`, fontSize: 'var(--font-xs)', fontWeight: 600, color: C.teal, whiteSpace: 'nowrap' }}>{countdown}</div>
                     }
+                    <button onClick={ev => { ev.stopPropagation(); togglePin(e) }} style={{ width: 28, height: 28, borderRadius: 9, border: `1px solid ${e.pinned ? C.teal + '80' : C.bord}`, background: e.pinned ? C.tealD : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Pin size={13} color={e.pinned ? C.teal : C.t3} fill={e.pinned ? C.teal : 'none'} />
+                    </button>
                     <button onClick={ev => { ev.stopPropagation(); setConfirmDel(e) }} style={{ width: 28, height: 28, borderRadius: 9, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Trash2 size={13} color={C.coral} />
                     </button>
