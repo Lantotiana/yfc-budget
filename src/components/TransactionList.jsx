@@ -420,7 +420,7 @@ export default function TransactionList({
             <div className={`tx-amount ${tx.type}`}>
               {tx.type === 'depense' ? '−' : '+'}{fmt(tx.montant)}
             </div>
-            {tx.type === 'entree' && (
+            {tx.type === 'entree' && normalize(tx.motif || '').includes('don') && (
               <button
                 className="tx-receipt-btn"
                 title="Reçu de don"

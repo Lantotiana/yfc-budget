@@ -20,6 +20,7 @@ import Notifications from './pages/Notifications'
 import Fampaherezana from './pages/Fampaherezana'
 import MessagesStaff from './pages/MessagesStaff'
 import Admin from './components/Admin'
+import VerifyReceipt from './pages/VerifyReceipt'
 import './App.css'
 
 function ScrollToTop() {
@@ -117,7 +118,7 @@ function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const swipeStart = useRef(null)
-  const baseVisible = Boolean(user && location.pathname !== '/login')
+  const baseVisible = Boolean(user && location.pathname !== '/login' && !location.pathname.startsWith('/verify'))
   const visible = baseVisible
 
   useEffect(() => {
@@ -253,6 +254,7 @@ export default function App() {
       <BackNavigationGuard user={user} />
       <BottomNav user={user} />
       <Routes>
+        <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={
           <ProtectedRoute user={user}>

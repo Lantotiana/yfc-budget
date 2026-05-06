@@ -9,6 +9,14 @@ export async function getReceiptByEntryId(budgetEntryId) {
   return { id: d.id, ...d.data() }
 }
 
+export async function getReceiptByNumber(receiptNumber) {
+  const q = query(collection(db, 'donReceipts'), where('receiptNumber', '==', receiptNumber))
+  const snap = await getDocs(q)
+  if (snap.empty) return null
+  const d = snap.docs[0]
+  return { id: d.id, ...d.data() }
+}
+
 export async function generateReceiptNumber() {
   const year = new Date().getFullYear()
   const counterRef = doc(db, 'receipts_meta', 'counter')

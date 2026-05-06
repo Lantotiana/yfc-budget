@@ -23,7 +23,6 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   const [receipt, setReceipt] = useState(null)
   const [donorName, setDonorName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Espèces')
-  const [reference, setReference] = useState('')
   const [responsible, setResponsible] = useState('')
   const [role, setRole] = useState('')
   const [saving, setSaving] = useState(false)
@@ -52,7 +51,6 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   function openEditForm() {
     setDonorName(receipt?.donorName || '')
     setPaymentMethod(receipt?.paymentMethod || 'Espèces')
-    setReference(receipt?.reference || '')
     setResponsible(receipt?.responsible || currentMember?.nom || userData?.nom || user?.displayName || '')
     setRole(receipt?.role || currentMember?.staffRole || '')
     setStep('form')
@@ -66,7 +64,6 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
         const changes = {
           donorName: donorName.trim(),
           paymentMethod,
-          reference: reference.trim(),
           responsible: responsible.trim(),
           role: role.trim(),
         }
@@ -79,7 +76,6 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
           receiptNumber,
           donorName: donorName.trim(),
           paymentMethod,
-          reference: reference.trim(),
           responsible: responsible.trim(),
           role: role.trim(),
           montant: tx.montant,
@@ -176,14 +172,13 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   function buildText() {
     const fmtAr = n => Number(n || 0).toLocaleString('fr-FR') + ' Ar'
     return [
-      `📄 *Reçu de Don — Young For Christ Madagascar*`,
+      `📄 *Reçu de Don — Young For Christ Itaosy*`,
       `N° ${receipt.receiptNumber}`,
       ``,
       `👤 Donateur : ${receipt.donorName}`,
       `📅 Date : ${fmtLocalDate(receipt.txDate || tx.date)}`,
       `💚 Montant : *${fmtAr(receipt.montant)}*`,
       `💳 Paiement : ${receipt.paymentMethod}`,
-      receipt.reference ? `🔖 Référence : ${receipt.reference}` : '',
       `📝 Motif : ${receipt.motif}`,
       ``,
       `✍️ Reçu par : ${receipt.responsible}${receipt.role ? ` (${receipt.role})` : ''}`,
@@ -303,18 +298,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
                 </select>
               </div>
 
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.t2, display: 'block', marginBottom: 6 }}>Référence / Bordereau (optionnel)</label>
-                <input
-                  value={reference}
-                  onChange={e => setReference(e.target.value)}
-                  placeholder="Ex: REF-12345"
-                  className="form-input"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: C.t2, display: 'block', marginBottom: 6 }}>Responsable</label>
                   <input
