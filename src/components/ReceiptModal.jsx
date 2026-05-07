@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Download, Share2, Mail, Copy, Image, Loader } from 'lucide-react'
-import emailjs from '@emailjs/browser'
 import logoYfcAsset from '../assets/logo_yfc.png'
+import { sendBrevoEmail } from '../services/brevoService'
 import { useTheme } from '../context/ThemeContext'
 import DonationReceiptPreview from './DonationReceiptPreview'
 import { getReceiptByEntryId, generateReceiptNumber, createReceipt, updateReceipt, markReceiptSent } from '../services/receiptService'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { db } from '../firebase'
 
-const EMAILJS_SERVICE_ID   = 'service_q55ivrp'
-const EMAILJS_PUBLIC_KEY   = 'DBkP2rCi6WMgXW9kq'
-const EMAILJS_TEMPLATE_ID  = 'template_pjghhy9' // à créer dans EmailJS dashboard
 
 const PAYMENT_METHODS = ['Espèces', 'Mobile Money', 'Virement bancaire', 'Chèque', 'Autre']
 
@@ -59,7 +58,7 @@ function toWords(n) {
 }
 
 /* ── HTML email builder ── */
-function buildEmailHtml(receipt, tx, logoUrl = 'https://yfc-budget.vercel.app/logo_yfc.png') {
+function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/logo_yfc.png') {
   const fmtAr = n => Number(n||0).toLocaleString('fr-FR')+' Ar'
   const montant = receipt.montant
   const motif   = receipt.motif
@@ -67,7 +66,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://yfc-budget.vercel.app/lo
   const genDate = fmtDate(new Date().toISOString().slice(0,10))
   const w = toWords(montant)
   const wordsCapital = w.charAt(0).toUpperCase()+w.slice(1)
-  const verifyUrl = `https://yfc-budget.vercel.app/verify/${receipt.receiptNumber}`
+  const verifyUrl = `https://young-for-christ.com/verify/${receipt.receiptNumber}`
 
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -84,7 +83,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://yfc-budget.vercel.app/lo
   <!-- header -->
   <tr><td style="padding:22px 24px 16px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.07)">
     <img src="${logoUrl}" width="60" height="60"
-      style="display:block;margin:0 auto 10px;object-fit:contain" alt="YFC">
+      style="display:block;margin:0 auto 10px;object-fit:contain;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,0.10)" alt="YFC">
     <p style="margin:0 0 4px;font-size:9px;font-weight:700;color:#A0A4BE;
       letter-spacing:2.5px;text-transform:uppercase">YOUNG FOR CHRIST ITAOSY</p>
     <p style="margin:0;font-size:21px;font-weight:800;color:#1A1C2E">Reçu de Don</p>
@@ -103,6 +102,8 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://yfc-budget.vercel.app/lo
         <p style="margin:0 0 5px;font-size:9px;font-weight:700;color:#A0A4BE;
           text-transform:uppercase;letter-spacing:1.5px">Donateur</p>
         <p style="margin:0;font-size:13px;font-weight:700;color:#1A1C2E">${receipt.donorName}</p>
+        ${receipt.donorEmail ? `<p style="margin:3px 0 0;font-size:10px;color:#A0A4BE">${receipt.donorEmail}</p>` : ''}
+        ${receipt.donorPhone ? `<p style="margin:2px 0 0;font-size:10px;color:#A0A4BE">${receipt.donorPhone}</p>` : ''}
       </td>
       <td width="38%" style="padding:14px 16px">
         <p style="margin:0 0 5px;font-size:9px;font-weight:700;color:#A0A4BE;
@@ -164,7 +165,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://yfc-budget.vercel.app/lo
     border-bottom:1px solid rgba(0,0,0,0.07)">
     <p style="margin:0 0 2px;font-size:9px;color:#A0A4BE">Généré le ${genDate}</p>
     <p style="margin:4px 0 1px;font-size:9px;font-weight:600;color:#6B6F8A">Young For Christ Itaosy</p>
-    <p style="margin:1px 0 0;font-size:8px;color:#A0A4BE">Généré via YFC Management System</p>
+    <p style="margin:1px 0 0;font-size:8px;color:#A0A4BE">contact@young-for-christ.com</p>
   </td></tr>
 
   <!-- verify link -->
@@ -192,6 +193,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   const [receipt, setReceipt] = useState(null)
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
+  const [donorPhone, setDonorPhone] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Espèces')
   const [responsible, setResponsible] = useState('')
   const [role, setRole] = useState('')
@@ -200,6 +202,17 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   const [feedback, setFeedback] = useState('')
   const [emailPrompt, setEmailPrompt] = useState(false)
   const [emailTarget, setEmailTarget] = useState('')
+  const [members, setMembers] = useState([])
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [respSuggestions, setRespSuggestions] = useState([])
+  const [showRespSuggestions, setShowRespSuggestions] = useState(false)
+
+  useEffect(() => {
+    getDocs(query(collection(db, 'membres'), orderBy('nom')))
+      .then(snap => setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     getReceiptByEntryId(tx.id)
@@ -218,9 +231,50 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
       })
   }, [tx.id])
 
+  function handleDonorNameChange(val) {
+    setDonorName(val)
+    if (!val.trim()) { setSuggestions([]); setShowSuggestions(false); return }
+    const q = val.trim().toLowerCase()
+    const filtered = members.filter(m => {
+      const full = [m.nom, m.prenoms, m.nomPrefere].filter(Boolean).join(' ').toLowerCase()
+      return full.includes(q)
+    }).slice(0, 6)
+    setSuggestions(filtered)
+    setShowSuggestions(filtered.length > 0)
+  }
+
+  function selectMember(m) {
+    const fullName = [m.nom, m.prenoms].filter(Boolean).join(' ')
+    setDonorName(fullName)
+    setDonorEmail(m.email || '')
+    setDonorPhone(m.telephone || '')
+    setSuggestions([])
+    setShowSuggestions(false)
+  }
+
+  function handleResponsibleChange(val) {
+    setResponsible(val)
+    if (!val.trim()) { setRespSuggestions([]); setShowRespSuggestions(false); return }
+    const q = val.trim().toLowerCase()
+    const filtered = members.filter(m => {
+      const full = [m.nom, m.prenoms, m.nomPrefere].filter(Boolean).join(' ').toLowerCase()
+      return full.includes(q)
+    }).slice(0, 6)
+    setRespSuggestions(filtered)
+    setShowRespSuggestions(filtered.length > 0)
+  }
+
+  function selectResponsible(m) {
+    setResponsible([m.nom, m.prenoms].filter(Boolean).join(' '))
+    setRole(m.staffRole || '')
+    setRespSuggestions([])
+    setShowRespSuggestions(false)
+  }
+
   function openEditForm() {
     setDonorName(receipt?.donorName || '')
     setDonorEmail(receipt?.donorEmail || '')
+    setDonorPhone(receipt?.donorPhone || '')
     setPaymentMethod(receipt?.paymentMethod || 'Espèces')
     setResponsible(receipt?.responsible || currentMember?.nom || userData?.nom || user?.displayName || '')
     setRole(receipt?.role || currentMember?.staffRole || '')
@@ -234,6 +288,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
       const base = {
         donorName: donorName.trim(),
         donorEmail: donorEmail.trim(),
+        donorPhone: donorPhone.trim(),
         paymentMethod,
         responsible: responsible.trim(),
         role: role.trim(),
@@ -349,19 +404,13 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
     if (!target) { setEmailPrompt(true); return }
     await doAction('email', async () => {
       const logoUrl = logoYfcAsset.startsWith('/')
-        ? `https://yfc-budget.vercel.app${logoYfcAsset}`
+        ? `https://young-for-christ.com${logoYfcAsset}`
         : logoYfcAsset
-      await emailjs.send(
-        EMAILJS_SERVICE_ID,
-        EMAILJS_TEMPLATE_ID,
-        {
-          to_email:       target,
-          receipt_number: receipt.receiptNumber,
-          donor_name:     receipt.donorName,
-          html_body:      buildEmailHtml(receipt, tx, logoUrl),
-        },
-        EMAILJS_PUBLIC_KEY
-      )
+      await sendBrevoEmail({
+        to: target,
+        subject: `Reçu de don YFC ${receipt.receiptNumber} — ${receipt.donorName}`,
+        htmlContent: buildEmailHtml(receipt, tx, logoUrl),
+      })
       setFeedback('Email envoyé !')
       setTimeout(()=>setFeedback(''),3000)
       setEmailPrompt(false)
@@ -435,14 +484,55 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
                 </div>
               )}
 
-              <div>
+              <div style={{position:'relative'}}>
                 <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Nom du donateur *</label>
-                <input value={donorName} onChange={e=>setDonorName(e.target.value)} placeholder="Ex: Jean Dupont" className="form-input" style={{width:'100%'}} autoFocus/>
+                <input
+                  value={donorName}
+                  onChange={e => handleDonorNameChange(e.target.value)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  placeholder="Ex: Jean Dupont"
+                  className="form-input"
+                  style={{width:'100%'}}
+                  autoFocus
+                  autoComplete="off"
+                />
+                {showSuggestions && (
+                  <div style={{
+                    position:'absolute', top:'100%', left:0, right:0, zIndex:50,
+                    background:C.bg, border:`1px solid ${C.bord}`, borderRadius:10,
+                    boxShadow:'0 4px 16px rgba(0,0,0,0.12)', overflow:'hidden', marginTop:2,
+                  }}>
+                    {suggestions.map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onMouseDown={() => selectMember(m)}
+                        style={{
+                          display:'block', width:'100%', textAlign:'left',
+                          padding:'10px 14px', background:'none', border:'none',
+                          borderBottom:`1px solid ${C.bord}`, cursor:'pointer',
+                          fontFamily:'inherit',
+                        }}
+                      >
+                        <div style={{fontSize:13,fontWeight:700,color:C.t1}}>{m.nom}</div>
+                        {m.prenoms && <div style={{fontSize:12,color:C.t2,marginTop:1}}>{m.prenoms}</div>}
+                        {m.email && <div style={{fontSize:11,color:C.t3,marginTop:2}}>{m.email}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Email du donateur <span style={{color:C.t3,fontWeight:400}}>(pour envoi automatique)</span></label>
-                <input value={donorEmail} onChange={e=>setDonorEmail(e.target.value)} type="email" placeholder="Ex: jean@email.com" className="form-input" style={{width:'100%'}}/>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                <div>
+                  <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Email du donateur</label>
+                  <input value={donorEmail} onChange={e=>setDonorEmail(e.target.value)} type="email" placeholder="jean@email.com" className="form-input" style={{width:'100%'}}/>
+                </div>
+                <div>
+                  <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Téléphone</label>
+                  <input value={donorPhone} onChange={e=>setDonorPhone(e.target.value)} type="tel" placeholder="034 xx xxx xx" className="form-input" style={{width:'100%'}}/>
+                </div>
               </div>
 
               <div>
@@ -453,9 +543,43 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
               </div>
 
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-                <div>
+                <div style={{position:'relative'}}>
                   <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Responsable</label>
-                  <input value={responsible} onChange={e=>setResponsible(e.target.value)} placeholder="Nom" className="form-input" style={{width:'100%'}}/>
+                  <input
+                    value={responsible}
+                    onChange={e => handleResponsibleChange(e.target.value)}
+                    onBlur={() => setTimeout(() => setShowRespSuggestions(false), 150)}
+                    onFocus={() => respSuggestions.length > 0 && setShowRespSuggestions(true)}
+                    placeholder="Nom complet"
+                    className="form-input"
+                    style={{width:'100%'}}
+                    autoComplete="off"
+                  />
+                  {showRespSuggestions && (
+                    <div style={{
+                      position:'absolute', top:'100%', left:0, right:0, zIndex:50,
+                      background:C.bg, border:`1px solid ${C.bord}`, borderRadius:10,
+                      boxShadow:'0 4px 16px rgba(0,0,0,0.12)', overflow:'hidden', marginTop:2,
+                    }}>
+                      {respSuggestions.map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onMouseDown={() => selectResponsible(m)}
+                          style={{
+                            display:'block', width:'100%', textAlign:'left',
+                            padding:'10px 14px', background:'none', border:'none',
+                            borderBottom:`1px solid ${C.bord}`, cursor:'pointer',
+                            fontFamily:'inherit',
+                          }}
+                        >
+                          <div style={{fontSize:13,fontWeight:700,color:C.t1}}>{m.nom}</div>
+                          {m.prenoms && <div style={{fontSize:12,color:C.t2,marginTop:1}}>{m.prenoms}</div>}
+                          {m.staffRole && <div style={{fontSize:11,color:C.t3,marginTop:2}}>{m.staffRole}</div>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Rôle</label>

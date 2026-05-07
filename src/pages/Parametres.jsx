@@ -38,7 +38,7 @@ export default function Parametres({ user, userData, setUserData }) {
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
   const [showQR, setShowQR] = useState(false)
-  const appUrl = 'https://yfc-budget.vercel.app/'
+  const appUrl = 'https://young-for-christ.com/'
 
   const isAdmin = user?.email === ADMIN_EMAIL
 

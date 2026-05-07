@@ -1,16 +1,98 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
-import emailjs from '@emailjs/browser'
+import { sendBrevoEmail } from '../services/brevoService'
 import { ArrowLeft, Check, ShieldCheck, X } from 'lucide-react'
 import { db } from '../firebase'
 import { ADMIN_EMAIL, STAFF_ROLES } from '../constants'
 import { useTheme } from '../context/ThemeContext'
 
-const EMAILJS_SERVICE_ID = 'service_q55ivrp'
-const EMAILJS_TEMPLATE_ID = 'template_wgibd9k'
-const EMAILJS_PUBLIC_KEY = 'DBkP2rCi6WMgXW9kq'
-const APP_URL = 'https://yfc-budget.vercel.app'
+const APP_URL = 'https://young-for-christ.com'
+const LOGO_URL = 'https://young-for-christ.com/logo_yfc.png'
+
+function buildApprovalHtml(nom) {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:32px 16px 48px;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto">
+<tr><td>
+
+  <!-- Header -->
+  <div style="text-align:center;margin-bottom:24px">
+    <img src="${LOGO_URL}" width="60" height="60"
+      style="display:block;margin:0 auto 10px;object-fit:contain;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,0.08)" alt="YFC">
+    <p style="margin:0;font-size:10px;font-weight:700;color:#A0A4BE;letter-spacing:2.5px;text-transform:uppercase">
+      YOUNG FOR CHRIST ITAOSY
+    </p>
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0"
+    style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,0.10)">
+
+    <!-- top bar -->
+    <tr><td height="7" style="background:#0CC0DF;font-size:0">&nbsp;</td></tr>
+
+    <!-- badge -->
+    <tr><td style="background:linear-gradient(135deg,#0CC0DF,#0891b2);padding:28px 24px;text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.2);
+        margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+        font-size:28px;line-height:56px;text-align:center">✓</div>
+      <p style="margin:0;font-size:18px;font-weight:800;color:#fff;letter-spacing:0.3px">
+        Compte approuvé !
+      </p>
+      <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.85)">
+        Bienvenue dans l'équipe YFC
+      </p>
+    </td></tr>
+
+    <!-- body -->
+    <tr><td style="padding:28px 28px 8px">
+      <p style="margin:0 0 14px;font-size:15px;color:#1A1C2E;font-weight:600">
+        Bonjour ${nom || 'ami(e)'} 👋
+      </p>
+      <p style="margin:0 0 14px;font-size:13px;color:#6B6F8A;line-height:1.7">
+        Ton compte a été vérifié et approuvé par l'administration de
+        <strong style="color:#1A1C2E">Young For Christ Itaosy</strong>.
+        Tu peux maintenant accéder à l'application de gestion.
+      </p>
+    </td></tr>
+
+    <!-- button -->
+    <tr><td style="padding:8px 28px 28px;text-align:center">
+      <a href="${APP_URL}"
+        style="display:inline-block;padding:13px 32px;border-radius:12px;
+          background:#0CC0DF;color:#fff;font-size:14px;font-weight:700;
+          text-decoration:none;letter-spacing:0.3px">
+        Accéder à l'application
+      </a>
+    </td></tr>
+
+    <!-- divider -->
+    <tr><td style="padding:0 28px"><div style="border-top:1px solid rgba(0,0,0,0.07)"></div></td></tr>
+
+    <!-- attestation -->
+    <tr><td style="background:#F9FAFB;padding:16px 28px">
+      <p style="margin:0;font-size:11px;color:#6B6F8A;font-style:italic;line-height:1.65;
+        border-left:3px solid #0CC0DF;padding-left:10px">
+        Ce message a été envoyé automatiquement suite à l'approbation de ton compte.
+        Si tu n'as pas fait de demande, contacte-nous à
+        <a href="mailto:contact@young-for-christ.com" style="color:#0CC0DF">contact@young-for-christ.com</a>.
+      </p>
+    </td></tr>
+
+    <!-- footer -->
+    <tr><td style="background:#F9FAFB;padding:14px 28px;text-align:center;border-top:1px solid rgba(0,0,0,0.07)">
+      <p style="margin:0;font-size:9px;font-weight:600;color:#6B6F8A">Young For Christ Itaosy</p>
+      <p style="margin:3px 0 0;font-size:8px;color:#A0A4BE">contact@young-for-christ.com</p>
+    </td></tr>
+
+    <!-- bottom bar -->
+    <tr><td height="5" style="background:#0CC0DF;font-size:0">&nbsp;</td></tr>
+
+  </table>
+</td></tr></table>
+</body></html>`
+}
 
 
 function isOnline(u) {
@@ -192,7 +274,11 @@ export default function Admin({ user }) {
     setSending(u.id)
     try {
       await updateDoc(doc(db, 'users', u.id), { approuve: true })
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { nom: u.nom || u.email, email: u.email, app_url: APP_URL }, EMAILJS_PUBLIC_KEY)
+      await sendBrevoEmail({
+        to: u.email,
+        subject: '✅ Ton compte Young For Christ a été approuvé',
+        htmlContent: buildApprovalHtml(u.nom),
+      })
     } catch (e) {
       console.error('Erreur approbation:', e)
     }
