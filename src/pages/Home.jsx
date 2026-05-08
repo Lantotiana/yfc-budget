@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
+import { countUnseenNotifications, getNotificationSeenAt } from '../utils/notificationUtils'
 import { useTranslation } from 'react-i18next'
 
 function getPrenom(fullName) {
@@ -159,15 +160,8 @@ export default function Home({ user, userData }) {
     if (!user?.uid) return
     const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(150))
     return onSnapshot(q, snap => {
-      const unread = snap.docs.filter(d => {
-        const targetUserId = d.data().targetUserId
-        const targetUserEmail = d.data().targetUserEmail
-        if (targetUserId && targetUserId !== user.uid) return false
-        if (targetUserEmail && targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
-        const readBy = d.data().readBy || []
-        return !readBy.includes(user.uid)
-      })
-      setNotifCount(unread.length)
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setNotifCount(countUnseenNotifications(items, user, getNotificationSeenAt(user.uid)))
     }, () => setNotifCount(0))
   }, [user?.uid, user?.email])
 

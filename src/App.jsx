@@ -26,6 +26,7 @@ import Admin from './components/Admin'
 import VerifyReceipt from './pages/VerifyReceipt'
 import AppLayout from './layouts/AppLayout'
 import useMediaQuery from './hooks/useMediaQuery'
+import { bindForegroundPushNotifications, syncPushNotifications } from './services/pushNotifications'
 import './App.css'
 
 function ScrollToTop() {
@@ -259,6 +260,12 @@ export default function App() {
     const id = setInterval(write, 60_000)
     return () => clearInterval(id)
   }, [user])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    syncPushNotifications().catch(() => {})
+    bindForegroundPushNotifications(() => {}).catch(() => {})
+  }, [user?.uid])
 
   if (authLoading) return (
     <div className="app-loader-screen" aria-label="Chargement">

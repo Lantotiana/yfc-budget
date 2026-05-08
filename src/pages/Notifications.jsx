@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../firebase'
-import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, onSnapshot, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore'
 import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
-import { useTheme } from '../context/ThemeContext'
 import { useTranslation } from 'react-i18next'
+import { db } from '../firebase'
+import { useTheme } from '../context/ThemeContext'
+import { isNotificationVisibleForUser, setNotificationSeenAt } from '../utils/notificationUtils'
 
 const typeIcon = {
   budget: Wallet,
@@ -70,9 +71,14 @@ const TITLE_FIXES = {
 function cleanText(text) {
   if (!text) return ''
   return (TITLE_FIXES[text] || text)
-    .replaceAll('â€™', "'")
-    .replaceAll('â€¢', '•')
-    .replaceAll('â€¹', '‹')
+    .replaceAll('Ã¢â‚¬â„¢', "'")
+    .replaceAll('Ã¢â‚¬Â¢', '•')
+    .replaceAll('Ã¢â‚¬Â¹', '‹')
+    .replaceAll('Ã€', 'À')
+    .replaceAll('Â·', '·')
+    .replaceAll('activitÃ©', 'activité')
+    .replaceAll('rÃ©cente', 'récente')
+    .replaceAll('marquÃ©e', 'marquée')
 }
 
 function formatTime(iso) {
@@ -113,14 +119,17 @@ export default function Notifications({ user }) {
     })
   }, [])
 
-  useEffect(() => {
-    if (!user?.uid || notifications.length === 0) return
+  const visibleNotifications = useMemo(
+    () => notifications.filter(notif => isNotificationVisibleForUser(notif, user)),
+    [notifications, user?.uid, user?.email]
+  )
 
-    const unread = notifications.filter(notif => {
-      if (notif.targetUserId && notif.targetUserId !== user.uid) return false
-      if (notif.targetUserEmail && notif.targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
-      return !(notif.readBy || []).includes(user.uid)
-    })
+  useEffect(() => {
+    if (!user?.uid || loading) return
+
+    setNotificationSeenAt(user.uid)
+
+    const unread = visibleNotifications.filter(notif => !(notif.readBy || []).includes(user.uid))
     if (unread.length === 0) return
 
     const batch = writeBatch(db)
@@ -129,17 +138,8 @@ export default function Notifications({ user }) {
         readBy: arrayUnion(user.uid),
       })
     })
-    batch.commit().catch(err => console.warn('Notifications non marquées comme lues', err))
-  }, [notifications, user?.uid])
-
-  const visibleNotifications = useMemo(
-    () => notifications.filter(notif => {
-      if (notif.targetUserId && notif.targetUserId !== user?.uid) return false
-      if (notif.targetUserEmail && notif.targetUserEmail.toLowerCase() !== (user?.email || '').toLowerCase()) return false
-      return true
-    }),
-    [notifications, user?.uid, user?.email]
-  )
+    batch.commit().catch(err => console.warn('Notifications non marquees comme lues', err))
+  }, [visibleNotifications, loading, user?.uid])
 
   const grouped = useMemo(() => {
     return visibleNotifications.reduce((acc, notif) => {
@@ -161,51 +161,141 @@ export default function Notifications({ user }) {
     return notif.route
   }
 
+  async function openNotification(notif) {
+    const route = getNotificationRoute(notif)
+
+    if (user?.uid && !(notif.readBy || []).includes(user.uid)) {
+      try {
+        await updateDoc(doc(db, 'notifications', notif.id), {
+          readBy: arrayUnion(user.uid),
+        })
+      } catch (err) {
+        console.warn('Notification non marquee comme lue', err)
+      }
+    }
+
+    if (route) navigate(route)
+  }
+
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
-
-      {/* Header */}
-      <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        className="textured-page-header desktop-hide-page-header"
+        style={{
+          '--header-color': '#7c3aed',
+          padding: '20px 20px 16px',
+          paddingTop: 'max(20px, env(safe-area-inset-top))',
+          borderBottom: `1px solid ${C.bord}`,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div>
-          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('notifications.title')}</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>
+            {t('notifications.title')}
+          </div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>
             {visibleNotifications.length} activité{visibleNotifications.length !== 1 ? 's' : ''} récente{visibleNotifications.length !== 1 ? 's' : ''}
           </div>
         </div>
-        <div className="header-action" style={{ width: 36, height: 36, borderRadius: 12, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          className="header-action"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 12,
+            background: C.violetD,
+            color: C.violet,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Bell size={18} />
         </div>
       </div>
 
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
+            {t('common.loading')}
+          </div>
         ) : visibleNotifications.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
             {t('notifications.aucune')}
           </div>
         ) : Object.entries(grouped).map(([label, items]) => (
           <div key={label} style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', margin: '0 0 8px' }}>{label}</div>
+            <div
+              style={{
+                fontSize: 'var(--font-xs)',
+                fontWeight: 700,
+                color: C.t3,
+                textTransform: 'uppercase',
+                letterSpacing: '.08em',
+                margin: '0 0 8px',
+              }}
+            >
+              {label}
+            </div>
             {items.map(notif => {
               const Icon = typeIcon[notif.type] || Bell
               const color = getNotificationColor(notif.type)
+
               return (
                 <button
                   key={notif.id}
-                  onClick={() => {
-                    const route = getNotificationRoute(notif)
-                    if (route) navigate(route)
-                  }}
                   type="button"
-                  style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 14, padding: '13px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                  onClick={() => openNotification(notif)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 12,
+                    background: C.surf,
+                    border: `1px solid ${C.bord}`,
+                    borderRadius: 14,
+                    padding: '13px 14px',
+                    marginBottom: 8,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                  }}
                 >
-                  <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: `${color}1F`, color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 10,
+                      flexShrink: 0,
+                      background: `${color}1F`,
+                      color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Icon size={16} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{cleanText(notif.titre)}</div>
-                    {notif.detail && <div style={{ fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanText(notif.detail)}</div>}
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>
+                      {cleanText(notif.titre)}
+                    </div>
+                    {notif.detail && (
+                      <div
+                        style={{
+                          fontSize: 'var(--font-xs)',
+                          color: C.t2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {cleanText(notif.detail)}
+                      </div>
+                    )}
                     <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4, display: 'flex', gap: 6 }}>
                       <span>{cleanText(notif.actor?.nom) || t('notifications.utilisateurInconnu')}</span>
                       <span>·</span>

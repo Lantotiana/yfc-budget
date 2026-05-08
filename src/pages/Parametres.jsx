@@ -11,6 +11,7 @@ import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 import { normalizeAccessText, sameEmail } from '../utils/access'
 import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
+import { disablePushNotifications, enablePushNotifications, getPushAvailability, syncPushNotifications } from '../services/pushNotifications'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 
@@ -37,6 +38,8 @@ export default function Parametres({ user, userData, setUserData }) {
   const [savingPwd, setSavingPwd] = useState(false)
   const [showOld, setShowOld] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [pushStatus, setPushStatus] = useState({ supported: false, enabled: false, permission: 'default', configured: false })
+  const [pushLoading, setPushLoading] = useState(false)
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [newTagInput, setNewTagInput] = useState('')
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
@@ -72,6 +75,12 @@ export default function Parametres({ user, userData, setUserData }) {
     return () => unsub()
   }, [])
 
+  useEffect(() => {
+    getPushAvailability().then(setPushStatus).catch(() => {
+      setPushStatus({ supported: false, enabled: false, permission: 'unsupported', configured: false })
+    })
+  }, [])
+
   async function addNewTag() {
     const tag = newTagInput.trim()
     if (!tag || availableTags.includes(tag)) return
@@ -88,6 +97,50 @@ export default function Parametres({ user, userData, setUserData }) {
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 2000)
     }
+  }
+
+  async function handleEnablePush() {
+    setPushLoading(true)
+    try {
+      const result = await enablePushNotifications()
+      const status = await getPushAvailability()
+      setPushStatus(status)
+
+      if (result.ok) flash('Notifications téléphone activées')
+      else if (result.reason === 'missing-vapid-key') flash('Clé Web Push manquante côté projet', false)
+      else if (result.reason === 'permission-denied') flash('Autorisation de notification refusée', false)
+      else flash('Impossible d’activer les notifications', false)
+    } catch {
+      flash('Impossible d’activer les notifications', false)
+    }
+    setPushLoading(false)
+  }
+
+  async function handleDisablePush() {
+    setPushLoading(true)
+    try {
+      await disablePushNotifications()
+      const status = await getPushAvailability()
+      setPushStatus(status)
+      flash('Notifications téléphone désactivées sur cet appareil')
+    } catch {
+      flash('Impossible de désactiver les notifications', false)
+    }
+    setPushLoading(false)
+  }
+
+  async function handleRefreshPush() {
+    setPushLoading(true)
+    try {
+      const result = await syncPushNotifications()
+      const status = await getPushAvailability()
+      setPushStatus(status)
+      if (result.ok) flash('Notifications téléphone synchronisées')
+      else flash('Impossible de synchroniser les notifications', false)
+    } catch {
+      flash('Impossible de synchroniser les notifications', false)
+    }
+    setPushLoading(false)
   }
 
   async function removeTag(tag) {
@@ -294,6 +347,51 @@ export default function Parametres({ user, userData, setUserData }) {
               style={{ width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', padding: 0, background: dark ? C.amber : C.bord2, position: 'relative', transition: 'background 0.2s' }}
             >
               <span style={{ position: 'absolute', top: 3, left: dark ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', display: 'block' }} />
+            </button>
+          </div>
+        </div>
+
+        <div style={section}>
+          <div style={sectionLabel}>Notifications téléphone</div>
+          <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 4 }}>
+            Recevoir les notifications même quand l’app est fermée
+          </div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 14, lineHeight: 1.5 }}>
+            {!pushStatus.configured
+              ? 'La clé Web Push Firebase n’est pas encore configurée.'
+              : !pushStatus.supported
+                ? 'Ce téléphone ou ce navigateur ne supporte pas les notifications push web.'
+                : pushStatus.enabled
+                  ? 'Les notifications push sont actives sur cet appareil.'
+                  : pushStatus.permission === 'denied'
+                    ? 'Les notifications sont bloquées dans le navigateur.'
+                    : 'Les notifications push ne sont pas encore activées sur cet appareil.'}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleEnablePush}
+              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied'}
+              style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied') ? 0.6 : 1 }}
+            >
+              {pushLoading ? 'Activation...' : 'Activer'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefreshPush}
+              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled}
+              style={{ padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
+            >
+              Synchroniser
+            </button>
+            <button
+              type="button"
+              onClick={handleDisablePush}
+              disabled={pushLoading || !pushStatus.supported || !pushStatus.enabled}
+              style={{ padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.coralD}`, background: C.coralD, color: C.coral, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
+            >
+              Désactiver
             </button>
           </div>
         </div>

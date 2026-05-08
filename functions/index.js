@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
-const { onDocumentWritten } = require('firebase-functions/v2/firestore')
+const { onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore')
 const { defineSecret } = require('firebase-functions/params')
 const admin = require('firebase-admin')
 const { prepareGoogleSheet, syncAllToGoogleSheets, runTriggeredSync } = require('./googleSheetsSync')
@@ -17,6 +17,60 @@ const sheetSecrets = {
   GOOGLE_SHEET_ID: googleSheetId,
 }
 const sheetSecretList = [googleServiceAccountEmail, googlePrivateKey, googleSheetId]
+
+function tokenDocId(token) {
+  return Buffer.from(String(token || '')).toString('base64url')
+}
+
+function safeText(value, fallback = '') {
+  return String(value || fallback).trim()
+}
+
+function buildPushBody(notification) {
+  return safeText(notification.detail, 'Ouvre l’application pour voir les détails.')
+}
+
+function buildPushLink(notification) {
+  const route = safeText(notification.route, '/notifications')
+  const metadata = notification.metadata || {}
+  if (route === '/tasks' && metadata.taskId) return `/tasks?task=${encodeURIComponent(metadata.taskId)}`
+  if (route === '/evenements' && metadata.eventId) return `/evenements?event=${encodeURIComponent(metadata.eventId)}`
+  if (route === '/membres' && metadata.membreId) return `/membres?membre=${encodeURIComponent(metadata.membreId)}`
+  return route
+}
+
+async function listPushTokensForUser(uid) {
+  if (!uid) return []
+  const snap = await db.collection('users').doc(uid).collection('pushTokens').get()
+  return snap.docs
+    .map(docSnap => ({ id: docSnap.id, ...docSnap.data(), uid }))
+    .filter(item => item.token)
+}
+
+async function findUserIdByEmail(email) {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) return null
+
+  const direct = await db.collection('users').where('email', '==', email).limit(1).get()
+  if (!direct.empty) return direct.docs[0].id
+
+  const all = await db.collection('users').get()
+  const found = all.docs.find(docSnap => String(docSnap.data().email || '').trim().toLowerCase() === normalized)
+  return found ? found.id : null
+}
+
+async function listPushTargets(notification) {
+  if (notification.targetUserId) return listPushTokensForUser(notification.targetUserId)
+
+  if (notification.targetUserEmail) {
+    const userId = await findUserIdByEmail(notification.targetUserEmail)
+    return userId ? listPushTokensForUser(userId) : []
+  }
+
+  const approvedUsers = await db.collection('users').where('approuve', '==', true).get()
+  const tokenGroups = await Promise.all(approvedUsers.docs.map(docSnap => listPushTokensForUser(docSnap.id)))
+  return tokenGroups.flat()
+}
 
 function normalizeAccessText(value) {
   return String(value || '')
@@ -145,6 +199,43 @@ exports.summarizeBudget = onCall({ secrets: [geminiApiKey] }, async request => {
   })
 
   return { text }
+})
+
+exports.savePushToken = onCall(async request => {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Login required')
+
+  const token = safeText(request.data?.token)
+  if (!token) throw new HttpsError('invalid-argument', 'Token is required')
+
+  await db
+    .collection('users')
+    .doc(request.auth.uid)
+    .collection('pushTokens')
+    .doc(tokenDocId(token))
+    .set({
+      token,
+      platform: safeText(request.data?.platform),
+      userAgent: safeText(request.data?.userAgent),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true })
+
+  return { ok: true }
+})
+
+exports.removePushToken = onCall(async request => {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Login required')
+
+  const token = safeText(request.data?.token)
+  if (!token) throw new HttpsError('invalid-argument', 'Token is required')
+
+  await db
+    .collection('users')
+    .doc(request.auth.uid)
+    .collection('pushTokens')
+    .doc(tokenDocId(token))
+    .delete()
+
+  return { ok: true }
 })
 
 function plainDate(value) {
@@ -481,4 +572,55 @@ exports.syncPresenceEventsToGoogleSheets = onDocumentWritten(
 exports.syncPresenceDetailsToGoogleSheets = onDocumentWritten(
   { document: 'presences/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
   event => runTriggeredSync(sheetSecrets, event, 'presences'),
+)
+
+exports.sendPushForNotification = onDocumentCreated(
+  { document: 'notifications/{docId}', timeoutSeconds: 120, memory: '256MiB' },
+  async event => {
+    const notification = event.data?.data()
+    if (!notification) return
+
+    const targets = await listPushTargets(notification)
+    if (!targets.length) return
+
+    const title = safeText(notification.titre, 'Nouvelle activité YFC')
+    const body = buildPushBody(notification)
+    const link = `https://young-for-christ.com${buildPushLink(notification)}`
+
+    const message = {
+      tokens: targets.map(target => target.token),
+      notification: { title, body },
+      webpush: {
+        fcmOptions: { link },
+        notification: {
+          title,
+          body,
+          icon: 'https://young-for-christ.com/Yfc_icone.png',
+          badge: 'https://young-for-christ.com/Yfc_icone.png',
+          tag: event.params.docId,
+        },
+      },
+      data: {
+        title,
+        body,
+        link,
+        notificationId: event.params.docId,
+      },
+    }
+
+    const response = await admin.messaging().sendEachForMulticast(message)
+    const invalidCodes = new Set([
+      'messaging/invalid-registration-token',
+      'messaging/registration-token-not-registered',
+    ])
+
+    const cleanup = response.responses
+      .map((result, index) => ({ result, target: targets[index] }))
+      .filter(({ result }) => !result.success && invalidCodes.has(result.error?.code))
+      .map(({ target }) =>
+        db.collection('users').doc(target.uid).collection('pushTokens').doc(target.id).delete().catch(() => {})
+      )
+
+    await Promise.all(cleanup)
+  },
 )

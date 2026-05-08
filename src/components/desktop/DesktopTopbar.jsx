@@ -18,6 +18,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { ADMIN_EMAIL } from '../../constants'
+import { countUnseenNotifications, getNotificationSeenAt } from '../../utils/notificationUtils'
 import { normalizeAccessText } from '../../utils/access'
 
 const adminRoles = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
@@ -82,15 +83,16 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
     if (!user?.uid) return
     const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(150))
     return onSnapshot(q, snap => {
-      const unread = snap.docs.filter(d => {
-        const data = d.data()
-        if (data.targetUserId && data.targetUserId !== user.uid) return false
-        if (data.targetUserEmail && data.targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
-        return !(data.readBy || []).includes(user.uid)
-      })
-      setNotifCount(unread.length)
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setNotifCount(countUnseenNotifications(items, user, getNotificationSeenAt(user.uid)))
     }, () => setNotifCount(0))
   }, [user?.uid, user?.email])
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/notifications')) {
+      setNotifCount(0)
+    }
+  }, [location.pathname])
 
   const results = useMemo(() => {
     const term = norm(search)
