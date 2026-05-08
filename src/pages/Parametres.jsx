@@ -48,6 +48,12 @@ function getPushErrorMessage(reason) {
   }
 }
 
+function withPushErrorDetail(base, detail) {
+  const clean = String(detail || '').replace(/\s+/g, ' ').trim()
+  if (!clean) return base
+  return `${base} (${clean.slice(0, 90)})`
+}
+
 export default function Parametres({ user, userData, setUserData }) {
   const navigate = useNavigate()
   const { dark, toggle, C } = useTheme()
@@ -136,7 +142,7 @@ export default function Parametres({ user, userData, setUserData }) {
       setPushStatus(status)
 
       if (result.ok) flash('Notifications telephone activees')
-      else flash(getPushErrorMessage(result.reason), false)
+      else flash(withPushErrorDetail(getPushErrorMessage(result.reason), result.error), false)
     } catch {
       flash('Impossible d activer les notifications', false)
     }
@@ -163,7 +169,7 @@ export default function Parametres({ user, userData, setUserData }) {
       const status = await getPushAvailability()
       setPushStatus(status)
       if (result.ok) flash('Notifications telephone synchronisees')
-      else flash(getPushErrorMessage(result.reason), false)
+      else flash(withPushErrorDetail(getPushErrorMessage(result.reason), result.error), false)
     } catch {
       flash('Impossible de synchroniser les notifications', false)
     }
@@ -288,6 +294,75 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
         )}
 
+        {/* Apparence */}
+        <div style={section}>
+          <div style={sectionLabel}>{t('parametres.apparence')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{t('parametres.modeSombre')}</div>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{dark ? t('parametres.active') : t('parametres.desactive')}</div>
+            </div>
+            <button
+              onClick={toggle}
+              style={{ width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', padding: 0, background: dark ? C.amber : C.bord2, position: 'relative', transition: 'background 0.2s' }}
+            >
+              <span style={{ position: 'absolute', top: 3, left: dark ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', display: 'block' }} />
+            </button>
+          </div>
+        </div>
+
+
+        {/* Profil */}
+        <div style={section}>
+          <div style={sectionLabel}>{t('parametres.profil')}</div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+            <div
+              onClick={() => fileRef.current?.click()}
+              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-md)', color: C.t1, flexShrink: 0 }}
+            >
+              {uploadingPhoto ? '...' : photoURL
+                ? <img src={photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : (nom || user?.email || '?').slice(0, 2).toUpperCase()
+              }
+            </div>
+            <div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{t('parametres.photoProfile')}</div>
+              <button
+                onClick={() => fileRef.current?.click()}
+                style={{ fontSize: 'var(--font-xs)', color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
+              >
+                {uploadingPhoto ? t('parametres.uploading') : t('parametres.modifierPhoto')}
+              </button>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+          </div>
+
+          <div style={{ marginBottom: 12 }}>
+            <label className="form-label">{t('parametres.nomComplet')}</label>
+            <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder={t('parametres.namePlaceholder')} style={inp} />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label className="form-label">{t('parametres.email')}</label>
+            <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label className="form-label">{t('parametres.role')}</label>
+            <input type="text" value={roleLabel} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
+          </div>
+
+          <button
+            onClick={saveProfile}
+            disabled={saving || !nom.trim()}
+            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
+          >
+            {saving ? t('parametres.enregistrement') : t('parametres.sauvegarder')}
+          </button>
+        </div>
+
+        
         {/* Application */}
         <div style={section}>
           <div style={sectionLabel}>{t('parametres.application')}</div>
@@ -361,22 +436,7 @@ export default function Parametres({ user, userData, setUserData }) {
           )}
         </div>
 
-        {/* Apparence */}
-        <div style={section}>
-          <div style={sectionLabel}>{t('parametres.apparence')}</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{t('parametres.modeSombre')}</div>
-              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{dark ? t('parametres.active') : t('parametres.desactive')}</div>
-            </div>
-            <button
-              onClick={toggle}
-              style={{ width: 52, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', padding: 0, background: dark ? C.amber : C.bord2, position: 'relative', transition: 'background 0.2s' }}
-            >
-              <span style={{ position: 'absolute', top: 3, left: dark ? 27 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', display: 'block' }} />
-            </button>
-          </div>
-        </div>
+
 
         <div style={section}>
           <div style={sectionLabel}>Notifications téléphone</div>
@@ -421,56 +481,6 @@ export default function Parametres({ user, userData, setUserData }) {
               Désactiver
             </button>
           </div>
-        </div>
-
-        {/* Profil */}
-        <div style={section}>
-          <div style={sectionLabel}>{t('parametres.profil')}</div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-            <div
-              onClick={() => fileRef.current?.click()}
-              style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-md)', color: C.t1, flexShrink: 0 }}
-            >
-              {uploadingPhoto ? '...' : photoURL
-                ? <img src={photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : (nom || user?.email || '?').slice(0, 2).toUpperCase()
-              }
-            </div>
-            <div>
-              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{t('parametres.photoProfile')}</div>
-              <button
-                onClick={() => fileRef.current?.click()}
-                style={{ fontSize: 'var(--font-xs)', color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
-              >
-                {uploadingPhoto ? t('parametres.uploading') : t('parametres.modifierPhoto')}
-              </button>
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
-          </div>
-
-          <div style={{ marginBottom: 12 }}>
-            <label className="form-label">{t('parametres.nomComplet')}</label>
-            <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder={t('parametres.namePlaceholder')} style={inp} />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label className="form-label">{t('parametres.email')}</label>
-            <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label className="form-label">{t('parametres.role')}</label>
-            <input type="text" value={roleLabel} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
-          </div>
-
-          <button
-            onClick={saveProfile}
-            disabled={saving || !nom.trim()}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
-          >
-            {saving ? t('parametres.enregistrement') : t('parametres.sauvegarder')}
-          </button>
         </div>
 
         {/* Mot de passe */}
