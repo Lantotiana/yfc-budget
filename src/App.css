@@ -445,35 +445,17 @@
 }
 
 .task-card.highlighted {
-  animation: taskCardHighlight 2.8s cubic-bezier(.2,.9,.2,1) both;
+  animation: taskCardBounce 0.65s cubic-bezier(.36,.07,.19,.97) both;
+  will-change: transform;
 }
 
-@keyframes taskCardHighlight {
-  0% {
-    box-shadow: var(--card-shadow);
-    transform: translateY(0) scale(1);
-    border-color: var(--border-light);
-  }
-  12% {
-    box-shadow: 0 0 0 1px rgba(22,181,163,.3), 0 14px 34px rgba(22,181,163,.12), var(--card-shadow);
-    transform: translateY(-1px) scale(1.006);
-    border-color: rgba(22,181,163,.32);
-  }
-  34% {
-    box-shadow: 0 0 0 7px rgba(22,181,163,.12), 0 18px 40px rgba(22,181,163,.16), var(--card-shadow);
-    transform: translateY(-2px) scale(1.01);
-    border-color: rgba(22,181,163,.42);
-  }
-  68% {
-    box-shadow: 0 0 0 4px rgba(22,181,163,.08), 0 14px 32px rgba(15,23,42,.08);
-    transform: translateY(0) scale(1.002);
-    border-color: rgba(22,181,163,.24);
-  }
-  100% {
-    box-shadow: var(--card-shadow);
-    transform: translateY(0) scale(1);
-    border-color: var(--border-light);
-  }
+@keyframes taskCardBounce {
+  0%   { transform: scale(1); }
+  20%  { transform: scale(1.05); }
+  40%  { transform: scale(.97); }
+  60%  { transform: scale(1.025); }
+  80%  { transform: scale(.99); }
+  100% { transform: scale(1); }
 }
 
 .task-card-head {
