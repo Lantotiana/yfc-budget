@@ -157,14 +157,6 @@ export default function Membres({ user, userData }) {
           const userSnap = await getDocs(query(collection(db, 'users'), where('email', '==', form.email.trim())))
           if (!userSnap.empty) await updateDoc(userSnap.docs[0].ref, { staffRole })
         }
-        await createNotification({
-          type: 'membre',
-          titre: 'Membre modifié',
-          detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
-          cible: form.nom.trim(),
-          route: '/membres',
-          metadata: { membreId: sheet.id },
-        })
       }
       closeSheet()
     } catch(e) { console.error(e) }
@@ -391,7 +383,7 @@ export default function Membres({ user, userData }) {
                 />
                 <span style={{ color: C.t1, fontSize: 'var(--font-sm)', fontWeight: 400 }}>
                   {t('membres.estStaff')}
-                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (user approuvé)</span>}
+                  {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (Utilisateur approuvé)</span>}
                 </span>
               </label>
               {isFormStaff && (

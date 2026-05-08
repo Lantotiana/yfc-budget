@@ -460,6 +460,31 @@
   100% { transform: scale(1); }
 }
 
+.confetti-wrap {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -16px;
+  animation: confettiFall linear forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg);    opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(108vh) rotate(680deg); opacity: 0; }
+}
+
+@media (min-width: 1024px) {
+  .confetti-wrap { display: none; }
+}
+
 .task-card-head {
   display: flex;
   align-items: flex-start;
@@ -717,6 +742,26 @@
 .task-modal-actions button.danger {
   background: rgba(239,68,68,.12);
   color: #dc2626;
+}
+
+.task-modal-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btnSpin .6s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
 }
 
 .task-form {

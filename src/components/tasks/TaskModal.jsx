@@ -26,6 +26,7 @@ export default function TaskModal({
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [archiving, setArchiving] = useState(false)
+  const [savingStatus, setSavingStatus] = useState('')
   if (!task) return null
 
   const canEdit = canEditTask(task, user, userData, currentMember)
@@ -95,8 +96,18 @@ export default function TaskModal({
                   </button>
                 )}
                 {canStatus && statusActions.map(([status, label]) => (
-                  <button key={status} type="button" className={status === 'done' ? 'success' : ''} onClick={() => onStatus(task, status)}>
-                    {label}
+                  <button
+                    key={status}
+                    type="button"
+                    className={status === 'done' ? 'success' : ''}
+                    disabled={savingStatus !== ''}
+                    onClick={async () => {
+                      setSavingStatus(status)
+                      await onStatus(task, status)
+                      setSavingStatus('')
+                    }}
+                  >
+                    {savingStatus === status ? <span className="btn-spinner" /> : label}
                   </button>
                 ))}
                 {canArchive && (

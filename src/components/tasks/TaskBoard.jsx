@@ -6,6 +6,7 @@ import TaskTabs from './TaskTabs'
 import TaskFilters from './TaskFilters'
 import TaskModal from './TaskModal'
 import TaskForm from './TaskForm'
+import Confetti from './Confetti'
 import Portal from '../Portal'
 import useMediaQuery from '../../hooks/useMediaQuery'
 import {
@@ -44,6 +45,7 @@ export default function TaskBoard({
   const [draggingTask, setDraggingTask] = useState(null)
   const [highlightedTaskId, setHighlightedTaskId] = useState('')
   const [toast, setToast] = useState('')
+  const [confetti, setConfetti] = useState(false)
   const canCreate = canCreateTasks(user)
   const canDrag = Boolean(user?.uid)
 
@@ -112,6 +114,10 @@ export default function TaskBoard({
   async function handleStatus(task, status) {
     await updateTaskStatus(task, status)
     setSelectedTask(prev => prev?.id === task.id ? { ...prev, status } : prev)
+    if (status === 'done') {
+      setConfetti(true)
+      window.setTimeout(() => setConfetti(false), 4000)
+    }
     setToast(t('tasks.statusUpdated'))
     window.setTimeout(() => setToast(''), 2200)
   }
@@ -224,6 +230,7 @@ export default function TaskBoard({
       )}
 
       {toast && <div className="toast task-toast">{toast}</div>}
+      <Confetti active={confetti} />
     </div>
   )
 }

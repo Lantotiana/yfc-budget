@@ -169,7 +169,7 @@ export default function Notifications({ user }) {
         <div>
           <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('notifications.title')}</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>
-            {visibleNotifications.length}
+            {visibleNotifications.length} activité{visibleNotifications.length !== 1 ? 's' : ''} récente{visibleNotifications.length !== 1 ? 's' : ''}
           </div>
         </div>
         <div className="header-action" style={{ width: 36, height: 36, borderRadius: 12, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
