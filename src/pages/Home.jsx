@@ -32,7 +32,7 @@ const modules = [
     label: 'Presence et evenement',
     items: [
       { path: '/presences', Icon: CalendarCheck, label: 'Presences', color: '#7c3aed' },
-      { path: '/evenements', Icon: CalendarDays, label: 'Evenements', color: '#f59e0b' },
+      { path: '/evenements', Icon: CalendarDays, label: 'Events', color: '#f59e0b' },
     ],
   },
   { path: '/membres',   Icon: Users,           label: 'Membres',         desc: 'Liste des membres',    color: '#f43f5e' },

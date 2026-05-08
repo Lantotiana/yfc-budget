@@ -44,6 +44,35 @@ function getActorName(user, userData) {
   return userData?.nom || userData?.displayName || user?.displayName || user?.email || 'Staff YFC'
 }
 
+async function notifyTaskAssignment({ taskId, taskTitle, assignedTo, assignableMembers }) {
+  const assignedMembers = assignedTo
+    .map(uid => assignableMembers.find(m => m.uid === uid))
+    .filter(Boolean)
+  const assignedNames = assignedMembers.map(member => member.name)
+
+  await Promise.all(assignedMembers.map(member => createNotification({
+    type: 'task',
+    titre: "Une tâche est assignée à toi",
+    detail: taskTitle,
+    cible: member.name || '',
+    route: '/tasks',
+    targetUserId: member.uid,
+    targetUserEmail: member.email || null,
+    metadata: { taskId },
+  })))
+
+  if (assignedNames.length > 0) {
+    await createNotification({
+      type: 'task',
+      titre: `Tâche assignée à ${assignedNames.join(', ')}`,
+      detail: taskTitle,
+      cible: assignedNames.join(', '),
+      route: '/tasks',
+      metadata: { taskId },
+    })
+  }
+}
+
 export default function useTasks({ user, userData } = {}) {
   const [tasks, setTasks] = useState([])
   const [assignableMembers, setAssignableMembers] = useState([])
@@ -161,19 +190,12 @@ export default function useTasks({ user, userData } = {}) {
       archived: false,
     })
 
-    await Promise.all(normalized.assignedTo.map(uid => {
-      const member = assignableMembers.find(m => m.uid === uid)
-      return createNotification({
-        type: 'task',
-        titre: 'Nouvelle tâche assignée',
-        detail: normalized.title,
-        cible: member?.name || '',
-        route: '/tasks',
-        targetUserId: uid,
-        targetUserEmail: member?.email || null,
-        metadata: { taskId: ref.id },
-      })
-    }))
+    await notifyTaskAssignment({
+      taskId: ref.id,
+      taskTitle: normalized.title,
+      assignedTo: normalized.assignedTo,
+      assignableMembers,
+    })
 
     return ref.id
   }, [assignableMembers, user, userData])
@@ -193,19 +215,31 @@ export default function useTasks({ user, userData } = {}) {
     }
 
     await updateDoc(doc(db, 'tasks', taskId), next)
-    await Promise.all(normalized.assignedTo.map(uid => {
-      const member = assignableMembers.find(m => m.uid === uid)
-      return createNotification({
-        type: 'task',
-        titre: 'Tâche modifiée',
-        detail: normalized.title,
-        cible: member?.name || '',
-        route: '/tasks',
-        targetUserId: uid,
-        targetUserEmail: member?.email || null,
-        metadata: { taskId },
+    const previousAssigned = new Set(previousTask?.assignedTo || [])
+    const newlyAssigned = normalized.assignedTo.filter(uid => !previousAssigned.has(uid))
+
+    if (newlyAssigned.length > 0) {
+      await notifyTaskAssignment({
+        taskId,
+        taskTitle: normalized.title,
+        assignedTo: newlyAssigned,
+        assignableMembers,
       })
-    }))
+    } else {
+      await Promise.all(normalized.assignedTo.map(uid => {
+        const member = assignableMembers.find(m => m.uid === uid)
+        return createNotification({
+          type: 'task',
+          titre: 'Tâche modifiée',
+          detail: normalized.title,
+          cible: member?.name || '',
+          route: '/tasks',
+          targetUserId: uid,
+          targetUserEmail: member?.email || null,
+          metadata: { taskId },
+        })
+      }))
+    }
   }, [assignableMembers])
 
   const updateTaskStatus = useCallback(async (task, status) => {
