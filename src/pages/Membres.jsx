@@ -275,7 +275,8 @@ export default function Membres({ user, userData }) {
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
         </div>
-        <div className="member-role-filter" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+        <div className="member-role-filter" data-active={roleFilter} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+          <span className="member-role-filter-indicator" aria-hidden="true" />
           {[
             { key: 'all', label: 'Tous', count: membres.length },
             { key: 'staff', label: 'Staff', count: staffCount },
@@ -291,12 +292,15 @@ export default function Membres({ user, userData }) {
                   border: 'none',
                   borderRadius: 10,
                   padding: '8px 6px',
-                  background: active ? C.teal : 'transparent',
+                  background: 'transparent',
                   color: active ? '#fff' : C.t2,
                   fontSize: 'var(--font-xs)',
                   fontWeight: 800,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
+                  position: 'relative',
+                  zIndex: 1,
+                  transition: 'color .18s ease',
                 }}
               >
                 {item.label} <span style={{ opacity: active ? 0.9 : 0.65 }}>{item.count}</span>

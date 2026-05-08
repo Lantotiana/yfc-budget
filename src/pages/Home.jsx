@@ -31,7 +31,7 @@ const modules = [
     type: 'split',
     label: 'Presence et evenement',
     items: [
-      { path: '/presences', Icon: CalendarCheck, label: 'Presences', color: '#7c3aed' },
+      { path: '/presences', Icon: CalendarCheck, label: 'Présences', color: '#7c3aed' },
       { path: '/evenements', Icon: CalendarDays, label: 'Events', color: '#f59e0b' },
     ],
   },
@@ -340,7 +340,7 @@ export default function Home({ user, userData }) {
                       cursor: 'pointer',
                       position: 'relative',
                       overflow: 'hidden',
-                      textAlign: 'left',
+                      textAlign: 'center',
                       boxShadow: `0 14px 30px ${item.color}2E`,
                       minHeight: 124,
                     }}
@@ -355,7 +355,7 @@ export default function Home({ user, userData }) {
                         pointerEvents: 'none',
                       }}
                     />
-                    <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, position: 'relative' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', position: 'relative' }}>
                       <item.Icon size={18} color="#fff" />
                     </div>
                     <div style={{ fontSize: 'var(--font-xs)', fontWeight: 800, color: '#fff', lineHeight: 1.25, position: 'relative' }}>{item.label}</div>

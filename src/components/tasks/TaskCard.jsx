@@ -3,7 +3,7 @@ import DueDateBadge from './DueDateBadge'
 import PriorityBadge from './PriorityBadge'
 import { TASK_STATUS_LABELS, initials } from '../../utils/taskUtils'
 
-export default function TaskCard({ task, onOpen, assignableMembers = [], draggable = false, onDragStart, dragging = false }) {
+export default function TaskCard({ task, onOpen, assignableMembers = [], draggable = false, onDragStart, dragging = false, highlighted = false }) {
   const names = Array.isArray(task.assignedToNames) ? task.assignedToNames : []
   const assignedPeople = (task.assignedTo || []).map((uid, index) => {
     const member = assignableMembers.find(item => item.uid === uid)
@@ -18,7 +18,8 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
   return (
     <button
       type="button"
-      className={`task-card${dragging ? ' dragging' : ''}`}
+      className={`task-card${dragging ? ' dragging' : ''}${highlighted ? ' highlighted' : ''}`}
+      data-task-id={task.id}
       onClick={() => onOpen(task)}
       draggable={draggable}
       onDragStart={event => onDragStart?.(event, task)}

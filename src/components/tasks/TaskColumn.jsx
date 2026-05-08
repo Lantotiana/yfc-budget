@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import TaskCard from './TaskCard'
 
-export default function TaskColumn({ column, tasks, onOpen, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, onDragStart, onDropTask }) {
+export default function TaskColumn({ column, tasks, onOpen, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, highlightedTaskId, onDragStart, onDropTask }) {
   const [dragOver, setDragOver] = useState(false)
 
   function handleDragOver(event) {
@@ -42,6 +42,7 @@ export default function TaskColumn({ column, tasks, onOpen, assignableMembers, c
             assignableMembers={assignableMembers}
             draggable={canDrag}
             dragging={draggingTaskId === task.id}
+            highlighted={highlightedTaskId === task.id}
             onDragStart={onDragStart}
           />
         ))}

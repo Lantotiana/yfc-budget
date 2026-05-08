@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
-import { Bell, CalendarCheck, CalendarDays, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
+import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 
 const typeIcon = {
@@ -13,6 +13,7 @@ const typeIcon = {
   document: FolderOpen,
   message: MessageCircle,
   mention: MessageCircle,
+  task: ClipboardList,
   profil: Settings,
   admin: UserRound,
 }
@@ -31,6 +32,7 @@ const typeColor = {
   documents: '#06b6d4',
   message: '#10b981',
   mention: '#10b981',
+  task: '#16b5a3',
   profil: '#64748b',
   admin: '#64748b',
 }
@@ -146,6 +148,13 @@ export default function Notifications({ user }) {
     }, {})
   }, [visibleNotifications])
 
+  function getNotificationRoute(notif) {
+    if (!notif.route) return ''
+    const taskId = notif.metadata?.taskId
+    if (notif.route === '/tasks' && taskId) return `/tasks?task=${encodeURIComponent(taskId)}`
+    return notif.route
+  }
+
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
@@ -178,7 +187,10 @@ export default function Notifications({ user }) {
               return (
                 <button
                   key={notif.id}
-                  onClick={() => notif.route && navigate(notif.route)}
+                  onClick={() => {
+                    const route = getNotificationRoute(notif)
+                    if (route) navigate(route)
+                  }}
                   type="button"
                   style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 14, padding: '13px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                 >

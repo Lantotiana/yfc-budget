@@ -55,7 +55,7 @@ async function notifyTaskAssignment({ taskId, taskTitle, assignedTo, assignableM
     titre: "Une tâche est assignée à toi",
     detail: taskTitle,
     cible: member.name || '',
-    route: '/tasks',
+    route: `/tasks?task=${taskId}`,
     targetUserId: member.uid,
     targetUserEmail: member.email || null,
     metadata: { taskId },
@@ -67,7 +67,7 @@ async function notifyTaskAssignment({ taskId, taskTitle, assignedTo, assignableM
       titre: `Tâche assignée à ${assignedNames.join(', ')}`,
       detail: taskTitle,
       cible: assignedNames.join(', '),
-      route: '/tasks',
+      route: `/tasks?task=${taskId}`,
       metadata: { taskId },
     })
   }
@@ -233,7 +233,7 @@ export default function useTasks({ user, userData } = {}) {
           titre: 'Tâche modifiée',
           detail: normalized.title,
           cible: member?.name || '',
-          route: '/tasks',
+          route: `/tasks?task=${taskId}`,
           targetUserId: uid,
           targetUserEmail: member?.email || null,
           metadata: { taskId },
@@ -254,7 +254,7 @@ export default function useTasks({ user, userData } = {}) {
         titre: 'Tâche terminée',
         detail: task.title,
         cible: task.createdByName || '',
-        route: '/tasks',
+        route: `/tasks?task=${task.id}`,
         targetUserId: task.createdBy || null,
         metadata: { taskId: task.id },
       })

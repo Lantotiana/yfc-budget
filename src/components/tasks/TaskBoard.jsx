@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import TaskColumn from './TaskColumn'
 import TaskTabs from './TaskTabs'
 import TaskFilters from './TaskFilters'
@@ -33,10 +34,13 @@ export default function TaskBoard({
   archiveTask,
 }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ search: '', assignee: 'all', priority: 'all', mine: false, overdue: false })
+  const [activeTab, setActiveTab] = useState('todo')
   const [selectedTask, setSelectedTask] = useState(null)
   const [creating, setCreating] = useState(false)
   const [draggingTask, setDraggingTask] = useState(null)
+  const [highlightedTaskId, setHighlightedTaskId] = useState('')
   const [toast, setToast] = useState('')
   const canCreate = canCreateTasks(user)
   const canDrag = Boolean(user?.uid)
@@ -48,6 +52,36 @@ export default function TaskBoard({
     window.addEventListener('yfc-open-task-create', openCreate)
     return () => window.removeEventListener('yfc-open-task-create', openCreate)
   }, [canCreate])
+
+  useEffect(() => {
+    const taskId = searchParams.get('task')
+    if (!taskId || tasks.length === 0) return
+    const task = tasks.find(item => item.id === taskId)
+    if (!task) return
+
+    if (task.status) setActiveTab(task.status)
+    setHighlightedTaskId(taskId)
+
+    const scrollTimer = window.setTimeout(() => {
+      document.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }, 180)
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedTaskId('')
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('task')
+        return next
+      }, { replace: true })
+    }, 2600)
+
+    return () => {
+      window.clearTimeout(scrollTimer)
+      window.clearTimeout(clearTimer)
+    }
+  }, [searchParams, setSearchParams, tasks])
 
   const filteredTasks = useMemo(() => {
     const term = norm(filters.search)
@@ -106,10 +140,10 @@ export default function TaskBoard({
       </div>
 
       <div className="tasks-summary">
-        <div><span>À faire</span><strong>{counters.todo}</strong></div>
-        <div><span>En cours</span><strong>{counters.in_progress}</strong></div>
-        <div><span>Terminé</span><strong>{counters.done}</strong></div>
-        <div className={counters.overdue ? 'danger' : ''}><span>En retard</span><strong>{counters.overdue}</strong></div>
+        <button type="button" className="summary-todo" onClick={() => setActiveTab('todo')}><span>À faire</span><strong>{counters.todo}</strong></button>
+        <button type="button" className="summary-progress" onClick={() => setActiveTab('in_progress')}><span>En cours</span><strong>{counters.in_progress}</strong></button>
+        <button type="button" className="summary-done" onClick={() => setActiveTab('done')}><span>Terminé</span><strong>{counters.done}</strong></button>
+        <div className="summary-overdue"><span>En retard</span><strong>{counters.overdue}</strong></div>
       </div>
 
       <TaskFilters filters={filters} setFilters={setFilters} assignableMembers={assignableMembers} compact={!isDesktop} />
@@ -133,6 +167,7 @@ export default function TaskBoard({
               onCreate={() => setCreating(true)}
               canDrag={canDrag}
               draggingTaskId={draggingTask?.id}
+              highlightedTaskId={highlightedTaskId}
               onDragStart={handleDragStart}
               onDropTask={handleDropTask}
             />
@@ -141,8 +176,11 @@ export default function TaskBoard({
       ) : (
         <TaskTabs
           tasksByStatus={filteredByStatus}
+          active={activeTab}
+          setActive={setActiveTab}
           onOpen={setSelectedTask}
           assignableMembers={assignableMembers}
+          highlightedTaskId={highlightedTaskId}
           canCreate={canCreate}
           onCreate={() => setCreating(true)}
         />
