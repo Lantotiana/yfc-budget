@@ -19,6 +19,35 @@ const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
 const SHEET_SYNC_ROLES = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
+function getPushErrorMessage(reason) {
+  switch (reason) {
+    case 'missing-vapid-key':
+      return 'Cle Web Push manquante cote projet'
+    case 'permission-denied':
+      return 'Autorisation de notification refusee'
+    case 'permission-not-granted':
+      return 'Autorisation de notification non accordee'
+    case 'unsupported':
+      return 'Navigateur ou telephone non compatible'
+    case 'insecure-context':
+      return 'Les notifications push demandent un site HTTPS'
+    case 'functions-not-deployed':
+      return 'Cloud Functions non deployees pour les notifications'
+    case 'functions-unavailable':
+      return 'Cloud Functions indisponibles pour le moment'
+    case 'service-worker-registration-failed':
+      return 'Impossible d enregistrer le service worker'
+    case 'token-subscribe-failed':
+      return 'Impossible de creer le token de notification'
+    case 'missing-token':
+      return 'Token de notification introuvable'
+    case 'token-sync-failed':
+      return 'Impossible de synchroniser cet appareil'
+    default:
+      return 'Impossible d activer les notifications'
+  }
+}
+
 export default function Parametres({ user, userData, setUserData }) {
   const navigate = useNavigate()
   const { dark, toggle, C } = useTheme()
@@ -109,9 +138,9 @@ export default function Parametres({ user, userData, setUserData }) {
       if (result.ok) flash('Notifications téléphone activées')
       else if (result.reason === 'missing-vapid-key') flash('Clé Web Push manquante côté projet', false)
       else if (result.reason === 'permission-denied') flash('Autorisation de notification refusée', false)
-      else flash('Impossible d’activer les notifications', false)
+      else flash('Impossible d activer les notifications', false)
     } catch {
-      flash('Impossible d’activer les notifications', false)
+      flash('Impossible d activer les notifications', false)
     }
     setPushLoading(false)
   }
@@ -122,9 +151,9 @@ export default function Parametres({ user, userData, setUserData }) {
       await disablePushNotifications()
       const status = await getPushAvailability()
       setPushStatus(status)
-      flash('Notifications téléphone désactivées sur cet appareil')
+      flash('Notifications telephone desactivees sur cet appareil')
     } catch {
-      flash('Impossible de désactiver les notifications', false)
+      flash('Impossible de desactiver les notifications', false)
     }
     setPushLoading(false)
   }
@@ -570,3 +599,4 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
+
