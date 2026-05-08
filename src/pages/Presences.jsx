@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { createNotification } from '../notifications'
 
 export default function Presences({ user, userData }) {
   const { t } = useTranslation()
@@ -104,6 +105,14 @@ export default function Presences({ user, userData }) {
         date: newEventForm.date,
         tags: newEventForm.tags,
         createdAt: new Date().toISOString(),
+      })
+      await createNotification({
+        type: 'presence',
+        titre: 'Nouvel événement de présence créé',
+        detail: `${newEventForm.titre.trim()} - ${toDisplayDate(newEventForm.date)}`,
+        cible: newEventForm.titre.trim(),
+        route: `/presences?presence=${ref.id}`,
+        metadata: { presenceId: ref.id },
       })
       setShowNewEvent(false)
       setNewEventForm({ titre: '', date: new Date().toISOString().slice(0, 10), tags: ['Membre'] })

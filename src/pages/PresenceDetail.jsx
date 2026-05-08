@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { ArrowLeft, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
+import { ArrowLeft, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { createNotification } from '../notifications'
 
 export default function PresenceDetail({ user, userData }) {
   const { t } = useTranslation()
@@ -26,6 +27,7 @@ export default function PresenceDetail({ user, userData }) {
   const [editForm, setEditForm] = useState(null)
   const [savingEdit, setSavingEdit] = useState(false)
   const [isSharingReport, setIsSharingReport] = useState(false)
+  const [presenceLocked, setPresenceLocked] = useState(true)
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
@@ -80,7 +82,22 @@ export default function PresenceDetail({ user, userData }) {
   const presencePercent = tagFilteredMembres.length ? Math.round((presentCount / tagFilteredMembres.length) * 100) : 0
   const progressColor = presencePercent < 40 ? C.coral : presencePercent < 75 ? C.amber : C.teal
 
+  useEffect(() => {
+    setPresenceLocked(true)
+    return () => setPresenceLocked(true)
+  }, [id])
+
+  function togglePresenceLock() {
+    if (presenceLocked) {
+      if (!window.confirm('Voulez-vous vraiment modifier la présence ?')) return
+      setPresenceLocked(false)
+      return
+    }
+    setPresenceLocked(true)
+  }
+
   async function togglePresence(membre) {
+    if (presenceLocked) return
     const docId = `${id}_${membre.id}`
     const nowPresent = !presences[membre.id]
     setSaving(membre.id)
@@ -93,6 +110,14 @@ export default function PresenceDetail({ user, userData }) {
         membreNomPrefere: membre.nomPrefere || '',
         present: nowPresent,
         updatedAt: new Date().toISOString(),
+      })
+      await createNotification({
+        type: 'presence',
+        titre: nowPresent ? 'Présence marquée' : 'Présence retirée',
+        detail: `${membre.nom} ${membre.prenoms || ''} - ${event?.titre || ''}`.trim(),
+        cible: membre.nom,
+        route: `/presences/${id}`,
+        metadata: { presenceId: id, membreId: membre.id },
       })
       setPresences(prev => ({ ...prev, [membre.id]: nowPresent }))
     } catch (e) { console.error(e) }
@@ -120,6 +145,14 @@ export default function PresenceDetail({ user, userData }) {
         date: editForm.date,
         tags: editForm.tags,
       })
+      await createNotification({
+        type: 'presence',
+        titre: 'Événement de présence modifié',
+        detail: `${editForm.titre.trim()} - ${toDisplayDate(editForm.date)}`,
+        cible: editForm.titre.trim(),
+        route: `/presences?presence=${id}`,
+        metadata: { presenceId: id },
+      })
       setShowEdit(false)
     } catch (e) { console.error(e) }
     setSavingEdit(false)
@@ -128,6 +161,14 @@ export default function PresenceDetail({ user, userData }) {
   async function deleteEvent() {
     if (!window.confirm(`Supprimer "${event.titre}" ? Les données de présence seront conservées.`)) return
     await deleteDoc(doc(db, 'evenements', id))
+    await createNotification({
+      type: 'presence',
+      titre: 'Événement de présence supprimé',
+      detail: event.titre,
+      cible: event.titre,
+      route: '/presences',
+      metadata: { presenceId: id },
+    })
     navigate('/presences')
   }
 
@@ -143,6 +184,16 @@ export default function PresenceDetail({ user, userData }) {
 
   const desktopActions = useMemo(() => (
     <>
+      <button
+        type="button"
+        className="desktop-toolbar-btn secondary"
+        onClick={togglePresenceLock}
+        disabled={!event}
+        aria-label={presenceLocked ? 'Déverrouiller les présences' : 'Verrouiller les présences'}
+        title={presenceLocked ? 'Déverrouiller les présences' : 'Verrouiller les présences'}
+      >
+        {presenceLocked ? <Lock size={17} /> : <LockOpen size={17} />}
+      </button>
       <button
         type="button"
         className="desktop-toolbar-btn secondary"
@@ -164,7 +215,7 @@ export default function PresenceDetail({ user, userData }) {
         </button>
       )}
     </>
-  ), [event, isSharingReport, tagFilteredMembres.length])
+  ), [event, isSharingReport, presenceLocked, tagFilteredMembres.length])
 
   useEffect(() => {
     setToolbar({ actions: desktopActions })
@@ -280,6 +331,14 @@ export default function PresenceDetail({ user, userData }) {
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <button
+              onClick={togglePresenceLock}
+              title={presenceLocked ? 'Déverrouiller les présences' : 'Verrouiller les présences'}
+              aria-label={presenceLocked ? 'Déverrouiller les présences' : 'Verrouiller les présences'}
+              style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${presenceLocked ? C.bord : C.teal + '55'}`, background: presenceLocked ? C.surf : C.tealD, color: presenceLocked ? C.t2 : C.teal, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {presenceLocked ? <Lock size={16} /> : <LockOpen size={16} />}
+            </button>
+            <button
               onClick={openEdit}
               style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
@@ -347,7 +406,7 @@ export default function PresenceDetail({ user, userData }) {
                 background: present ? `${C.teal}0D` : C.surf,
                 border: `1px solid ${present ? C.teal + '40' : C.bord}`,
                 borderRadius: 16, padding: '12px 14px', marginBottom: 8,
-                cursor: isSaving ? 'wait' : 'pointer',
+                cursor: presenceLocked ? 'default' : (isSaving ? 'wait' : 'pointer'),
                 transition: 'background .2s, border-color .2s, opacity .2s',
                 opacity: isSaving ? 0.6 : 1,
               }}
@@ -358,7 +417,7 @@ export default function PresenceDetail({ user, userData }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
               </div>
-              <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1)', transform: present ? 'scale(1)' : 'scale(0.9)' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s', transform: present ? 'scale(1)' : 'scale(0.9)', opacity: presenceLocked ? 0.58 : 1 }}>
                 {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
               </div>
             </div>

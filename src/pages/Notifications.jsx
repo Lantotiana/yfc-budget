@@ -118,7 +118,7 @@ export default function Notifications({ user }) {
 
     const unread = notifications.filter(notif => {
       if (notif.targetUserId && notif.targetUserId !== user.uid) return false
-      if (notif.targetUserEmail && notif.targetUserEmail !== user.email) return false
+      if (notif.targetUserEmail && notif.targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
       return !(notif.readBy || []).includes(user.uid)
     })
     if (unread.length === 0) return
@@ -135,7 +135,7 @@ export default function Notifications({ user }) {
   const visibleNotifications = useMemo(
     () => notifications.filter(notif => {
       if (notif.targetUserId && notif.targetUserId !== user?.uid) return false
-      if (notif.targetUserEmail && notif.targetUserEmail !== user?.email) return false
+      if (notif.targetUserEmail && notif.targetUserEmail.toLowerCase() !== (user?.email || '').toLowerCase()) return false
       return true
     }),
     [notifications, user?.uid, user?.email]

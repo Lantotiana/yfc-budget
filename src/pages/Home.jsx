@@ -157,19 +157,19 @@ export default function Home({ user, userData }) {
 
   useEffect(() => {
     if (!user?.uid) return
-    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(20))
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(150))
     return onSnapshot(q, snap => {
       const unread = snap.docs.filter(d => {
         const targetUserId = d.data().targetUserId
         const targetUserEmail = d.data().targetUserEmail
         if (targetUserId && targetUserId !== user.uid) return false
-        if (targetUserEmail && targetUserEmail !== user.email) return false
+        if (targetUserEmail && targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
         const readBy = d.data().readBy || []
         return !readBy.includes(user.uid)
       })
       setNotifCount(unread.length)
     }, () => setNotifCount(0))
-  }, [user?.uid])
+  }, [user?.uid, user?.email])
 
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()

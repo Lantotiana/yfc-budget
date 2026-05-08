@@ -141,7 +141,7 @@ export default function Membres({ user, userData }) {
           titre: 'Nouveau membre ajouté',
           detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
           cible: form.nom.trim(),
-          route: '/membres',
+          route: `/membres?membre=${ref.id}`,
           metadata: { membreId: ref.id },
         })
       } else {
@@ -157,6 +157,14 @@ export default function Membres({ user, userData }) {
           const userSnap = await getDocs(query(collection(db, 'users'), where('email', '==', form.email.trim())))
           if (!userSnap.empty) await updateDoc(userSnap.docs[0].ref, { staffRole })
         }
+        await createNotification({
+          type: 'membre',
+          titre: 'Membre modifié',
+          detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
+          cible: form.nom.trim(),
+          route: `/membres?membre=${sheet.id}`,
+          metadata: { membreId: sheet.id },
+        })
       }
       closeSheet()
     } catch(e) { console.error(e) }
@@ -172,6 +180,7 @@ export default function Membres({ user, userData }) {
       detail: `${confirmDel.nom || ''} ${confirmDel.prenoms || ''}`.trim(),
       cible: confirmDel.nom || '',
       route: '/membres',
+      metadata: { membreId: confirmDel.id },
     })
     setConfirmDel(null)
   }
@@ -245,6 +254,14 @@ export default function Membres({ user, userData }) {
     setAvailableTags(next)
     setNewTagInput('')
     await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+    await createNotification({
+      type: 'membre',
+      titre: 'Tag membre ajouté',
+      detail: tag,
+      cible: tag,
+      route: '/membres',
+      metadata: { tag },
+    })
   }
 
   async function removeAvailableTag(tag) {
@@ -252,6 +269,14 @@ export default function Membres({ user, userData }) {
     const next = availableTags.filter(t => t !== tag)
     setConfirmDeleteTag(null)
     await setDoc(doc(db, 'appSettings', 'membreTags'), { list: next })
+    await createNotification({
+      type: 'membre',
+      titre: 'Tag membre supprimé',
+      detail: tag,
+      cible: tag,
+      route: '/membres',
+      metadata: { tag },
+    })
   }
 
 

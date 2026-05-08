@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bell,
   CalendarCheck,
@@ -15,6 +15,8 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { db } from '../../firebase'
 import { ADMIN_EMAIL } from '../../constants'
 import { normalizeAccessText } from '../../utils/access'
 
@@ -55,6 +57,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
   const navigate = useNavigate()
   const location = useLocation()
   const [search, setSearch] = useState('')
+  const [notifCount, setNotifCount] = useState(0)
 
   const displayName = userData?.nom || user?.displayName || user?.email || 'Staff'
   const initials = displayName.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
@@ -74,6 +77,20 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
     if (path.startsWith('/notifications')) return 'Notifications'
     return 'Dashboard'
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(150))
+    return onSnapshot(q, snap => {
+      const unread = snap.docs.filter(d => {
+        const data = d.data()
+        if (data.targetUserId && data.targetUserId !== user.uid) return false
+        if (data.targetUserEmail && data.targetUserEmail.toLowerCase() !== (user.email || '').toLowerCase()) return false
+        return !(data.readBy || []).includes(user.uid)
+      })
+      setNotifCount(unread.length)
+    }, () => setNotifCount(0))
+  }, [user?.uid, user?.email])
 
   const results = useMemo(() => {
     const term = norm(search)
@@ -188,8 +205,13 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
       </div>
 
       <div className="desktop-top-actions">
-        <button type="button" className="desktop-icon-btn" onClick={() => navigate('/notifications')} aria-label="Notifications">
+        <button type="button" className="desktop-icon-btn" onClick={() => navigate('/notifications')} aria-label="Notifications" style={{ position: 'relative' }}>
           <Bell size={18} />
+          {notifCount > 0 && (
+            <span style={{ position: 'absolute', top: -3, right: -3, minWidth: 17, height: 17, padding: '0 4px', borderRadius: 999, background: '#f43f5e', color: '#fff', fontSize: 10, fontWeight: 900, lineHeight: '17px', textAlign: 'center', border: '2px solid var(--surf)' }}>
+              {notifCount > 9 ? '9+' : notifCount}
+            </span>
+          )}
         </button>
         <button type="button" className="desktop-icon-btn" onClick={() => navigate('/messages')} aria-label="Messages">
           <MessageCircle size={18} />
