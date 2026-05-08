@@ -435,10 +435,12 @@ export default function Parametres({ user, userData, setUserData }) {
             </div>
           )}
         </div>
-
-
-
         <div style={section}>
+          {msg.text && (
+            <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontSize: 'var(--font-sm)', fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
+              {msg.text}
+            </div>
+          )}
           <div style={sectionLabel}>Notifications téléphone</div>
           <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 4 }}>
             Recevoir les notifications même quand l’app est fermée
@@ -455,20 +457,21 @@ export default function Parametres({ user, userData, setUserData }) {
                     : 'Les notifications push ne sont pas encore activées sur cet appareil.'}
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={handleEnablePush}
-              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled}
-              style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.6 : 1 }}
-            >
-              {pushLoading ? 'Activation...' : pushStatus.enabled ? 'Autorise' : 'Activer'}
-            </button>
+          <button
+            type="button"
+            onClick={handleEnablePush}
+            disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled}
+            style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: 'none', background: pushStatus.enabled ? C.tealD : C.teal, color: pushStatus.enabled ? C.teal : '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10, opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.72 : 1 }}
+          >
+            {pushLoading ? 'Activation...' : pushStatus.enabled ? 'Autorise' : 'Activer'}
+          </button>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button
               type="button"
               onClick={handleRefreshPush}
               disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled}
-              style={{ padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
             >
               Synchroniser
             </button>
@@ -476,7 +479,7 @@ export default function Parametres({ user, userData, setUserData }) {
               type="button"
               onClick={handleDisablePush}
               disabled={pushLoading || !pushStatus.supported || !pushStatus.enabled}
-              style={{ padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.coralD}`, background: C.coralD, color: C.coral, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.coralD}`, background: C.coralD, color: C.coral, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
             >
               Désactiver
             </button>
@@ -607,6 +610,9 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
+
+
+
 
 
 

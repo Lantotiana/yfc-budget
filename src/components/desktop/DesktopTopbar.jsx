@@ -31,7 +31,7 @@ const searchableItems = [
   { label: 'Événements', path: '/evenements', Icon: CalendarDays, keywords: 'agenda calendrier date lieu planning' },
   { label: 'Tâches', path: '/tasks', Icon: ClipboardList, keywords: 'kanban tache todo deadline priorite assigne' },
   { label: 'Messages staff', path: '/messages', Icon: MessageCircle, keywords: 'message annonce discussion mention' },
-  { label: 'Documents', path: '/documents', Icon: FileText, keywords: 'fichier document upload pdf image' },
+  { label: 'Documents et matériels', path: '/documents', Icon: FileText, keywords: 'fichier document upload pdf image materiel stock emprunt retour inventaire' },
   { label: 'Paramètres', path: '/parametres', Icon: Settings, keywords: 'profil thème mot de passe réglages' },
   { label: 'Administration', path: '/admin', Icon: ShieldCheck, keywords: 'admin approbation utilisateurs roles' },
   { label: 'Synchronisation Google Sheets', path: '/admin', Icon: FileSpreadsheet, keywords: 'sheet sheets google synchroniser sync spreadsheet' },
@@ -71,7 +71,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
     if (path.startsWith('/evenements')) return 'Événements'
     if (path.startsWith('/tasks')) return 'Tâches'
     if (path.startsWith('/messages')) return 'Messages'
-    if (path.startsWith('/documents')) return 'Documents'
+    if (path.startsWith('/documents')) return 'Documents et matériels'
     if (path.startsWith('/assistant')) return 'Assistant IA'
     if (path.startsWith('/parametres')) return 'Paramètres'
     if (path.startsWith('/admin')) return 'Administration'

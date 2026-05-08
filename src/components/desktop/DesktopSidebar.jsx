@@ -28,7 +28,7 @@ const baseItems = [
   { path: '/evenements', label: 'Événements', Icon: CalendarDays },
   { path: '/tasks', label: 'Tâches', Icon: ClipboardList },
   { path: '/messages', label: 'Messages', Icon: MessageCircle },
-  { path: '/documents', label: 'Documents', Icon: FileText },
+  { path: '/documents', label: 'Documents et matériels', Icon: FileText },
   { path: '/assistant', label: 'Assistant IA', Icon: Bot },
   { path: '/parametres', label: 'Paramètres', Icon: Settings },
 ]
