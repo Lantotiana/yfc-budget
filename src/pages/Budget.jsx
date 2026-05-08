@@ -32,7 +32,6 @@ export default function Budget({ user, userData }) {
     const unsub = onSnapshot(q, snapshot => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       data.sort((a, b) => {
-        if (a.date !== b.date) return b.date.localeCompare(a.date)
         const aCreated = a.createdAt || ''
         const bCreated = b.createdAt || ''
         return bCreated.localeCompare(aCreated)
@@ -136,7 +135,7 @@ export default function Budget({ user, userData }) {
   return (
     <div className="sin budget-page" style={{ minHeight: '100vh', background: C.bg }}>
       {/* Header */}
-      <div className="f1 textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+      <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
         <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
         <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Young For Christ</div>
       </div>

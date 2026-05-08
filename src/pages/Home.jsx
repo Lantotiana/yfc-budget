@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, FolderOpen, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
@@ -27,9 +27,16 @@ function getFallbackVerseIndex(dayKey) {
 const modules = [
   { path: '/dashboard', Icon: LayoutDashboard, label: 'Tableau de bord', desc: 'Vue globale',          color: '#2563eb' },
   { path: '/budget',    Icon: Wallet,          label: 'Budget YFC',      desc: 'Entrées & dépenses',   color: '#10b981' },
-  { path: '/presences', Icon: CalendarCheck,   label: 'Présences',       desc: 'Suivi Alimbavaka',     color: '#7c3aed' },
+  {
+    type: 'split',
+    label: 'Presence et evenement',
+    items: [
+      { path: '/presences', Icon: CalendarCheck, label: 'Presences', color: '#7c3aed' },
+      { path: '/evenements', Icon: CalendarDays, label: 'Evenements', color: '#f59e0b' },
+    ],
+  },
   { path: '/membres',   Icon: Users,           label: 'Membres',         desc: 'Liste des membres',    color: '#f43f5e' },
-  { path: '/evenements',Icon: CalendarDays,    label: 'Événements',      desc: 'Agenda YFC',           color: '#f59e0b' },
+  { path: '/tasks',     Icon: ClipboardList,   label: 'Tâches',          desc: 'Kanban staff',         color: '#16b5a3' },
   { path: '/documents', Icon: FolderOpen,      label: 'Documents',       desc: 'Ressources partagées', color: '#06b6d4' },
 ]
 
@@ -311,7 +318,51 @@ export default function Home({ user, userData }) {
       {/* Modules grid */}
       <div style={{ padding: '0 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {modules.map((m, i) => (
+          {modules.map(m => (
+            m.type === 'split' ? (
+              <div
+                key={m.label}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 8,
+                }}
+              >
+                {m.items.map(item => (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    style={{
+                      background: item.color,
+                      border: '0',
+                      borderRadius: 18,
+                      padding: '18px 10px',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      textAlign: 'left',
+                      boxShadow: `0 14px 30px ${item.color}2E`,
+                      minHeight: 124,
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: 'radial-gradient(circle at 12px 12px, rgba(255,255,255,.24) 0 2px, transparent 2.5px), linear-gradient(135deg, rgba(255,255,255,.16) 0 1px, transparent 1px)',
+                        backgroundSize: '28px 28px, 18px 18px',
+                        opacity: .55,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, position: 'relative' }}>
+                      <item.Icon size={18} color="#fff" />
+                    </div>
+                    <div style={{ fontSize: 'var(--font-xs)', fontWeight: 800, color: '#fff', lineHeight: 1.25, position: 'relative' }}>{item.label}</div>
+                  </button>
+                ))}
+              </div>
+            ) : (
               <button
                 key={m.path}
                 onClick={() => navigate(m.path)}
@@ -343,6 +394,7 @@ export default function Home({ user, userData }) {
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: '#fff', marginBottom: 3, lineHeight: 1.3, position: 'relative' }}>{m.label}</div>
                 <div style={{ fontSize: 'var(--font-xs)', color: 'rgba(255,255,255,.78)', position: 'relative' }}>{m.desc}</div>
               </button>
+            )
           ))}
         </div>
       </div>

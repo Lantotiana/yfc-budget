@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { Upload, Download, Trash2, FileText, File, X } from 'lucide-react'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 const MAX_SIZE_MB = 20
 
 function fmtSize(bytes) {
@@ -24,6 +25,7 @@ function FileIcon({ type }) {
 
 export default function Documents({ user, userData }) {
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const fileRef = useRef()
   const [documents, setDocuments] = useState([])
   const [uploading, setUploading] = useState(false)
@@ -31,6 +33,22 @@ export default function Documents({ user, userData }) {
   const [confirmDel, setConfirmDel] = useState(null)
   const [error, setError] = useState('')
   const [preview, setPreview] = useState(null) // { url, nom, type }
+
+  const desktopActions = useMemo(() => (
+    <button
+      type="button"
+      onClick={() => fileRef.current?.click()}
+      disabled={uploading}
+      className="desktop-toolbar-btn"
+    >
+      <Upload size={16} /> {uploading ? 'Envoi...' : 'Ajouter'}
+    </button>
+  ), [uploading])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
 
   useEffect(() => {
     const q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'))
@@ -109,7 +127,7 @@ export default function Documents({ user, userData }) {
     <div className="page-container sin" style={{ background: C.bg, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
 
       {/* Header */}
-      <div className="f1 textured-page-header" style={{ '--header-color': '#06b6d4', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#06b6d4', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>

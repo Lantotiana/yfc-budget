@@ -9,11 +9,12 @@ import { collection, doc, onSnapshot, updateDoc, setDoc } from 'firebase/firesto
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
-import { sameEmail } from '../utils/access'
+import { normalizeAccessText, sameEmail } from '../utils/access'
 import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
+const SHEET_SYNC_ROLES = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
 export default function Parametres({ user, userData, setUserData }) {
   const navigate = useNavigate()
@@ -41,6 +42,7 @@ export default function Parametres({ user, userData, setUserData }) {
   const appUrl = 'https://young-for-christ.com/'
 
   const isAdmin = user?.email === ADMIN_EMAIL
+  const canOpenAdminTools = isAdmin || SHEET_SYNC_ROLES.includes(normalizeAccessText(memberRole.staffRole))
 
   function flash(text, ok = true) {
     setMsg({ text, ok })
@@ -185,7 +187,7 @@ export default function Parametres({ user, userData, setUserData }) {
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div className="textured-page-header" style={{ '--header-color': '#64748b', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+      <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#64748b', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
       </div>
 
@@ -339,7 +341,7 @@ export default function Parametres({ user, userData, setUserData }) {
         </div>
 
         {/* Mot de passe */}
-        {user?.email === ADMIN_EMAIL && (
+        {canOpenAdminTools && (
           <div style={section}>
             <div style={sectionLabel}>Administration</div>
             <button

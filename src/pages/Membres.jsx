@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
@@ -7,6 +7,8 @@ import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import { ADMIN_EMAIL, STAFF_ROLES, DEFAULT_MEMBRE_TAGS } from '../constants'
+import Portal from '../components/Portal'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '', tags: ['Membre'] }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
@@ -38,6 +40,7 @@ function getAvatarColor(member) {
 
 export default function Membres({ user, userData }) {
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const [membres, setMembres] = useState([])
   const [staffEmails, setStaffEmails] = useState(() => new Set())
   const [loading, setLoading] = useState(true)
@@ -205,6 +208,24 @@ export default function Membres({ user, userData }) {
 
   const isEditing = sheet && sheet !== 'add'
 
+  const desktopActions = useMemo(() => (
+    <>
+      {membres.length > 0 && (
+        <button className="desktop-toolbar-btn secondary" type="button" onClick={exportExcel} aria-label="Exporter les membres">
+          <Download size={16} />
+        </button>
+      )}
+      <button className="desktop-toolbar-btn" type="button" onClick={openAdd}>
+        <Plus size={16} /> Ajouter
+      </button>
+    </>
+  ), [membres])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
+
   async function addNewTag() {
     const tag = newTagInput.trim()
     if (!tag || availableTags.includes(tag)) return
@@ -234,7 +255,7 @@ export default function Membres({ user, userData }) {
 
       {/* Header */}
       <div className="textured-page-header" style={{ '--header-color': '#f43f5e', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="desktop-page-header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
             <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Membres</div>
             <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{membres.length} membre{membres.length !== 1 ? 's' : ''}</div>
@@ -321,11 +342,12 @@ export default function Membres({ user, userData }) {
 
       {/* Bottom sheet */}
       {sheet !== null && (
+        <Portal>
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
             <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>{isEditing ? 'Modifier le membre' : 'Nouveau membre'}</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div><label className="form-label">Nom *</label><input type="text" value={form.nom} onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))} placeholder="Nom de famille" className="form-input" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label className="form-label">Prénoms</label><input type="text" value={form.prenoms} onChange={e => setForm(prev => ({ ...prev, prenoms: e.target.value }))} placeholder="Prénoms" className="form-input" /></div>
@@ -419,7 +441,7 @@ export default function Membres({ user, userData }) {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
+            <div className="dialog-footer" style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
               <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>
               <button onClick={save} disabled={saving || !form.nom.trim()} style={{ flex: 2, padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim()) ? 0.6 : 1 }}>
                 {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
@@ -427,10 +449,12 @@ export default function Membres({ user, userData }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Tag settings modal */}
       {showTagSettings && (
+        <Portal>
         <div className="modal-overlay" onClick={() => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
             <h3 className="dialog-title" style={{ marginBottom: '1rem' }}>Paramètres des tags</h3>
@@ -497,10 +521,12 @@ export default function Membres({ user, userData }) {
             </button>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Confirmation suppression */}
       {confirmDel && (
+        <Portal>
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce membre ?</h3>
@@ -511,6 +537,7 @@ export default function Membres({ user, userData }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   )

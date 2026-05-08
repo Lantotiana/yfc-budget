@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { toDisplayDate } from '../utils'
-import { ChevronRight, Tag } from 'lucide-react'
+import { CalendarPlus, ChevronRight, Tag } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
+import Portal from '../components/Portal'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 export default function Presences({ user, userData }) {
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const navigate = useNavigate()
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
@@ -17,6 +20,17 @@ export default function Presences({ user, userData }) {
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0, 10), tags: ['Membre'] })
   const [savingEvent, setSavingEvent] = useState(false)
+
+  const desktopActions = useMemo(() => (
+    <button className="desktop-toolbar-btn" type="button" onClick={() => setShowNewEvent(true)}>
+      <CalendarPlus size={16} /> Nouvelle
+    </button>
+  ), [])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
 
   useEffect(() => {
     const q = query(collection(db, 'evenements'), orderBy('date', 'desc'))
@@ -88,7 +102,7 @@ export default function Presences({ user, userData }) {
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
-      <div className="textured-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+      <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
@@ -151,11 +165,12 @@ export default function Presences({ user, userData }) {
       </div>
 
       {showNewEvent && (
+        <Portal>
         <div className="bottom-sheet-overlay" onClick={() => setShowNewEvent(false)}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
             <h2 className="dialog-title mb-16">Nouvelle réunion</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="form-label">Nom de la réunion *</label>
                 <input
@@ -228,6 +243,7 @@ export default function Presences({ user, userData }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   )

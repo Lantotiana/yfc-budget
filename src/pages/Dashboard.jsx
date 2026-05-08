@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Users } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, ClipboardList, TrendingUp, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
+import useMediaQuery from '../hooks/useMediaQuery'
+import DesktopStatCard from '../components/desktop/DesktopStatCard'
+import DesktopSectionCard from '../components/desktop/DesktopSectionCard'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { getDueDateStatus } from '../utils/taskUtils'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -74,17 +79,20 @@ function StatCard({ label, value, col, colD, Icon, type, onClick }) {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ user }) {
   const navigate = useNavigate()
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [transactions, setTransactions] = useState([])
   const [membres, setMembres] = useState([])
   const [evenements, setEvenements] = useState([])
+  const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let loaded = 0
-    const done = () => { if (++loaded === 3) setLoading(false) }
+    const done = () => { if (++loaded === 4) setLoading(false) }
 
     const u1 = onSnapshot(query(collection(db, 'transactions'), orderBy('date', 'desc')), snap => {
       setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })))
@@ -98,14 +106,45 @@ export default function Dashboard() {
       setEvenements(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       done()
     })
+    const u4 = onSnapshot(query(collection(db, 'tasks'), orderBy('deadline', 'asc')), snap => {
+      setTasks(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.archived !== true))
+      done()
+    }, () => done())
 
-    return () => { u1(); u2(); u3() }
+    return () => { u1(); u2(); u3(); u4() }
   }, [])
 
   const totalEntrees = transactions.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
   const totalDepenses = transactions.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
   const solde = totalEntrees - totalDepenses
   const recentTransactions = transactions.slice(0, 10)
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const monthTx = transactions.filter(t => t.date?.startsWith(currentMonth))
+  const monthEntrees = monthTx.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+  const staffCount = membres.filter(m => m.staff === true || m.staffRole).length
+  const nextEvent = evenements.find(e => (e.dateFin || e.dateDebut || '') >= new Date().toISOString().slice(0, 10))
+  const taskStats = useMemo(() => ({
+    todo: tasks.filter(t => t.status === 'todo').length,
+    inProgress: tasks.filter(t => t.status === 'in_progress').length,
+    done: tasks.filter(t => t.status === 'done').length,
+    overdue: tasks.filter(t => getDueDateStatus(t.deadline, t.status).isOverdue).length,
+    mine: tasks.filter(t => t.assignedTo?.includes(user?.uid)).length,
+    dueSoon: tasks.filter(t => {
+      const due = getDueDateStatus(t.deadline, t.status)
+      return t.status !== 'done' && (due.color === 'orange' || due.color === 'red')
+    }).length,
+  }), [tasks, user?.uid])
+
+  const desktopActions = useMemo(() => (
+    <button type="button" className="desktop-toolbar-btn" onClick={() => navigate('/budget')}>
+      Voir le budget
+    </button>
+  ), [navigate])
+
+  useEffect(() => {
+    setToolbar({ title: 'Tableau de bord YFC', actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
 
   const { upcomingCount, finishedCount } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -115,6 +154,108 @@ export default function Dashboard() {
       return acc
     }, { upcomingCount: 0, finishedCount: 0 })
   }, [evenements])
+
+  if (isDesktop) {
+    return (
+      <div className="desktop-dashboard-page">
+        <div className="desktop-page-intro desktop-hide-page-header">
+          <div>
+            <span>Vue générale</span>
+            <h2>Tableau de bord YFC</h2>
+            <p>Suivi centralisé des membres, finances, événements et activités staff.</p>
+          </div>
+          <button type="button" onClick={() => navigate('/budget')}>Voir le budget</button>
+        </div>
+
+        <div className="desktop-stats-grid">
+          <DesktopStatCard label="Membres" value={membres.length} detail={`${staffCount} staffs`} color="#0cc0df" Icon={Users} onClick={() => navigate('/membres')} />
+          <DesktopStatCard label="Solde actuel" value={fmt(solde)} detail="Toutes périodes" color={solde >= 0 ? '#22c55e' : '#ef4444'} Icon={Wallet} onClick={() => navigate('/budget')} />
+          <DesktopStatCard label="Entrées du mois" value={fmt(monthEntrees)} detail="Mois courant" color="#22c55e" Icon={ArrowDownLeft} onClick={() => navigate('/budget')} />
+          <DesktopStatCard label="Tâches actives" value={taskStats.todo + taskStats.inProgress} detail={`${taskStats.overdue} en retard`} color={taskStats.overdue ? '#ef4444' : '#0cc0df'} Icon={ClipboardList} onClick={() => navigate('/tasks')} />
+        </div>
+
+        <div className="desktop-dashboard-grid">
+          <DesktopSectionCard title="Budget">
+            <div className="desktop-budget-summary">
+              <div><span>Total entrées</span><strong className="positive">{fmt(totalEntrees)}</strong></div>
+              <div><span>Total sorties</span><strong className="negative">{fmt(totalDepenses)}</strong></div>
+              <div><span>Solde</span><strong className={solde >= 0 ? 'positive' : 'negative'}>{fmt(solde)}</strong></div>
+            </div>
+          </DesktopSectionCard>
+
+          <DesktopSectionCard title="Événements">
+            <div className="desktop-next-event">
+              <CalendarDays size={24} />
+              <div>
+                <strong>{nextEvent?.nom || 'Aucun événement à venir'}</strong>
+                <span>{nextEvent ? `${toDisplayDate(nextEvent.dateDebut)}${nextEvent.lieu ? ` - ${nextEvent.lieu}` : ''}` : 'Ajoutez un événement pour alimenter le planning.'}</span>
+              </div>
+            </div>
+            <div className="desktop-mini-metrics">
+              <span>{upcomingCount} à venir</span>
+              <span>{finishedCount} terminés</span>
+            </div>
+          </DesktopSectionCard>
+
+          <DesktopSectionCard title="Tâches" action={<button type="button" onClick={() => navigate('/tasks')}>Ouvrir</button>}>
+            <div className="desktop-task-summary">
+              <div><span>À faire</span><strong>{taskStats.todo}</strong></div>
+              <div><span>En cours</span><strong>{taskStats.inProgress}</strong></div>
+              <div><span>Terminé</span><strong>{taskStats.done}</strong></div>
+              <div className={taskStats.overdue ? 'danger' : ''}><span>En retard</span><strong>{taskStats.overdue}</strong></div>
+            </div>
+            <div className="desktop-mini-metrics">
+              <span>{taskStats.mine} mes tâches</span>
+              <span>{taskStats.dueSoon} échéance proche</span>
+            </div>
+          </DesktopSectionCard>
+
+          <DesktopSectionCard title="Transactions récentes" className="desktop-wide-card" action={<button type="button" onClick={() => navigate('/budget')}>Voir tout</button>}>
+            <div className="desktop-activity-list">
+              {loading ? (
+                <div className="desktop-empty">Chargement...</div>
+              ) : recentTransactions.length === 0 ? (
+                <div className="desktop-empty">Aucune transaction</div>
+              ) : recentTransactions.map(tx => {
+                const isEntree = tx.type === 'entree'
+                return (
+                  <button key={tx.id} type="button" onClick={() => navigate('/budget')} className="desktop-activity-row">
+                    <span className={isEntree ? 'income' : 'expense'}>{isEntree ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}</span>
+                    <div>
+                      <strong>{tx.motif || 'Transaction'}</strong>
+                      <small>{toDisplayDate(tx.date)}</small>
+                    </div>
+                    <em className={isEntree ? 'positive' : 'negative'}>{isEntree ? '+' : '-'}{fmt(tx.montant)}</em>
+                  </button>
+                )
+              })}
+            </div>
+          </DesktopSectionCard>
+
+          <DesktopSectionCard title="Membres" action={<button type="button" onClick={() => navigate('/membres')}>Gérer</button>}>
+            <div className="desktop-member-preview">
+              {membres.slice(0, 5).map(m => (
+                <button key={m.id} type="button" onClick={() => navigate('/membres')}>
+                  <span>{(m.nom || '?')[0].toUpperCase()}</span>
+                  <div>
+                    <strong>{m.nom} {m.prenoms}</strong>
+                    <small>{m.staffRole || (m.staff ? 'Staff' : 'Membre')}</small>
+                  </div>
+                </button>
+              ))}
+              {membres.length === 0 && <div className="desktop-empty">Aucun membre</div>}
+            </div>
+          </DesktopSectionCard>
+
+          <DesktopSectionCard title="Performance" className="desktop-accent-card">
+            <TrendingUp size={26} />
+            <strong>{transactions.length}</strong>
+            <span>opérations budget enregistrées</span>
+          </DesktopSectionCard>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="sin" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: C.bg }}>
@@ -161,8 +302,19 @@ export default function Dashboard() {
           </button>
         </div>
 
+        <button onClick={() => navigate('/tasks')} className="border-none text-left cursor-pointer f4" style={{ borderRadius: 18, padding: '15px 16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 12, background: 'rgba(12,192,223,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ClipboardList size={16} color="#0cc0df" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 800, color: C.t1 }}>Tâches</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{taskStats.todo} à faire - {taskStats.inProgress} en cours - {taskStats.mine} à moi</div>
+          </div>
+          {taskStats.overdue > 0 && <div style={{ padding: '5px 8px', borderRadius: 999, background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: 'var(--font-xs)', fontWeight: 900 }}>{taskStats.overdue} retard</div>}
+        </button>
+
         {/* Transactions récentes */}
-        <div className="f4" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="f5" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexShrink: 0 }}>
             <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
             <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 'var(--font-xs)', color: C.amber, fontWeight: 500 }}>

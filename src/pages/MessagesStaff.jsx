@@ -20,6 +20,7 @@ import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
 import { canModerateStaffMessagesRole, normalizeAccessText, sameEmail } from '../utils/access'
 import { useTheme } from '../context/ThemeContext'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 const INITIAL_LIMIT = 30
 const PAGE_SIZE = 30
@@ -105,6 +106,7 @@ function formatAnnouncementDate(value) {
 
 export default function MessagesStaff({ user, userData }) {
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const listRef = useRef(null)
   const inputRef = useRef(null)
   const composerRef = useRef(null)
@@ -151,6 +153,32 @@ export default function MessagesStaff({ user, userData }) {
     announcementTime: '',
     location: '',
   })
+
+  const desktopActions = useMemo(() => (
+    <>
+      <button
+        type="button"
+        className="desktop-toolbar-btn secondary"
+        onClick={() => setShowAnnouncementForm(true)}
+        aria-label="Creer une annonce"
+      >
+        <Megaphone size={17} />
+      </button>
+      <button
+        type="button"
+        className="desktop-toolbar-btn secondary"
+        onClick={() => setShowSearch(v => !v)}
+        aria-label="Rechercher un message"
+      >
+        <Search size={17} />
+      </button>
+    </>
+  ), [])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
@@ -1160,7 +1188,7 @@ export default function MessagesStaff({ user, userData }) {
 
   return (
     <div className="staff-messages-page sin" style={{ background: C.bg }}>
-      <header className="staff-messages-header textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+      <header className="staff-messages-header textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button

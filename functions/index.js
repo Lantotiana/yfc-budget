@@ -1,11 +1,53 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https')
+const { onDocumentWritten } = require('firebase-functions/v2/firestore')
 const { defineSecret } = require('firebase-functions/params')
 const admin = require('firebase-admin')
+const { prepareGoogleSheet, syncAllToGoogleSheets, runTriggeredSync } = require('./googleSheetsSync')
 
 admin.initializeApp()
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY')
+const googleServiceAccountEmail = defineSecret('GOOGLE_SERVICE_ACCOUNT_EMAIL')
+const googlePrivateKey = defineSecret('GOOGLE_PRIVATE_KEY')
+const googleSheetId = defineSecret('GOOGLE_SHEET_ID')
 const db = admin.firestore()
+const sheetSecrets = {
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: googleServiceAccountEmail,
+  GOOGLE_PRIVATE_KEY: googlePrivateKey,
+  GOOGLE_SHEET_ID: googleSheetId,
+}
+const sheetSecretList = [googleServiceAccountEmail, googlePrivateKey, googleSheetId]
+
+function normalizeAccessText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+async function requireSheetSyncAccess(request) {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Login required')
+
+  const userSnap = await db.collection('users').doc(request.auth.uid).get()
+  const user = userSnap.exists ? userSnap.data() : {}
+  const email = String(user.email || request.auth.token.email || '').trim().toLowerCase()
+  if (email === 'lterazaf@gmail.com') return
+
+  const allowed = new Set(['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin'])
+  const directRole = normalizeAccessText(user.staffRole || user.role)
+  if (allowed.has(directRole)) return
+
+  if (email) {
+    const memberSnap = await db.collection('membres').where('email', '==', email).limit(1).get()
+    if (!memberSnap.empty) {
+      const memberRole = normalizeAccessText(memberSnap.docs[0].data().staffRole)
+      if (allowed.has(memberRole)) return
+    }
+  }
+
+  throw new HttpsError('permission-denied', 'Google Sheets sync is restricted to YFC leaders')
+}
 
 async function callGemini(prompt, { temperature = 0.7, maxOutputTokens = 900 } = {}) {
   const apiKey = geminiApiKey.value()
@@ -399,3 +441,44 @@ exports.generateAppAssistant = onCall({ secrets: [geminiApiKey] }, async request
 
   return { text }
 })
+
+exports.prepareGoogleSheets = onCall({ secrets: sheetSecretList }, async request => {
+  await requireSheetSyncAccess(request)
+  try {
+    await prepareGoogleSheet(sheetSecrets)
+    return { ok: true, lastSync: new Date().toISOString() }
+  } catch (e) {
+    console.error('prepareGoogleSheets failed', e)
+    throw new HttpsError('internal', e.message || 'Unable to prepare Google Sheet')
+  }
+})
+
+exports.syncAllToGoogleSheets = onCall({ secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' }, async request => {
+  await requireSheetSyncAccess(request)
+  try {
+    return await syncAllToGoogleSheets(sheetSecrets, { action: 'manualSync' })
+  } catch (e) {
+    console.error('syncAllToGoogleSheets failed', e)
+    throw new HttpsError('internal', e.message || 'Unable to sync Google Sheet')
+  }
+})
+
+exports.syncMembresToGoogleSheets = onDocumentWritten(
+  { document: 'membres/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
+  event => runTriggeredSync(sheetSecrets, event, 'membres'),
+)
+
+exports.syncTransactionsToGoogleSheets = onDocumentWritten(
+  { document: 'transactions/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
+  event => runTriggeredSync(sheetSecrets, event, 'transactions'),
+)
+
+exports.syncPresenceEventsToGoogleSheets = onDocumentWritten(
+  { document: 'evenements/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
+  event => runTriggeredSync(sheetSecrets, event, 'evenements'),
+)
+
+exports.syncPresenceDetailsToGoogleSheets = onDocumentWritten(
+  { document: 'presences/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
+  event => runTriggeredSync(sheetSecrets, event, 'presences'),
+)

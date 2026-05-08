@@ -19,8 +19,11 @@ import Documents from './pages/Documents'
 import Notifications from './pages/Notifications'
 import Fampaherezana from './pages/Fampaherezana'
 import MessagesStaff from './pages/MessagesStaff'
+import Tasks from './pages/Tasks'
 import Admin from './components/Admin'
 import VerifyReceipt from './pages/VerifyReceipt'
+import AppLayout from './layouts/AppLayout'
+import useMediaQuery from './hooks/useMediaQuery'
 import './App.css'
 
 function ScrollToTop() {
@@ -118,8 +121,9 @@ function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const swipeStart = useRef(null)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const baseVisible = Boolean(user && location.pathname !== '/login' && !location.pathname.startsWith('/verify'))
-  const visible = baseVisible
+  const visible = baseVisible && !isDesktop
 
   useEffect(() => {
     if (visible) document.body.setAttribute('data-bottom-nav', 'true')
@@ -204,6 +208,16 @@ function BottomNav({ user }) {
   )
 }
 
+function AppPage({ user, userData, children }) {
+  return (
+    <ProtectedRoute user={user}>
+      <AppLayout user={user} userData={userData}>
+        {children}
+      </AppLayout>
+    </ProtectedRoute>
+  )
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
@@ -257,83 +271,88 @@ export default function App() {
         <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Home user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/budget" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Budget user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/budget/:detailType" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Budget user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/membres" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Membres user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/presences" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Presences user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/presences/:id" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <PresenceDetail user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/dashboard" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Dashboard user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/evenements" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Evenements user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/parametres" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Parametres
               user={user}
               userData={userData}
               setUserData={setUserData}
             />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/documents" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Documents user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
+        } />
+        <Route path="/tasks" element={
+          <AppPage user={user} userData={userData}>
+            <Tasks user={user} userData={userData} />
+          </AppPage>
         } />
         <Route path="/notifications" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Notifications user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/messages" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <MessagesStaff user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/admin" element={
-          <ProtectedRoute user={user}>
-            <Admin user={user} />
-          </ProtectedRoute>
+          <AppPage user={user} userData={userData}>
+            <Admin user={user} userData={userData} />
+          </AppPage>
         } />
         <Route path="/assistant" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Fampaherezana user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="/fampaherezana" element={
-          <ProtectedRoute user={user}>
+          <AppPage user={user} userData={userData}>
             <Fampaherezana user={user} userData={userData} />
-          </ProtectedRoute>
+          </AppPage>
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
@@ -6,11 +6,14 @@ import { ArrowLeft, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
+import Portal from '../components/Portal'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 export default function PresenceDetail({ user, userData }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const [event, setEvent] = useState(null)
   const [membres, setMembres] = useState([])
   const [presences, setPresences] = useState({})
@@ -136,6 +139,36 @@ export default function PresenceDetail({ user, userData }) {
     return m.nomPrefere?.trim() || m.prenoms?.trim() || m.nom
   }
 
+  const desktopActions = useMemo(() => (
+    <>
+      <button
+        type="button"
+        className="desktop-toolbar-btn secondary"
+        onClick={openEdit}
+        disabled={!event}
+        aria-label="Modifier la reunion"
+      >
+        <Pencil size={17} />
+      </button>
+      {tagFilteredMembres.length > 0 && (
+        <button
+          type="button"
+          className="desktop-toolbar-btn secondary"
+          onClick={partager}
+          disabled={isSharingReport}
+          aria-label="Partager"
+        >
+          <Share2 size={17} />
+        </button>
+      )}
+    </>
+  ), [event, isSharingReport, tagFilteredMembres.length])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
+
   function buildReportText(presents, absents) {
     const tagLabel = eventTags.length ? ` [${eventTags.join(', ')}]` : ''
     let t = `Présence ${event.titre}${tagLabel} — ${formatDateFR(event.date)}\n\n`
@@ -228,7 +261,7 @@ export default function PresenceDetail({ user, userData }) {
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
-      <div className="textured-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+      <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
           <button
             onClick={() => navigate('/presences')}
@@ -333,11 +366,12 @@ export default function PresenceDetail({ user, userData }) {
 
       {/* Edit sheet */}
       {showEdit && editForm && (
+        <Portal>
         <div className="bottom-sheet-overlay" onClick={() => setShowEdit(false)}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
             <h2 className="dialog-title mb-16">Modifier la réunion</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="form-label">Nom *</label>
                 <input
@@ -394,7 +428,7 @@ export default function PresenceDetail({ user, userData }) {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: '1.5rem' }}>
+            <div className="dialog-footer" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: '1.5rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <button
                   onClick={deleteEvent}
@@ -416,6 +450,7 @@ export default function PresenceDetail({ user, userData }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
 

@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { sendBrevoEmail } from '../services/brevoService'
-import { ArrowLeft, Check, ShieldCheck, X } from 'lucide-react'
-import { db } from '../firebase'
+import { ArrowLeft, Check, ExternalLink, FileSpreadsheet, RefreshCw, ShieldCheck, X } from 'lucide-react'
+import { cloudFunctions, db } from '../firebase'
 import { ADMIN_EMAIL, STAFF_ROLES } from '../constants'
 import { useTheme } from '../context/ThemeContext'
+import { normalizeAccessText, sameEmail } from '../utils/access'
 
 const APP_URL = 'https://young-for-christ.com'
 const LOGO_URL = 'https://young-for-christ.com/logo_yfc.png'
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1bmvdcxi8NS4_RTPPT4cXusAVMgORMqB08RtxvNBOqz8/edit?gid=0#gid=0'
+const SHEET_SYNC_ROLES = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
 function buildApprovalHtml(nom) {
   return `<!DOCTYPE html>
@@ -256,16 +260,107 @@ function UserSheet({ u, onClose, onSave, C }) {
   )
 }
 
-export default function Admin({ user }) {
+function canUseSheetSync(role) {
+  return SHEET_SYNC_ROLES.includes(normalizeAccessText(role))
+}
+
+function GoogleSheetsSyncPanel({ C, canSync }) {
+  const [status, setStatus] = useState({ state: 'idle', message: 'Pas encore synchronise', data: null })
+  const [busy, setBusy] = useState(null)
+
+  async function callFunction(name, label) {
+    if (!canSync || busy) return
+    setBusy(name)
+    setStatus(prev => ({ ...prev, state: 'loading', message: `${label}...` }))
+    try {
+      const callable = httpsCallable(cloudFunctions, name)
+      const result = await callable({})
+      setStatus({ state: 'success', message: 'Succes', data: result.data || {} })
+    } catch (e) {
+      console.error(e)
+      setStatus(prev => ({ ...prev, state: 'error', message: e.message || 'Erreur de synchronisation' }))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const data = status.data || {}
+  const badgeColor = status.state === 'error' ? '#f43f5e' : status.state === 'success' ? '#10b981' : C.t3
+
+  return (
+    <section style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(12,192,223,0.14)', color: '#0cc0df', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <FileSpreadsheet size={18} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="card-title mt-0" style={{ marginBottom: 2 }}>Synchronisation Google Sheets</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>Firebase reste la source officielle des donnees.</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+        <button
+          type="button"
+          disabled={!canSync || busy}
+          onClick={() => callFunction('syncAllToGoogleSheets', 'Synchronisation')}
+          style={{ padding: '11px 10px', borderRadius: 12, border: 'none', background: '#0cc0df', color: '#fff', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: !canSync || busy ? 0.65 : 1 }}
+        >
+          <RefreshCw size={14} /> {busy === 'syncAllToGoogleSheets' ? 'Synchro...' : 'Synchroniser'}
+        </button>
+        <button
+          type="button"
+          disabled={!canSync || busy}
+          onClick={() => callFunction('prepareGoogleSheets', 'Preparation du fichier')}
+          style={{ padding: '11px 10px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf2, color: C.t1, fontWeight: 800, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', opacity: !canSync || busy ? 0.65 : 1 }}
+        >
+          Preparer
+        </button>
+      </div>
+
+      <a
+        href={GOOGLE_SHEET_URL}
+        target="_blank"
+        rel="noreferrer"
+        style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px', borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf2, color: C.t1, fontWeight: 700, textDecoration: 'none', fontSize: 'var(--font-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+      >
+        <ExternalLink size={14} /> Voir le Google Sheet
+      </a>
+
+      <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 'var(--font-xs)', color: C.t2, fontWeight: 700 }}>Statut</span>
+          <span style={{ fontSize: 'var(--font-xs)', color: badgeColor, fontWeight: 800 }}>{status.message}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 'var(--font-xs)', color: C.t2 }}>
+          <div>Derniere synchro<br /><strong style={{ color: C.t1 }}>{data.lastSync ? new Date(data.lastSync).toLocaleString('fr-FR') : '-'}</strong></div>
+          <div>Membres<br /><strong style={{ color: C.t1 }}>{data.membres ?? '-'}</strong></div>
+          <div>Operations budget<br /><strong style={{ color: C.t1 }}>{data.transactions ?? '-'}</strong></div>
+          <div>Evenements<br /><strong style={{ color: C.t1 }}>{data.events ?? '-'}</strong></div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default function Admin({ user, userData }) {
   const navigate = useNavigate()
   const { dark, C } = useTheme()
   const [users, setUsers] = useState([])
+  const [membres, setMembres] = useState([])
   const [sending, setSending] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), snap => {
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+    return () => unsub()
+  }, [])
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'membres'), snap => {
+      setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
     return () => unsub()
   }, [])
@@ -292,20 +387,22 @@ export default function Admin({ user }) {
 
   const enAttente = users.filter(u => u.approuve !== true)
   const approuves = users.filter(u => u.approuve === true)
+  const currentMember = membres.find(m => sameEmail(m.email, user?.email))
+  const canSyncSheets = user?.email === ADMIN_EMAIL || canUseSheetSync(userData?.staffRole || userData?.role || currentMember?.staffRole)
 
   const pendingItemBg = dark ? 'rgba(180,83,9,0.12)' : '#fef9ec'
   const pendingAvatarBg = dark ? 'rgba(180,83,9,0.2)' : '#fef3c7'
   const pendingColor = dark ? '#f59e0b' : '#b45309'
 
-  if (user?.email !== ADMIN_EMAIL) {
+  if (user?.email !== ADMIN_EMAIL && !canSyncSheets) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
-        <div className="textured-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
+        <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
           <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>Administration</div>
         </div>
         <div className="page-content">
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
-            Cette page est réservée à l'admin.
+            Cette page est reservee a l'administration.
           </div>
         </div>
       </div>
@@ -314,7 +411,7 @@ export default function Admin({ user }) {
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
-      <div className="textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
+      <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => navigate('/parametres')} className="header-action" style={{ width: 38, height: 38, borderRadius: 12, border: `1px solid ${C.bord}`, background: C.surf, color: C.t2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ArrowLeft size={18} />
@@ -330,6 +427,10 @@ export default function Admin({ user }) {
       </div>
 
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
+        <GoogleSheetsSyncPanel C={C} canSync={canSyncSheets} />
+
+        {user?.email === ADMIN_EMAIL && (
+        <>
         <section style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
           <div className="card-title mt-0">En attente ({enAttente.length})</div>
           {enAttente.length === 0 ? (
@@ -381,6 +482,8 @@ export default function Admin({ user }) {
             Un email est automatiquement envoyé lors de l'approbation d'un membre.
           </div>
         </section>
+        </>
+        )}
       </div>
 
       {selectedUser && (

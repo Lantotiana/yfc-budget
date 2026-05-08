@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Pin, Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import Portal from '../components/Portal'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 const EMPTY = { nom: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', lieu: '' }
 
 function useNow() {
@@ -53,6 +55,7 @@ function formatTimeRange(heureDebut, heureFin) {
 
 export default function Evenements() {
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const now = useNow()
   const [evenements, setEvenements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -147,11 +150,22 @@ export default function Evenements() {
 
   const isEditing = sheet && sheet !== 'add'
 
+  const desktopActions = useMemo(() => (
+    <button className="desktop-toolbar-btn" type="button" onClick={openAdd}>
+      <Plus size={16} /> Ajouter
+    </button>
+  ), [])
+
+  useEffect(() => {
+    setToolbar({ actions: desktopActions })
+    return () => setToolbar({ actions: null })
+  }, [desktopActions, setToolbar])
+
   return (
     <div className="page-container sin" style={{ background: C.bg, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
 
       {/* Header */}
-      <div className="f1 textured-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Événements</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{evenements.length} événement{evenements.length !== 1 ? 's' : ''}</div>
@@ -205,6 +219,7 @@ export default function Evenements() {
 
       {/* Bottom sheet */}
       {sheet !== null && (
+        <Portal>
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet" onClick={ev => ev.stopPropagation()}>
             <div className="bottom-sheet-handle" />
@@ -235,10 +250,12 @@ export default function Evenements() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Confirmation suppression */}
       {confirmDel && (
+        <Portal>
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title mb-8">Supprimer cet événement ?</h3>
@@ -249,6 +266,7 @@ export default function Evenements() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   )

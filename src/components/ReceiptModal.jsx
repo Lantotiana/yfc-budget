@@ -4,6 +4,7 @@ import { X, Download, Share2, Mail, Copy, Image, Loader } from 'lucide-react'
 import logoYfcAsset from '../assets/logo_yfc.png'
 import { sendBrevoEmail } from '../services/brevoService'
 import { useTheme } from '../context/ThemeContext'
+import useMediaQuery from '../hooks/useMediaQuery'
 import DonationReceiptPreview from './DonationReceiptPreview'
 import { getReceiptByEntryId, generateReceiptNumber, createReceipt, updateReceipt, markReceiptSent } from '../services/receiptService'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
@@ -188,6 +189,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/log
 
 export default function ReceiptModal({ tx, onClose, user, userData, currentMember }) {
   const { C } = useTheme()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const previewRef = useRef(null)
   const [step, setStep] = useState('loading')
   const [receipt, setReceipt] = useState(null)
@@ -436,16 +438,43 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
     )
   }
 
+  const overlayStyle = {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.55)',
+    zIndex: isDesktop ? 5200 : 300,
+    display: 'flex',
+    alignItems: isDesktop ? 'center' : 'flex-end',
+    justifyContent: 'center',
+    padding: isDesktop ? 24 : 0,
+    boxSizing: 'border-box',
+  }
+
+  const panelStyle = {
+    width: isDesktop ? 'min(620px, calc(100vw - 64px))' : '100%',
+    maxWidth: isDesktop ? 620 : 480,
+    maxHeight: isDesktop ? 'calc(100dvh - 64px)' : '92dvh',
+    background: C.bg,
+    borderRadius: isDesktop ? 24 : '20px 20px 0 0',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: isDesktop ? '0 28px 90px rgba(0,0,0,0.32)' : undefined,
+  }
+
+  const footerStyle = {
+    flexShrink: 0,
+    padding: isDesktop ? '14px 20px 18px' : '12px 20px calc(12px + env(safe-area-inset-bottom))',
+    borderTop: `1px solid ${C.bord}`,
+    background: C.bg,
+  }
+
   return createPortal(
     <div
-      style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:300,display:'flex',alignItems:'flex-end',justifyContent:'center'}}
+      style={overlayStyle}
       onClick={e=>{if(e.target===e.currentTarget)onClose()}}
     >
-      <div style={{
-        width:'100%', maxWidth:480, maxHeight:'92dvh',
-        background:C.bg, borderRadius:'20px 20px 0 0',
-        display:'flex', flexDirection:'column', overflow:'hidden',
-      }}>
+      <div style={panelStyle}>
         {/* Header */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px 12px',borderBottom:`1px solid ${C.bord}`,flexShrink:0}}>
           <div>
@@ -460,7 +489,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
         </div>
 
         {/* Content */}
-        <div style={{flex:1,overflowY:'auto',padding:'16px 20px',paddingBottom:'calc(16px + env(safe-area-inset-bottom))'}}>
+        <div style={{flex:1,minHeight:0,overflowY:'auto',padding:'16px 20px'}}>
 
           {/* Loading */}
           {step==='loading' && (
@@ -587,11 +616,6 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
                 </div>
               </div>
 
-              <button onClick={handleGenerate} disabled={saving}
-                className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none"
-                style={{padding:'13px',background:'var(--btn-primary-bg)',marginTop:4,opacity:saving?0.6:1,fontFamily:'inherit'}}>
-                {saving ? 'Enregistrement...' : receipt ? 'Enregistrer les modifications' : 'Générer le reçu'}
-              </button>
             </div>
           )}
 
@@ -632,22 +656,35 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
                 <div style={{textAlign:'center',fontSize:13,fontWeight:700,color:C.teal}}>{feedback}</div>
               )}
 
-              <div style={{display:'flex',gap:8}}>
-                {actionBtn('pdf',   <Download size={17}/>, 'PDF',     C.teal,   downloadPDF)}
-                {actionBtn('img',   <Image size={17}/>,    'Image',   C.violet, downloadImage)}
-                {actionBtn('share', <Share2 size={17}/>,   'Partager',C.amber,  shareReceipt)}
-                {actionBtn('email', <Mail size={17}/>,     'Email',   C.coral,  sendEmail)}
-                {actionBtn('copy',  <Copy size={17}/>,     'Copier',  C.t2,     copyText)}
-              </div>
-
-              <button onClick={openEditForm}
-                style={{background:'none',border:'none',color:C.t3,cursor:'pointer',fontSize:12,fontFamily:'inherit',padding:'4px 0',textAlign:'center'}}>
-                Modifier le reçu
-              </button>
             </div>
           )}
 
         </div>
+        {step === 'form' && (
+          <div style={footerStyle}>
+            <button onClick={handleGenerate} disabled={saving}
+              className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none"
+              style={{width:'100%',padding:'13px',background:'var(--btn-primary-bg)',opacity:saving?0.6:1,fontFamily:'inherit'}}>
+              {saving ? 'Enregistrement...' : receipt ? 'Enregistrer les modifications' : 'Générer le reçu'}
+            </button>
+          </div>
+        )}
+        {step === 'view' && receipt && (
+          <div style={footerStyle}>
+            <div style={{display:'flex',gap:8}}>
+              {actionBtn('pdf',   <Download size={17}/>, 'PDF',     C.teal,   () => downloadPDF())}
+              {actionBtn('img',   <Image size={17}/>,    'Image',   C.violet, () => downloadImage())}
+              {actionBtn('share', <Share2 size={17}/>,   'Partager',C.amber,  () => shareReceipt())}
+              {actionBtn('email', <Mail size={17}/>,     'Email',   C.coral,  () => sendEmail())}
+              {actionBtn('copy',  <Copy size={17}/>,     'Copier',  C.t2,     () => copyText())}
+            </div>
+
+            <button onClick={openEditForm}
+              style={{width:'100%',marginTop:8,background:'none',border:'none',color:C.t3,cursor:'pointer',fontSize:12,fontFamily:'inherit',padding:'4px 0',textAlign:'center'}}>
+              Modifier le reçu
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body

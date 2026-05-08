@@ -171,12 +171,12 @@ export default function TransactionList({
     const periodLabel = filterMonth
       ? `${MONTHS[parseInt(filterMonth.split('-')[1]) - 1]} ${filterMonth.split('-')[0]}`
       : 'Toutes périodes'
+    const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
     const wb = new ExcelJS.Workbook()
     wb.creator = 'YFC Budget'
-    const ws = wb.addWorksheet('Budget YFC')
-    ws.columns = [{ width: 14 }, { width: 26 }, { width: 32 }, { width: 22 }, { width: 20 }]
     const NC = 5
+    const COLS = [{ width: 14 }, { width: 26 }, { width: 32 }, { width: 22 }, { width: 20 }]
 
     function sc(cell, { bg, fg = 'FFFFFFFF', bold = false, size = 11, hAlign = 'left', numFmt = null } = {}) {
       if (bg) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
@@ -185,74 +185,118 @@ export default function TransactionList({
       if (numFmt) cell.numFmt = numFmt
     }
 
-    function addBanner(text, bg, fg = 'FFFFFFFF', size = 13, bold = true) {
-      const row = ws.addRow([text, '', '', '', ''])
-      ws.mergeCells(`A${row.number}:E${row.number}`)
+    function buildSheet(ws, rows, { headerBg, headerDark, dataBg, totalBg, label }) {
+      ws.columns = COLS
+      const addBanner = (text, bg, fg = 'FFFFFFFF', size = 13, bold = true) => {
+        const row = ws.addRow([text, '', '', '', ''])
+        ws.mergeCells(`A${row.number}:E${row.number}`)
+        row.height = bold ? 30 : 22
+        sc(row.getCell(1), { bg, fg, bold, size, hAlign: 'center' })
+      }
+      addBanner(`Budget YFC — ${label}`, 'FF5B4FCF', 'FFFFFFFF', 14)
+      addBanner(`Exporté le ${dateStr}  •  ${periodLabel}`, 'FFE8E4FB', 'FF4338CA', 10, false)
+      ws.addRow([])
+
+      const hRow = ws.addRow(['Date', 'Motif', 'Note', 'Ajouté par', 'Montant (Ar)'])
+      hRow.height = 20
+      for (let c = 1; c <= NC; c++)
+        sc(hRow.getCell(c), { bg: headerDark, bold: true, size: 10, hAlign: c === NC ? 'right' : 'left' })
+
+      if (rows.length === 0) {
+        const r = ws.addRow([`Aucune ${label.toLowerCase()}`, '', '', '', ''])
+        ws.mergeCells(`A${r.number}:E${r.number}`)
+        sc(r.getCell(1), { bg: 'FFFAFAFA', fg: 'FF9CA3AF', hAlign: 'center' })
+      }
+      rows.forEach(tx => {
+        const row = ws.addRow([toDisplayDate(tx.date), tx.motif || '', tx.note || '', tx.createdBy?.nom || '—', Number(tx.montant || 0)])
+        row.height = 19
+        for (let c = 1; c <= NC; c++)
+          sc(row.getCell(c), { bg: dataBg, fg: 'FF1F2937', size: 10, hAlign: c === NC ? 'right' : 'left', numFmt: c === NC ? '#,##0' : null })
+      })
+
+      const total = rows.reduce((s, t) => s + Number(t.montant || 0), 0)
+      const tRow = ws.addRow([`TOTAL ${label.toUpperCase()}`, '', '', '', total])
+      ws.mergeCells(`A${tRow.number}:D${tRow.number}`)
+      tRow.height = 26
+      sc(tRow.getCell(1), { bg: totalBg, bold: true, size: 12, hAlign: 'right' })
+      for (let c = 2; c <= 4; c++) tRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: totalBg } }
+      sc(tRow.getCell(5), { bg: totalBg, bold: true, size: 12, hAlign: 'right', numFmt: '#,##0' })
+    }
+
+    // Onglet Résumé
+    const wsResume = wb.addWorksheet('Résumé')
+    wsResume.columns = COLS
+    const addResumeBanner = (text, bg, fg = 'FFFFFFFF', size = 13, bold = true) => {
+      const row = wsResume.addRow([text, '', '', '', ''])
+      wsResume.mergeCells(`A${row.number}:E${row.number}`)
       row.height = bold ? 30 : 22
       sc(row.getCell(1), { bg, fg, bold, size, hAlign: 'center' })
     }
-
-    function addColHeaders(bg) {
-      const row = ws.addRow(['Date', 'Motif', 'Note', 'Ajouté par', 'Montant (Ar)'])
-      row.height = 20
-      for (let c = 1; c <= NC; c++)
-        sc(row.getCell(c), { bg, bold: true, size: 10, hAlign: c === NC ? 'right' : 'left' })
-    }
-
-    function addDataRow(tx, bg) {
-      const row = ws.addRow([toDisplayDate(tx.date), tx.motif || '', tx.note || '', tx.createdBy?.nom || '—', Number(tx.montant || 0)])
-      row.height = 19
-      for (let c = 1; c <= NC; c++)
-        sc(row.getCell(c), { bg, fg: 'FF1F2937', size: 10, hAlign: c === NC ? 'right' : 'left', numFmt: c === NC ? '#,##0' : null })
-    }
-
-    function addTotalRow(label, amount, bg) {
-      const row = ws.addRow([label, '', '', '', amount])
-      ws.mergeCells(`A${row.number}:D${row.number}`)
-      row.height = 26
-      sc(row.getCell(1), { bg, bold: true, size: 12, hAlign: 'right' })
-      for (let c = 2; c <= 4; c++) row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
-      sc(row.getCell(5), { bg, bold: true, size: 12, hAlign: 'right', numFmt: '#,##0' })
-    }
-
-    // Titre
-    const dateStr = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-    addBanner('Budget YFC — Young For Christ', 'FF5B4FCF', 'FFFFFFFF', 14)
-    addBanner(`Exporté le ${dateStr}  •  ${periodLabel}`, 'FFE8E4FB', 'FF4338CA', 10, false)
-    ws.addRow([])
-
-    // Entrées
-    addBanner(`ENTRÉES  (${entrees.length} transaction${entrees.length !== 1 ? 's' : ''})`, 'FF16A34A')
-    addColHeaders('FF166534')
-    if (entrees.length === 0) {
-      const r = ws.addRow(['Aucune entrée', '', '', '', ''])
-      ws.mergeCells(`A${r.number}:E${r.number}`)
-      sc(r.getCell(1), { bg: 'FFFAFAFA', fg: 'FF9CA3AF', hAlign: 'center' })
-    }
-    entrees.forEach(tx => addDataRow(tx, 'FFF0FDF4'))
-    addTotalRow('TOTAL ENTRÉES', totalEntrees, 'FF15803D')
-    ws.addRow([])
-
-    // Dépenses
-    addBanner(`DÉPENSES  (${depenses.length} transaction${depenses.length !== 1 ? 's' : ''})`, 'FFDC2626')
-    addColHeaders('FF991B1B')
-    if (depenses.length === 0) {
-      const r = ws.addRow(['Aucune dépense', '', '', '', ''])
-      ws.mergeCells(`A${r.number}:E${r.number}`)
-      sc(r.getCell(1), { bg: 'FFFAFAFA', fg: 'FF9CA3AF', hAlign: 'center' })
-    }
-    depenses.forEach(tx => addDataRow(tx, 'FFFEF2F2'))
-    addTotalRow('TOTAL DÉPENSES', totalDepenses, 'FFB91C1C')
-    ws.addRow([])
-
-    // Solde
+    addResumeBanner('Budget YFC — Young For Christ', 'FF5B4FCF', 'FFFFFFFF', 14)
+    addResumeBanner(`Exporté le ${dateStr}  •  ${periodLabel}`, 'FFE8E4FB', 'FF4338CA', 10, false)
+    wsResume.addRow([])
+    const resumeRows = [
+      ['ENTRÉES', entrees.length, totalEntrees],
+      ['DÉPENSES', depenses.length, totalDepenses],
+    ]
+    const rHeader = wsResume.addRow(['', 'Nombre', 'Montant (Ar)'])
+    rHeader.height = 20
+    sc(rHeader.getCell(2), { bg: 'FF374151', bold: true, size: 10, hAlign: 'center' })
+    sc(rHeader.getCell(3), { bg: 'FF374151', bold: true, size: 10, hAlign: 'right' })
+    resumeRows.forEach(([lbl, nb, mt]) => {
+      const isE = lbl === 'ENTRÉES'
+      const bg = isE ? 'FFF0FDF4' : 'FFFEF2F2'
+      const fg = isE ? 'FF15803D' : 'FFB91C1C'
+      const r = wsResume.addRow([lbl, nb, mt])
+      r.height = 24
+      sc(r.getCell(1), { bg, fg, bold: true, size: 11 })
+      sc(r.getCell(2), { bg, fg: 'FF1F2937', size: 11, hAlign: 'center' })
+      sc(r.getCell(3), { bg, fg: 'FF1F2937', size: 11, hAlign: 'right', numFmt: '#,##0' })
+    })
+    wsResume.addRow([])
     const soldeBg = solde >= 0 ? 'FF0D9370' : 'FFD63B5E'
-    const soldeRow = ws.addRow(['SOLDE', '', '', '', solde])
-    ws.mergeCells(`A${soldeRow.number}:D${soldeRow.number}`)
+    const soldeRow = wsResume.addRow(['SOLDE', '', solde])
+    wsResume.mergeCells(`A${soldeRow.number}:B${soldeRow.number}`)
     soldeRow.height = 34
     sc(soldeRow.getCell(1), { bg: soldeBg, bold: true, size: 14, hAlign: 'right' })
-    for (let c = 2; c <= 4; c++) soldeRow.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: soldeBg } }
-    sc(soldeRow.getCell(5), { bg: soldeBg, bold: true, size: 14, hAlign: 'right', numFmt: '#,##0' })
+    soldeRow.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: soldeBg } }
+    sc(soldeRow.getCell(3), { bg: soldeBg, bold: true, size: 14, hAlign: 'right', numFmt: '#,##0' })
+
+    // Onglet Entrées
+    buildSheet(wb.addWorksheet('Entrées'), entrees, {
+      headerDark: 'FF166534', dataBg: 'FFF0FDF4', totalBg: 'FF15803D', label: 'Entrées',
+    })
+
+    // Onglet Dépenses
+    buildSheet(wb.addWorksheet('Dépenses'), depenses, {
+      headerDark: 'FF991B1B', dataBg: 'FFFEF2F2', totalBg: 'FFB91C1C', label: 'Dépenses',
+    })
+
+    // Onglet Tout
+    const wsAll = wb.addWorksheet('Tout')
+    wsAll.columns = COLS
+    const addAllBanner = (text, bg, fg = 'FFFFFFFF', size = 13, bold = true) => {
+      const row = wsAll.addRow([text, '', '', '', ''])
+      wsAll.mergeCells(`A${row.number}:E${row.number}`)
+      row.height = bold ? 30 : 22
+      sc(row.getCell(1), { bg, fg, bold, size, hAlign: 'center' })
+    }
+    addAllBanner('Budget YFC — Toutes les transactions', 'FF5B4FCF', 'FFFFFFFF', 14)
+    addAllBanner(`Exporté le ${dateStr}  •  ${periodLabel}`, 'FFE8E4FB', 'FF4338CA', 10, false)
+    wsAll.addRow([])
+    const allHRow = wsAll.addRow(['Date', 'Type', 'Motif', 'Note', 'Ajouté par', 'Montant (Ar)'])
+    allHRow.height = 20
+    wsAll.columns = [{ width: 14 }, { width: 12 }, { width: 26 }, { width: 28 }, { width: 22 }, { width: 20 }]
+    ;[1,2,3,4,5,6].forEach(c => sc(allHRow.getCell(c), { bg: 'FF374151', bold: true, size: 10, hAlign: c === 6 ? 'right' : 'left' }))
+    searched.forEach(tx => {
+      const isE = tx.type === 'entree'
+      const bg = isE ? 'FFF0FDF4' : 'FFFEF2F2'
+      const typeLabel = isE ? 'Entrée' : 'Dépense'
+      const row = wsAll.addRow([toDisplayDate(tx.date), typeLabel, tx.motif || '', tx.note || '', tx.createdBy?.nom || '—', Number(tx.montant || 0)])
+      row.height = 19
+      ;[1,2,3,4,5].forEach(c => sc(row.getCell(c), { bg, fg: 'FF1F2937', size: 10 }))
+      sc(row.getCell(6), { bg, fg: isE ? 'FF15803D' : 'FFB91C1C', bold: true, size: 10, hAlign: 'right', numFmt: '#,##0' })
+    })
 
     const buffer = await wb.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
@@ -404,7 +448,7 @@ export default function TransactionList({
             <div className="tx-info">
               <div className="tx-motif">{tx.motif}</div>
               <div className="tx-date">{toDisplayDate(tx.date)}{tx.note ? ' · ' + tx.note : ''}</div>
-            {tx.createdBy && (
+              {tx.createdBy && (
                 <div className="tx-user">
                   {tx.createdBy.photoURL ? (
                     <img src={tx.createdBy.photoURL} alt="" className="tx-user-avatar" />
