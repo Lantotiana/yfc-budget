@@ -1,11 +1,14 @@
 import { Flag } from 'lucide-react'
-import { TASK_PRIORITY_LABELS } from '../../utils/taskUtils'
+import { useTranslation } from 'react-i18next'
+
+const PRIORITY_KEY = { low: 'tasks.priorityLow', medium: 'tasks.priorityMedium', high: 'tasks.priorityHigh' }
 
 export default function PriorityBadge({ priority = 'medium' }) {
+  const { t } = useTranslation()
   return (
     <span className={`tasks-badge priority-${priority}`}>
       <Flag size={13} />
-      {TASK_PRIORITY_LABELS[priority] || TASK_PRIORITY_LABELS.medium}
+      {t(PRIORITY_KEY[priority] || PRIORITY_KEY.medium)}
     </span>
   )
 }

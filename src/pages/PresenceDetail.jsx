@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { ArrowLeft, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
@@ -10,6 +11,7 @@ import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 export default function PresenceDetail({ user, userData }) {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { C } = useTheme()
@@ -252,7 +254,7 @@ export default function PresenceDetail({ user, userData }) {
   if (!event) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
-        <div style={{ textAlign: 'center', padding: '3rem', color: C.t2, fontSize: 'var(--font-sm)' }}>Chargement...</div>
+        <div style={{ textAlign: 'center', padding: '3rem', color: C.t2, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
       </div>
     )
   }
@@ -298,7 +300,7 @@ export default function PresenceDetail({ user, userData }) {
         {/* Stats + search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: tagFilteredMembres.length > 0 ? 12 : 0 }}>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>
-            <span style={{ fontWeight: 700, color: C.t1 }}>{presentCount}</span> / {tagFilteredMembres.length} présent{presentCount !== 1 ? 's' : ''}
+            <span style={{ fontWeight: 700, color: C.t1 }}>{presentCount}</span> / {tagFilteredMembres.length} {t('presences.presents')}
           </div>
         </div>
 
@@ -312,7 +314,7 @@ export default function PresenceDetail({ user, userData }) {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher un membre..."
+                placeholder={t('membres.rechercher')}
                 style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }}
               />
             </div>
@@ -327,11 +329,11 @@ export default function PresenceDetail({ user, userData }) {
       <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
         {membres.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
-            Aucun membre enregistré.
+            {t('membres.aucunMembre')}
           </div>
         ) : tagFilteredMembres.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
-            Aucun membre avec les tags sélectionnés.
+            {t('membres.aucunMembre')}
           </div>
         ) : filteredMembres.map(m => {
           const present = presences[m.id] === true
@@ -370,10 +372,10 @@ export default function PresenceDetail({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={() => setShowEdit(false)}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">Modifier la réunion</h2>
+            <h2 className="dialog-title mb-16">{t('common.edit')} {t('presences.evenement')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label className="form-label">Nom *</label>
+                <label className="form-label">{t('presences.nom')} *</label>
                 <input
                   type="text"
                   value={editForm.titre}
@@ -382,7 +384,7 @@ export default function PresenceDetail({ user, userData }) {
                 />
               </div>
               <div>
-                <label className="form-label">Date</label>
+                <label className="form-label">{t('presences.date')}</label>
                 <input
                   type="date"
                   value={editForm.date}
@@ -434,18 +436,18 @@ export default function PresenceDetail({ user, userData }) {
                   onClick={deleteEvent}
                   style={{ padding: '13px', borderRadius: 12, border: 'none', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
-                  <Trash2 size={14} /> Supprimer
+                  <Trash2 size={14} /> {t('common.delete')}
                 </button>
                 <button
                   onClick={saveEdit}
                   disabled={savingEdit || !editForm.titre.trim()}
                   style={{ padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEdit || !editForm.titre.trim()) ? 0.6 : 1 }}
                 >
-                  {savingEdit ? '...' : 'Enregistrer'}
+                  {savingEdit ? t('presences.enregistrement') : t('common.save')}
                 </button>
               </div>
               <button onClick={() => setShowEdit(false)} className="btn-secondary" style={{ width: '100%', padding: '13px' }}>
-                Annuler
+                {t('common.cancel')}
               </button>
             </div>
           </div>

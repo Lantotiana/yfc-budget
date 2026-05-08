@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import TaskCard from './TaskCard'
 import { TASK_COLUMNS } from '../../utils/taskUtils'
 
 export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, assignableMembers, highlightedTaskId, canCreate, onCreate }) {
+  const { t } = useTranslation()
   const column = TASK_COLUMNS.find(item => item.key === active) || TASK_COLUMNS[0]
   const tasks = tasksByStatus[active] || []
 
@@ -16,7 +18,7 @@ export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, ass
             className={active === item.key ? 'active' : ''}
             onClick={() => setActive(item.key)}
           >
-            {item.label}
+            {t(item.labelKey)}
             <span>{tasksByStatus[item.key]?.length || 0}</span>
           </button>
         ))}
@@ -24,8 +26,8 @@ export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, ass
       <div className="task-tab-list">
         {tasks.length === 0 ? (
           <div className="task-empty-state">
-            <p>{column.empty}</p>
-            {canCreate && column.key !== 'done' && <button type="button" onClick={onCreate}>Créer une tâche</button>}
+            <p>{t(column.emptyKey)}</p>
+            {canCreate && column.key !== 'done' && <button type="button" onClick={onCreate}>{t('tasks.newTaskTitle')}</button>}
           </div>
         ) : tasks.map(task => (
           <TaskCard

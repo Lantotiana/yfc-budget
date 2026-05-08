@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
@@ -42,6 +43,7 @@ export default function TransactionList({
   onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true, onShared,
   user, userData, currentMember
 }) {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const [selected, setSelected] = useState(null)
   const [receiptTx, setReceiptTx] = useState(null)
@@ -376,7 +378,7 @@ export default function TransactionList({
         await navigator.share({ text })
       } else {
         await navigator.clipboard.writeText(text)
-        setShareFeedback('Copié !')
+        setShareFeedback(t('common.copied'))
         setTimeout(() => setShareFeedback(''), 2500)
       }
       onShared?.({
@@ -392,14 +394,14 @@ export default function TransactionList({
   return (
     <>
       <div className="card">
-        <div className="card-title">Historique</div>
+        <div className="card-title">{t('budget.historique')}</div>
 
         <div className="tx-search-wrapper">
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher (motif, note, date, utilisateur)..."
+            placeholder={t('membres.rechercher')}
             className="tx-search-input"
             style={{paddingLeft: '38px', paddingRight: search ? '38px' : '12px'}}
           />
@@ -416,31 +418,31 @@ export default function TransactionList({
 
         <div className="filter-row">
           <select value={filterMonth} onChange={e => onFilterMonth(e.target.value)}>
-            <option value="">Tous les mois</option>
+            <option value="">{t('budget.allMonths')}</option>
             {months.map(m => {
               const [y, mo] = m.split('-')
               return <option key={m} value={m}>{MONTHS[parseInt(mo)-1]} {y}</option>
             })}
           </select>
           <select value={filterType} onChange={e => onFilterType(e.target.value)}>
-            <option value="">Tous</option>
-            <option value="entree">Entrées</option>
-            <option value="depense">Dépenses</option>
+            <option value="">{t('budget.tous')}</option>
+            <option value="entree">{t('budget.tabEntrees')}</option>
+            <option value="depense">{t('budget.tabDepenses')}</option>
           </select>
           <button className="btn-export" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }} onClick={shareReport}>
-            <Share2 size={14} /> {shareFeedback || 'Partager'}
+            <Share2 size={14} /> {shareFeedback || t('budget.partager')}
           </button>
           <button className="btn-export budget-export-primary" onClick={exportToExcel}>
-            <Download size={14} /> Exporter Excel
+            <Download size={14} /> {t('budget.exporterExcel')}
           </button>
         </div>
 
         <div className="tx-count">
-          {searched.length} transaction{searched.length > 1 ? 's' : ''}
+          {searched.length} {searched.length > 1 ? t('budget.transactionsPlural') : t('budget.transactions')}
           {searched.length > PAGE_SIZE && ` · Page ${page}/${totalPages}`}
         </div>
 
-        {paginated.length === 0 && <div className="empty">Aucune transaction</div>}
+        {paginated.length === 0 && <div className="empty">{t('budget.aucuneTransaction')}</div>}
 
         {paginated.map(tx => (
           <div key={tx.id} className="tx-item cursor-pointer" onClick={() => openEdit(tx)}>
@@ -516,12 +518,12 @@ export default function TransactionList({
           <div className="modal">
 
             <div className="dialog-header">
-              <h3 className="dialog-title">Modifier la transaction</h3>
+              <h3 className="dialog-title">{t('budget.modifierTransaction')}</h3>
               <button onClick={closeEdit} className="dialog-close-btn"><X size={18} /></button>
             </div>
             {!canManageBudget && (
               <div className="budget-readonly-note">
-                Lecture seule : seuls les Présidents, Vice-présidents et Trésoriers peuvent modifier le budget.
+                {t('budget.readOnly')}
               </div>
             )}
 
@@ -540,7 +542,7 @@ export default function TransactionList({
                   </div>
                 )}
                 <div className="flex-1-min">
-                  <div className="text-10 text-secondary font-600 mb-2" style={{textTransform:'uppercase', letterSpacing:'.05em'}}>Ajouté par</div>
+                  <div className="text-10 text-secondary font-600 mb-2" style={{textTransform:'uppercase', letterSpacing:'.05em'}}>{t('budget.ajoutePar')}</div>
                   <div className="text-13 font-700 text-primary text-ellipsis">
                     {selected.createdBy.nom}
                   </div>
@@ -555,26 +557,26 @@ export default function TransactionList({
 
             <div className="type-toggle mb-14">
               <button onClick={() => handleChangeType('entree')} disabled={!canManageBudget} className="type-btn" style={{background: editType==='entree' ? C.tealD : 'transparent', color: editType==='entree' ? C.teal : C.t2}}>
-                + Entrée
+                + {t('budget.entree')}
               </button>
               <button onClick={() => handleChangeType('depense')} disabled={!canManageBudget} className="type-btn" style={{background: editType==='depense' ? C.coralD : 'transparent', color: editType==='depense' ? C.coral : C.t2}}>
-                − Dépense
+                − {t('budget.depense')}
               </button>
             </div>
 
             <div className="form-row gap-10 mb-10">
               <div>
-                <label className="form-label">Date</label>
+                <label className="form-label">{t('budget.date')}</label>
                 <input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} className="form-input" disabled={!canManageBudget} />
               </div>
               <div>
-                <label className="form-label">Montant (Ar)</label>
+                <label className="form-label">{t('budget.montant')}</label>
                 <input type="number" value={editMontant} onChange={e => setEditMontant(e.target.value)} min="0" className="form-input" disabled={!canManageBudget} />
               </div>
             </div>
 
             <div className="mb-10">
-              <label className="form-label">Motif</label>
+              <label className="form-label">{t('budget.motif')}</label>
               <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
                 {DEFAULT_MOTIFS[editType].map(m => <option key={m}>{m}</option>)}
               </select>
@@ -582,12 +584,12 @@ export default function TransactionList({
 
             {editMotif === 'Autre' && (
               <div className="mb-10">
-                <label className="form-label">Précisez le motif</label>
+                <label className="form-label">{t('budget.motifPrecise')}</label>
                 <input
                   type="text"
                   value={editMotifCustom}
                   onChange={e => setEditMotifCustom(e.target.value)}
-                  placeholder="Ex: Achat matériel évangélisation..."
+                  placeholder={t('budget.motifExample')}
                   className="form-input"
                   autoFocus
                   disabled={!canManageBudget}
@@ -596,16 +598,16 @@ export default function TransactionList({
             )}
 
             <div className="mb-16">
-              <label className="form-label">Note (optionnel)</label>
-              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Détail..." className="form-input" disabled={!canManageBudget} />
+              <label className="form-label">{t('budget.note')}</label>
+              <input type="text" value={editNote} onChange={e => setEditNote(e.target.value)} placeholder={t('budget.noteDetail')} className="form-input" disabled={!canManageBudget} />
             </div>
 
             <button onClick={handleSave} disabled={saving || !canManageBudget} className="w-full rounded-12 font-700 text-14 cursor-pointer text-white border-none mb-8" style={{padding:'12px', background:'var(--btn-primary-bg)', opacity: saving || !canManageBudget ? 0.45 : 1}}>
-              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              {saving ? t('budget.enregistrement') : t('budget.modifierMdp')}
             </button>
 
             <button onClick={handleDelete} disabled={!canManageBudget} className="btn-danger w-full" style={{padding:'12px', fontSize:'14px', fontWeight:'700', opacity: !canManageBudget ? 0.45 : 1}}>
-              Supprimer la transaction
+              {t('budget.supprimerTransaction')}
             </button>
           </div>
         </div>

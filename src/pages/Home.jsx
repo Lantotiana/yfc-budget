@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
 import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
+import { useTranslation } from 'react-i18next'
 
 function getPrenom(fullName) {
   if (!fullName) return null
@@ -24,21 +25,6 @@ function getFallbackVerseIndex(dayKey) {
   return Math.floor(new Date(year, month - 1, day).getTime() / 86400000) % dailyVerses.length
 }
 
-const modules = [
-  { path: '/dashboard', Icon: LayoutDashboard, label: 'Tableau de bord', desc: 'Vue globale',          color: '#2563eb' },
-  { path: '/budget',    Icon: Wallet,          label: 'Budget YFC',      desc: 'Entrées & dépenses',   color: '#10b981' },
-  {
-    type: 'split',
-    label: 'Presence et evenement',
-    items: [
-      { path: '/presences', Icon: CalendarCheck, label: 'Présences', color: '#7c3aed' },
-      { path: '/evenements', Icon: CalendarDays, label: 'Events', color: '#f59e0b' },
-    ],
-  },
-  { path: '/membres',   Icon: Users,           label: 'Membres',         desc: 'Liste des membres',    color: '#f43f5e' },
-  { path: '/tasks',     Icon: ClipboardList,   label: 'Tâches',          desc: 'Kanban staff',         color: '#16b5a3' },
-  { path: '/documents', Icon: FolderOpen,      label: 'Documents',       desc: 'Ressources partagées', color: '#06b6d4' },
-]
 
 const dailyVerses = [
   {
@@ -81,6 +67,23 @@ const dailyVerses = [
 export default function Home({ user, userData }) {
   const navigate = useNavigate()
   const { C } = useTheme()
+  const { t } = useTranslation()
+
+  const modules = [
+    { path: '/dashboard', Icon: LayoutDashboard, label: t('home.dashboard'),  desc: t('home.dashboardDesc'), color: '#2563eb' },
+    { path: '/budget',    Icon: Wallet,          label: t('home.budget'),     desc: t('home.budgetDesc'),    color: '#10b981' },
+    {
+      type: 'split',
+      label: t('home.presenceAndEvent'),
+      items: [
+        { path: '/presences',  Icon: CalendarCheck, label: t('home.presences'), color: '#7c3aed' },
+        { path: '/evenements', Icon: CalendarDays,  label: t('home.events'),    color: '#f59e0b' },
+      ],
+    },
+    { path: '/membres',   Icon: Users,         label: t('home.membres'),   desc: t('home.membresDesc'),   color: '#f43f5e' },
+    { path: '/tasks',     Icon: ClipboardList, label: t('home.tasks'),     desc: t('home.tasksDesc'),     color: '#16b5a3' },
+    { path: '/documents', Icon: FolderOpen,    label: t('home.documents'), desc: t('home.documentsDesc'), color: '#06b6d4' },
+  ]
   const [verseOpen, setVerseOpen] = useState(false)
   const [verseClosing, setVerseClosing] = useState(false)
   const [verseHistoryPushed, setVerseHistoryPushed] = useState(false)
@@ -234,7 +237,7 @@ export default function Home({ user, userData }) {
 
           {/* Greeting */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 2 }}>{new Date().getHours() >= 18 || new Date().getHours() < 5 ? 'Bonsoir' : 'Bonjour'}</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 2 }}>{new Date().getHours() >= 18 || new Date().getHours() < 5 ? t('greeting.evening') : t('greeting.morning')}</div>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, lineHeight: 1.1, letterSpacing: '-.4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {prenom}
             </div>
@@ -296,7 +299,7 @@ export default function Home({ user, userData }) {
             <div className="daily-hill daily-hill-front" />
           </div>
           <div className="daily-verse-content">
-            <div className="daily-verse-label">Verset du jour</div>
+            <div className="daily-verse-label">{t('home.verseOfDay')}</div>
             <div className="daily-verse-text">"{dailyVerse.text}"</div>
             <div className="daily-verse-ref">{dailyVerse.ref}</div>
           </div>
@@ -452,7 +455,7 @@ export default function Home({ user, userData }) {
           </button>
           <div className="verse-modal-scroll">
             <div className="verse-modal-header">
-              <div className="verse-modal-tag">Verset du jour</div>
+              <div className="verse-modal-tag">{t('home.verseOfDay')}</div>
               <p className="verse-modal-verse">&ldquo;{dailyVerse.text}&rdquo;</p>
               <p className="verse-modal-ref">{dailyVerse.ref}</p>
             </div>

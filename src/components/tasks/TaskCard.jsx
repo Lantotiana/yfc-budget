@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'lucide-react'
 import DueDateBadge from './DueDateBadge'
 import PriorityBadge from './PriorityBadge'
-import { TASK_STATUS_LABELS, initials } from '../../utils/taskUtils'
+import { initials } from '../../utils/taskUtils'
 
 export default function TaskCard({ task, onOpen, assignableMembers = [], draggable = false, onDragStart, dragging = false, highlighted = false }) {
+  const { t } = useTranslation()
   const names = Array.isArray(task.assignedToNames) ? task.assignedToNames : []
   const assignedPeople = (task.assignedTo || []).map((uid, index) => {
     const member = assignableMembers.find(item => item.uid === uid)
@@ -33,7 +35,7 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
       </div>
       {task.description && <p>{task.description}</p>}
       <div className="task-card-badges">
-        <span className={`tasks-badge status-${task.status}`}>{TASK_STATUS_LABELS[task.status]}</span>
+        <span className={`tasks-badge status-${task.status}`}>{t(`tasks.${task.status === 'in_progress' ? 'inProgress' : task.status === 'todo' ? 'aTodo' : 'done'}`)}</span>
         <DueDateBadge deadline={task.deadline} status={task.status} />
         <PriorityBadge priority={task.priority} />
       </div>
@@ -46,7 +48,7 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
           ))}
           {people.length > 4 && <span>+{people.length - 4}</span>}
         </div>
-        <small>{people.length ? people.map(person => person.name).join(', ') : 'Non assignée'}</small>
+        <small>{people.length ? people.map(person => person.name).join(', ') : t('common.none')}</small>
       </div>
     </button>
   )

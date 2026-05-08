@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
 import { Plus, Search, Trash2, Download, Settings } from 'lucide-react'
@@ -39,6 +40,7 @@ function getAvatarColor(member) {
 }
 
 export default function Membres({ user, userData }) {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const [membres, setMembres] = useState([])
@@ -216,7 +218,7 @@ export default function Membres({ user, userData }) {
         </button>
       )}
       <button className="desktop-toolbar-btn" type="button" onClick={openAdd}>
-        <Plus size={16} /> Ajouter
+        <Plus size={16} /> {t('common.add')}
       </button>
     </>
   ), [membres])
@@ -257,7 +259,7 @@ export default function Membres({ user, userData }) {
       <div className="textured-page-header" style={{ '--header-color': '#f43f5e', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div className="desktop-page-header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Membres</div>
+            <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('membres.title')}</div>
             <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{membres.length} membre{membres.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -267,18 +269,18 @@ export default function Membres({ user, userData }) {
               </button>
             )}
             <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
-              <Plus size={14} color="#fff" /> Ajouter
+              <Plus size={14} color="#fff" /> {t('common.add')}
             </button>
           </div>
         </div>
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un membre..." style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('membres.rechercher')} style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
         </div>
         <div className="member-role-filter" data-active={roleFilter} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
           <span className="member-role-filter-indicator" aria-hidden="true" />
           {[
-            { key: 'all', label: 'Tous', count: membres.length },
+            { key: 'all', label: t('common.all'), count: membres.length },
             { key: 'staff', label: 'Staff', count: staffCount },
           ].map(item => {
             const active = roleFilter === item.key
@@ -313,9 +315,9 @@ export default function Membres({ user, userData }) {
       {/* Liste */}
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>Chargement...</div>
+          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{search || roleFilter !== 'all' ? 'Aucun résultat' : 'Aucun membre enregistré'}</div>
+          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{search || roleFilter !== 'all' ? t('common.noData') : t('membres.aucunMembre')}</div>
         ) : filtered.map(m => {
           const avatarColor = getAvatarColor(m)
           const isStaff = isStaffMember(m)
@@ -350,14 +352,14 @@ export default function Membres({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>{isEditing ? 'Modifier le membre' : 'Nouveau membre'}</h2>
+            <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div><label className="form-label">Nom *</label><input type="text" value={form.nom} onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))} placeholder="Nom de famille" className="form-input" /></div>
+              <div><label className="form-label">{t('membres.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))} placeholder="Nom de famille" className="form-input" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div><label className="form-label">Prénoms</label><input type="text" value={form.prenoms} onChange={e => setForm(prev => ({ ...prev, prenoms: e.target.value }))} placeholder="Prénoms" className="form-input" /></div>
+                <div><label className="form-label">{t('membres.prenom')}</label><input type="text" value={form.prenoms} onChange={e => setForm(prev => ({ ...prev, prenoms: e.target.value }))} placeholder="Prénoms" className="form-input" /></div>
                 <div><label className="form-label">Nom préféré</label><input type="text" value={form.nomPrefere} onChange={e => setForm(prev => ({ ...prev, nomPrefere: e.target.value }))} placeholder="Surnom..." className="form-input" /></div>
               </div>
-              {[{ key: 'telephone', label: 'Téléphone', placeholder: '034 xx xxx xx' }, { key: 'email', label: 'Email', placeholder: 'nom@email.com', type: 'email' }, { key: 'adresse', label: 'Adresse', placeholder: 'Quartier, ville...' }].map(f => (
+              {[{ key: 'telephone', label: t('membres.telephone'), placeholder: '034 xx xxx xx' }, { key: 'email', label: t('membres.email'), placeholder: 'nom@email.com', type: 'email' }, { key: 'adresse', label: 'Adresse', placeholder: 'Quartier, ville...' }].map(f => (
                 <div key={f.key}><label className="form-label">{f.label}</label><input type={f.type || 'text'} value={form[f.key]} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} className="form-input" /></div>
               ))}
               <div><label className="form-label">Taille T-shirt</label><select value={form.tailleTshirt} onChange={e => setForm(prev => ({ ...prev, tailleTshirt: e.target.value }))} className="form-input" style={{ cursor: 'pointer' }}><option value="">Non spécifiée</option>{TAILLES_TSHIRT.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
@@ -370,13 +372,13 @@ export default function Membres({ user, userData }) {
                   style={{ width: 18, height: 18, accentColor: C.teal }}
                 />
                 <span style={{ color: C.t1, fontSize: 'var(--font-sm)', fontWeight: 400 }}>
-                  Cette personne est Staff
+                  {t('membres.estStaff')}
                   {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (user approuvé)</span>}
                 </span>
               </label>
               {isFormStaff && (
                 <div>
-                  <label className="form-label">Rôle</label>
+                  <label className="form-label">{t('membres.role')}</label>
                   {isAdmin ? (
                     <select
                       value={form.staffRole}
@@ -446,9 +448,9 @@ export default function Membres({ user, userData }) {
               </div>
             </div>
             <div className="dialog-footer" style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
-              <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>
+              <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.cancel')}</button>
               <button onClick={save} disabled={saving || !form.nom.trim()} style={{ flex: 2, padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim()) ? 0.6 : 1 }}>
-                {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
+                {saving ? t('common.saving') : isEditing ? 'Mettre à jour' : t('common.add')}
               </button>
             </div>
           </div>
@@ -466,14 +468,14 @@ export default function Membres({ user, userData }) {
             {confirmDeleteTag ? (
               <div style={{ marginBottom: '1rem', padding: '12px 14px', borderRadius: 12, background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
                 <div style={{ fontSize: 'var(--font-sm)', color: C.t1, fontWeight: 600, marginBottom: 8 }}>
-                  Supprimer le tag «&nbsp;{confirmDeleteTag}&nbsp;» ?
+                  {t('common.delete')} «&nbsp;{confirmDeleteTag}&nbsp;» ?
                 </div>
                 <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 12 }}>
                   Ce tag sera retiré de la liste. Les membres qui l'ont conserveront leur donnée existante.
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Annuler</button>
-                  <button onClick={() => removeAvailableTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Supprimer</button>
+                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>{t('common.cancel')}</button>
+                  <button onClick={() => removeAvailableTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>{t('common.delete')}</button>
                 </div>
               </div>
             ) : (
@@ -490,7 +492,7 @@ export default function Membres({ user, userData }) {
                         <Trash2 size={13} />
                       </button>
                     ) : (
-                      <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>protégé</span>
+                      <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>{t('common.protected')}</span>
                     )}
                   </div>
                 ))}
@@ -513,7 +515,7 @@ export default function Membres({ user, userData }) {
                 disabled={!newTagInput.trim() || availableTags.includes(newTagInput.trim())}
                 style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', opacity: (newTagInput.trim() && !availableTags.includes(newTagInput.trim())) ? 1 : 0.5 }}
               >
-                + Ajouter
+                + {t('common.add')}
               </button>
             </div>
 
@@ -521,7 +523,7 @@ export default function Membres({ user, userData }) {
               onClick={() => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') }}
               style={{ width: '100%', padding: '12px', borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Fermer
+              {t('common.close')}
             </button>
           </div>
         </div>
@@ -533,11 +535,11 @@ export default function Membres({ user, userData }) {
         <Portal>
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce membre ?</h3>
+            <h3 className="dialog-title" style={{ marginBottom: 8 }}>{t('membres.supprimerMembre')}</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} {confirmDel.prenoms} sera définitivement supprimé.</p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Annuler</button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Supprimer</button>
+              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.cancel')}</button>
+              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.delete')}</button>
             </div>
           </div>
         </div>

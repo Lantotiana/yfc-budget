@@ -6,10 +6,12 @@ import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
 import { createNotification } from '../notifications'
 import { ADMIN_EMAIL } from '../constants'
+import { useTranslation } from 'react-i18next'
 
 const hero = '/hero.webp'
 
 export default function Login() {
+  const { t } = useTranslation()
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,21 +40,21 @@ export default function Login() {
       const snap = await getDoc(doc(db, 'users', cred.user.uid))
       if (!snap.exists()) {
         await signOut(auth)
-        showMsg('Compte introuvable. Veuillez vous inscrire.')
+        showMsg(t('login.errorAccountNotFound'))
       } else if (snap.data().approuve !== true) {
         await signOut(auth)
-        showMsg('Votre compte est en attente d\'approbation par l\'administrateur.')
+        showMsg(t('login.errorPendingApproval'))
       }
     } catch(e) {
-      showMsg('Email ou mot de passe incorrect.')
+      showMsg(t('login.errorInvalidCredentials'))
     }
     setLoading(false)
   }
 
   async function handleRegister() {
-    if (!nom.trim()) { showMsg('Veuillez entrer votre nom.'); return }
-    if (!email.trim()) { showMsg('Veuillez entrer votre email.'); return }
-    if (password.length < 6) { showMsg('Mot de passe trop court (minimum 6 caractères).'); return }
+    if (!nom.trim()) { showMsg(t('login.errorNameRequired')); return }
+    if (!email.trim()) { showMsg(t('login.errorEmailRequired')); return }
+    if (password.length < 6) { showMsg(t('login.errorPasswordTooShort')); return }
     setLoading(true)
     setMessage('')
 
@@ -71,9 +73,9 @@ export default function Login() {
             // Doc présent : vrai compte existant
             await signOut(auth)
             if (snap.data().approuve === false) {
-              showMsg('Votre demande est déjà en attente d\'approbation.')
+              showMsg(t('login.errorPendingAlready'))
             } else {
-              showMsg('Cet email est déjà utilisé. Connectez-vous.')
+              showMsg(t('login.errorEmailInUse'))
             }
           } else {
             // Doc absent : compte supprimé par admin → on recycle l'uid
@@ -82,15 +84,15 @@ export default function Login() {
           }
         } catch {
           await signOut(auth).catch(() => {})
-          showMsg('Cet email est déjà utilisé.')
+          showMsg(t('login.errorEmailInUse'))
         }
         if (!cred) { setLoading(false); return }
       } else if (e.code === 'auth/weak-password') {
-        showMsg('Mot de passe trop court (minimum 6 caractères).')
+        showMsg(t('login.errorPasswordTooShort'))
         setLoading(false)
         return
       } else {
-        showMsg('Erreur lors de la création du compte.')
+        showMsg(t('login.errorAccountCreation'))
         setLoading(false)
         return
       }
@@ -121,7 +123,7 @@ export default function Login() {
 
     if (!firestoreOk) {
       await cred.user.delete().catch(() => {})
-      showMsg('Connexion trop lente. Réessayez avec une meilleure connexion.', false)
+      showMsg(t('login.errorSlowConnection'), false)
       setLoading(false)
       return
     }
@@ -129,7 +131,7 @@ export default function Login() {
     // Succès — afficher l'écran de confirmation puis déconnecter
     await createNotification({
       type: 'admin',
-      titre: 'Nouvelle demande d’approbation',
+      titre: t('notifications.approbationDemande'),
       detail: `${userData.nom} - ${userData.email}`,
       cible: cred.user.uid,
       route: '/admin',
@@ -144,9 +146,9 @@ export default function Login() {
   }
 
  async function handleForgotPassword() {
-  if (!forgotEmail.trim()) { 
-    showMsg('Veuillez entrer votre email.')
-    return 
+  if (!forgotEmail.trim()) {
+    showMsg(t('login.errorEmailRequired'))
+    return
   }
   setForgotLoading(true)
   setMessage('')
@@ -156,13 +158,13 @@ export default function Login() {
   } catch(e) {
     console.error('Erreur reset password:', e.code, e.message)
     if (e.code === 'auth/user-not-found') {
-      showMsg('Aucun compte trouvé avec cet email.')
+      showMsg(t('login.errorUserNotFound'))
     } else if (e.code === 'auth/invalid-email') {
-      showMsg('Email invalide.')
+      showMsg(t('login.errorInvalidEmail'))
     } else if (e.code === 'auth/too-many-requests') {
-      showMsg('Trop de tentatives. Réessayez plus tard.')
+      showMsg(t('login.errorTooManyRequests'))
     } else {
-      showMsg('Erreur : ' + e.code + ' - ' + e.message)
+      showMsg(t('common.error') + ' : ' + e.code)
     }
   }
   setForgotLoading(false)
@@ -176,11 +178,11 @@ export default function Login() {
             <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
           <div className="login-eyebrow mb-12">
-            Demande envoyée
+            {t('login.successTitle')}
           </div>
           <h1 className="text-26 font-700 text-white mb-12" style={{lineHeight:1.3}}>
-            Merci {nomInscrit},<br/>
-            <span style={{color:'#5eead4'}}>nous avons bien reçu<br/>votre demande !</span>
+            {t('login.successGreeting', { name: nomInscrit })}<br/>
+            <span style={{color:'#5eead4'}}>{t('login.successSubtitle')}</span>
           </h1>
         </div>
 
@@ -188,30 +190,30 @@ export default function Login() {
           <div className="success-message-item">
             <div className="icon-circle-32 bg-teal-15"><CheckCircle size={16} color="#5eead4" /></div>
             <div>
-              <div className="login-msg-title">Compte créé avec succès</div>
-              <div className="login-msg-desc">Vos informations ont bien été enregistrées dans notre système.</div>
+              <div className="login-msg-title">{t('login.successCreated')}</div>
+              <div className="login-msg-desc">{t('login.successCreatedDesc')}</div>
             </div>
           </div>
           <div className="success-message-item">
             <div className="icon-circle-32 bg-teal-15"><Clock size={16} color="#5eead4" /></div>
             <div>
-              <div className="login-msg-title">En attente d'approbation</div>
-              <div className="login-msg-desc">L'administrateur va examiner votre demande et l'approuver très prochainement.</div>
+              <div className="login-msg-title">{t('login.successPending')}</div>
+              <div className="login-msg-desc">{t('login.successPendingDesc')}</div>
             </div>
           </div>
           <div className="flex-start gap-14">
             <div className="icon-circle-32 bg-teal-15"><Mail size={16} color="#5eead4" /></div>
             <div>
-              <div className="login-msg-title">Notification par email</div>
-              <div className="login-msg-desc">Vous recevrez un email dès que votre compte sera approuvé.</div>
+              <div className="login-msg-title">{t('login.successEmail')}</div>
+              <div className="login-msg-desc">{t('login.successEmailDesc')}</div>
             </div>
           </div>
         </div>
 
         <div className="login-blessing">
           <p className="text-13" style={{color:'rgba(255,255,255,0.6)', margin:0, lineHeight:1.6}}>
-            <span className="font-600" style={{color:'#5eead4'}}>Que Dieu vous bénisse !</span><br/>
-            L'équipe Young For Christ vous accueille chaleureusement.
+            <span className="font-600" style={{color:'#5eead4'}}>{t('login.blessing')}</span><br/>
+            {t('login.blessingTeam')}
           </p>
         </div>
 
@@ -219,7 +221,7 @@ export default function Login() {
           onClick={() => { setInscriptionReussie(false); setMode('login'); setEmail(''); setPassword(''); setNom('') }}
           className="login-btn-secondary"
         >
-          Retour à la connexion
+          {t('login.backToLogin')}
         </button>
       </div>
     </div>
@@ -234,10 +236,10 @@ export default function Login() {
             <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
           </div>
           <h1 className="text-22 font-700 text-white leading-tight mb-8">
-            Mot de passe<br/><span style={{color:'#5eead4'}}>oublié ?</span>
+            {t('login.forgotTitle')}
           </h1>
           <p className="text-13" style={{color:'rgba(255,255,255,0.4)'}}>
-            On va vous envoyer un lien de réinitialisation
+            {t('login.forgotSubtitle')}
           </p>
         </div>
 
@@ -245,15 +247,15 @@ export default function Login() {
           {forgotSent ? (
             <div className="text-center">
               <div className="flex-center mb-16"><Mail size={36} color="#5eead4" /></div>
-              <div className="text-15 font-700 mb-8" style={{color:'#5eead4'}}>Email envoyé !</div>
+              <div className="text-15 font-700 mb-8" style={{color:'#5eead4'}}>{t('login.forgotSent')}</div>
               <div className="text-13 mb-16" style={{color:'rgba(255,255,255,0.5)', lineHeight:1.6, marginBottom:'24px'}}>
-                Vérifiez votre boîte mail et cliquez sur le lien pour réinitialiser votre mot de passe.
+                {t('login.forgotSentDesc')}
               </div>
               <button
                 onClick={() => { setShowForgot(false); setForgotSent(false); setForgotEmail('') }}
                 className="login-btn-primary"
               >
-                Retour à la connexion
+                {t('login.backToLogin')}
               </button>
             </div>
           ) : (
@@ -263,12 +265,12 @@ export default function Login() {
                   {message}
                 </div>
               )}
-              <label className="login-label">Votre email</label>
+              <label className="login-label">{t('login.forgotEmailLabel')}</label>
               <input
                 type="email"
                 value={forgotEmail}
                 onChange={e => setForgotEmail(e.target.value)}
-                placeholder="ton@email.com"
+                placeholder={t('login.emailPlaceholder')}
                 className="login-input"
                 style={{marginBottom:'16px'}}
               />
@@ -278,13 +280,13 @@ export default function Login() {
                 className="login-btn-primary mb-12"
                 style={{opacity: forgotLoading ? 0.7 : 1}}
               >
-                {forgotLoading ? 'Envoi...' : 'Envoyer le lien'}
+                {forgotLoading ? t('login.forgotSending') : t('login.forgotSendBtn')}
               </button>
               <button
                 onClick={() => { setShowForgot(false); setMessage('') }}
                 className="login-btn-back"
               >
-                ← Retour
+                {t('login.backBtn')}
               </button>
             </>
           )}
@@ -299,9 +301,9 @@ export default function Login() {
         <div className="login-hero" style={{ backgroundImage: `url(${hero})` }}>
           <div className="login-hero-overlay" />
           <div className="login-hero-inner">
-            <p className="login-hero-subtitle">Young For Christ</p>
+            <p className="login-hero-subtitle">{t('login.subtitle')}</p>
             <h1 className="login-hero-title">
-              YFC app
+              {t('login.title')}
               <span className="login-verified-badge" aria-label="Vérifié" />
             </h1>
           </div>
@@ -312,24 +314,24 @@ export default function Login() {
 
           <div className="login-tab-row">
             <button onClick={() => { setMode('login'); setMessage('') }} className={`login-tab ${mode === 'login' ? 'login-tab-active' : ''}`}>
-              Connexion
+              {t('login.tabLogin')}
             </button>
             <button onClick={() => { setMode('register'); setMessage('') }} className={`login-tab ${mode === 'register' ? 'login-tab-active' : ''}`}>
-              Inscription
+              {t('login.tabRegister')}
             </button>
           </div>
 
           {mode === 'register' && (
             <div>
-              <label className="login-label">Nom complet</label>
-              <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom..." className="login-input" />
+              <label className="login-label">{t('login.fullName')}</label>
+              <input value={nom} onChange={e => setNom(e.target.value)} placeholder={t('login.namePlaceholder')} className="login-input" />
             </div>
           )}
 
-          <label className="login-label">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="ton@email.com" className="login-input" />
+          <label className="login-label">{t('login.email')}</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('login.emailPlaceholder')} className="login-input" />
 
-          <label className="login-label">Mot de passe</label>
+          <label className="login-label">{t('login.password')}</label>
           <div className="relative mb-4">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -353,7 +355,7 @@ export default function Login() {
                 onClick={() => { setShowForgot(true); setForgotEmail(email); setMessage('') }}
                 className="login-forgot-btn"
               >
-                Mot de passe oublié ?
+                {t('login.forgotPassword')}
               </button>
             </div>
           )}
@@ -370,7 +372,7 @@ export default function Login() {
             className="login-btn-primary"
             style={{opacity: loading ? 0.7 : 1, marginTop: mode === 'register' ? '4px' : '0'}}
           >
-            {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
+            {loading ? t('login.loadingBtn') : mode === 'login' ? t('login.loginBtn') : t('login.registerBtn')}
           </button>
         </div>
       </div>

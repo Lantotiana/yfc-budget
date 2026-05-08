@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Check, ChevronDown, X } from 'lucide-react'
-import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS, toDateInputValue } from '../../utils/taskUtils'
+import { toDateInputValue } from '../../utils/taskUtils'
 
 const EMPTY = {
   title: '',
@@ -11,7 +12,9 @@ const EMPTY = {
   assignedTo: [],
 }
 
-export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, canEditAll, submitLabel = 'Créer la tâche' }) {
+export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, canEditAll, submitLabel }) {
+  const { t } = useTranslation()
+  const defaultSubmitLabel = submitLabel ?? t('tasks.create')
   const [form, setForm] = useState(() => task ? {
     title: task.title || '',
     description: task.description || '',
@@ -82,7 +85,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
         assignedToNames: selected.map(m => m.name),
       })
     } catch (err) {
-      setErrors(err.errors || { global: "Impossible d'enregistrer la tâche." })
+      setErrors(err.errors || { global: 'common.error' })
       setSaving(false)
       return
     }
@@ -91,39 +94,43 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
 
   return (
     <form className="task-form" onSubmit={submit}>
-      {errors.global && <div className="task-form-error">{errors.global}</div>}
+      {errors.global && <div className="task-form-error">{t(errors.global)}</div>}
       <div>
-        <label>Titre *</label>
-        <input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} placeholder="Ex: Préparer la réunion staff" />
-        {errors.title && <small>{errors.title}</small>}
+        <label>{t('tasks.title')} *</label>
+        <input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} placeholder={t('tasks.titlePlaceholder')} />
+        {errors.title && <small>{t(errors.title)}</small>}
       </div>
       <div>
-        <label>Description</label>
-        <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} rows={4} placeholder="Détails utiles pour l'équipe..." />
+        <label>{t('tasks.description')}</label>
+        <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} rows={4} placeholder={t('tasks.descPlaceholder')} />
       </div>
       <div className="task-form-grid">
         <div>
-          <label>Deadline *</label>
+          <label>{t('tasks.deadline')} *</label>
           <input type="date" value={form.deadline} onChange={e => setForm(prev => ({ ...prev, deadline: e.target.value }))} />
-          {errors.deadline && <small>{errors.deadline}</small>}
+          {errors.deadline && <small>{t(errors.deadline)}</small>}
         </div>
         <div>
-        <label>Priorité</label>
+        <label>{t('tasks.priority')}</label>
           <select value={form.priority} onChange={e => setForm(prev => ({ ...prev, priority: e.target.value }))}>
-            {Object.entries(TASK_PRIORITY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            <option value="low">{t('tasks.priorityLow')}</option>
+            <option value="medium">{t('tasks.priorityMedium')}</option>
+            <option value="high">{t('tasks.priorityHigh')}</option>
           </select>
         </div>
       </div>
       <div>
-        <label>Statut</label>
+        <label>{t('tasks.status')}</label>
         <select value={form.status} onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}>
-          {Object.entries(TASK_STATUS_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          <option value="todo">{t('tasks.todo')}</option>
+          <option value="in_progress">{t('tasks.inProgress')}</option>
+          <option value="done">{t('tasks.done')}</option>
         </select>
       </div>
       <div>
-        <label>Assigné à *</label>
+        <label>{t('tasks.assignedTo')} *</label>
         {assignableMembers.length === 0 ? (
-          <div className="task-empty-inline">Aucun membre assignable trouvé.</div>
+          <div className="task-empty-inline">{t('tasks.noTasks')}</div>
         ) : (
           <div className="task-assignee-dropdown" ref={assigneeRef}>
             <button
@@ -134,7 +141,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
             >
               <span>
                 {selectedMembers.length === 0
-                  ? 'Choisir un ou plusieurs membres'
+                  ? t('tasks.filterAll')
                   : `${selectedMembers.length} membre${selectedMembers.length > 1 ? 's' : ''} sélectionné${selectedMembers.length > 1 ? 's' : ''}`}
               </span>
               <ChevronDown size={16} />
@@ -163,7 +170,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
                     type="search"
                     value={memberSearch}
                     onChange={e => setMemberSearch(e.target.value)}
-                    placeholder="Rechercher un membre..."
+                    placeholder={t('tasks.searchPlaceholder')}
                   />
                 </div>
                 <div className="task-assignee-options">
@@ -188,17 +195,17 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
                   })}
                 </div>
                 <div className="task-assignee-menu-actions">
-                  <button type="button" onClick={() => setAssigneeOpen(false)}>Terminer</button>
+                  <button type="button" onClick={() => setAssigneeOpen(false)}>{t('common.close')}</button>
                 </div>
               </div>
             )}
             </div>
         )}
-        {errors.assignedTo && <small>{errors.assignedTo}</small>}
+        {errors.assignedTo && <small>{t(errors.assignedTo)}</small>}
       </div>
       <div className="task-form-actions">
-        <button type="button" className="secondary" onClick={onCancel}>Annuler</button>
-        <button type="submit" disabled={saving}>{saving ? 'Enregistrement...' : submitLabel}</button>
+        <button type="button" className="secondary" onClick={onCancel}>{t('common.cancel')}</button>
+        <button type="submit" disabled={saving}>{saving ? t('common.saving') : defaultSubmitLabel}</button>
       </div>
     </form>
   )

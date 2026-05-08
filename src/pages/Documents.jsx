@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { db, storage } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
@@ -24,6 +25,7 @@ function FileIcon({ type }) {
 }
 
 export default function Documents({ user, userData }) {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const fileRef = useRef()
@@ -41,7 +43,7 @@ export default function Documents({ user, userData }) {
       disabled={uploading}
       className="desktop-toolbar-btn"
     >
-      <Upload size={16} /> {uploading ? 'Envoi...' : 'Ajouter'}
+      <Upload size={16} /> {uploading ? t('common.saving') : t('common.add')}
     </button>
   ), [uploading])
 
@@ -129,7 +131,7 @@ export default function Documents({ user, userData }) {
       {/* Header */}
       <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#06b6d4', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Documents</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('documents.title')}</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{documents.length} document{documents.length !== 1 ? 's' : ''}</div>
         </div>
         <button
@@ -138,7 +140,7 @@ export default function Documents({ user, userData }) {
           className="header-action"
           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600, opacity: uploading ? 0.6 : 1 }}
         >
-          <Upload size={14} /> {uploading ? 'Envoi...' : 'Ajouter'}
+          <Upload size={14} /> {uploading ? t('common.saving') : t('common.add')}
         </button>
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
       </div>
@@ -160,7 +162,7 @@ export default function Documents({ user, userData }) {
 
         {documents.length === 0 && !uploading ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
-            Aucun document. Appuyez sur « Ajouter » pour en uploader un.
+            {t('documents.aucun')}
           </div>
         ) : (
           <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, overflow: 'hidden' }}>
@@ -265,16 +267,16 @@ export default function Documents({ user, userData }) {
       {confirmDel && (
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce document ?</h3>
+            <h3 className="dialog-title" style={{ marginBottom: 8 }}>{t('documents.supprimer')} ?</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>
               « {confirmDel.nom} » sera définitivement supprimé.
             </p>
             <div className="dialog-footer">
               <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Annuler
+                {t('common.cancel')}
               </button>
               <button onClick={handleDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Supprimer
+                {t('common.delete')}
               </button>
             </div>
           </div>

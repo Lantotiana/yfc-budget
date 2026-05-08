@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { CalendarCheck, CalendarDays, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -99,29 +100,31 @@ function BackNavigationGuard({ user }) {
     return () => window.removeEventListener('popstate', onPop)
   }, [location.pathname, user])
 
+  const { t } = useTranslation()
   if (!exitToast) return null
 
   return (
     <div className="toast" style={{ color: '#fff' }}>
-      Appuie encore sur retour pour quitter
+      {t('common.appuieRetour')}
     </div>
   )
 }
-
-const bottomNavItems = [
-  { path: '/', label: 'Accueil', Icon: HomeIcon, color: '#2563eb' },
-  { path: '/dashboard', label: 'Stats', Icon: LayoutDashboard, color: '#2563eb' },
-  { path: '/budget', label: 'Budget', Icon: Wallet, color: '#10b981' },
-  { path: '/presences', label: 'Présences', Icon: CalendarCheck },
-  { path: '/membres', label: 'Membres', Icon: Users, color: '#f43f5e' },
-  { path: '/evenements', label: 'Events', Icon: CalendarDays, color: '#f59e0b' },
-]
 
 function BottomNav({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
   const swipeStart = useRef(null)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { t } = useTranslation()
+
+  const bottomNavItems = [
+    { path: '/', label: t('nav.accueil'), Icon: HomeIcon, color: '#2563eb' },
+    { path: '/dashboard', label: t('nav.stats'), Icon: LayoutDashboard, color: '#2563eb' },
+    { path: '/budget', label: t('nav.budget'), Icon: Wallet, color: '#10b981' },
+    { path: '/presences', label: t('nav.presences'), Icon: CalendarCheck },
+    { path: '/membres', label: t('nav.membres'), Icon: Users, color: '#f43f5e' },
+    { path: '/evenements', label: t('nav.events'), Icon: CalendarDays, color: '#f59e0b' },
+  ]
   const baseVisible = Boolean(user && location.pathname !== '/login' && !location.pathname.startsWith('/verify'))
   const visible = baseVisible && !isDesktop
 

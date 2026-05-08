@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   addDoc,
   arrayRemove,
@@ -105,6 +106,7 @@ function formatAnnouncementDate(value) {
 
 
 export default function MessagesStaff({ user, userData }) {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const listRef = useRef(null)
@@ -1019,7 +1021,7 @@ export default function MessagesStaff({ user, userData }) {
             onContextMenu={e => e.preventDefault()}
           >
             <div className="staff-announcement-label" style={{ color: '#10b981' }}>
-              <TrendingUp size={15} /> Rapport de budget
+              <TrendingUp size={15} /> {t('messages.budget_report')}
             </div>
             <h2>Budget YFC{currentMonthLabel ? ` — ${currentMonthLabel}` : ''}</h2>
 
@@ -1177,7 +1179,7 @@ export default function MessagesStaff({ user, userData }) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
         <div className="textured-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-          <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>Messages Staff</div>
+          <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>{t('messages.title')}</div>
         </div>
         <div className="page-content">
           <div className="staff-empty-state">Cette page est réservée aux Staffs approuvés.</div>
@@ -1214,7 +1216,7 @@ export default function MessagesStaff({ user, userData }) {
               style={{ display: 'none' }}
             />
             <div>
-              <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Messages Staff</div>
+              <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('messages.title')}</div>
               <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{staffUsers.length} membre{staffUsers.length !== 1 ? 's' : ''}</div>
             </div>
           </div>
@@ -1243,7 +1245,7 @@ export default function MessagesStaff({ user, userData }) {
       {(showSearch || search) && (
         <div className="staff-message-search" onClick={e => e.stopPropagation()}>
           <Search size={15} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un message..." autoFocus />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('common.search') + '...'} autoFocus />
           {search && (
             <button type="button" onClick={() => setSearch('')} aria-label="Effacer la recherche">
               <X size={15} />
@@ -1277,9 +1279,9 @@ export default function MessagesStaff({ user, userData }) {
           </button>
         )}
         {loading ? (
-          <div className="staff-empty-state">Chargement...</div>
+          <div className="staff-empty-state">{t('common.loading')}</div>
         ) : filteredMessages.length === 0 ? (
-          <div className="staff-empty-state">{search ? 'Aucun résultat.' : 'Aucun message pour le moment.'}</div>
+          <div className="staff-empty-state">{search ? t('common.noData') : t('messages.aucunMessage')}</div>
         ) : (
           filteredMessages.map(message => renderMessage(message))
         )}
@@ -1433,7 +1435,7 @@ export default function MessagesStaff({ user, userData }) {
             ref={inputRef}
             value={input}
             onChange={e => handleInputChange(e.target.value)}
-            placeholder="Message"
+            placeholder={t('messages.placeholder')}
             maxLength={MAX_MESSAGE_LENGTH}
             rows={1}
           />

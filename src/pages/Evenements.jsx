@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Pin, Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
@@ -54,6 +55,7 @@ function formatTimeRange(heureDebut, heureFin) {
 }
 
 export default function Evenements() {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const now = useNow()
@@ -152,9 +154,9 @@ export default function Evenements() {
 
   const desktopActions = useMemo(() => (
     <button className="desktop-toolbar-btn" type="button" onClick={openAdd}>
-      <Plus size={16} /> Ajouter
+      <Plus size={16} /> {t('common.add')}
     </button>
-  ), [])
+  ), [t])
 
   useEffect(() => {
     setToolbar({ actions: desktopActions })
@@ -167,20 +169,20 @@ export default function Evenements() {
       {/* Header */}
       <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 18px', paddingTop: 'max(20px, env(safe-area-inset-top))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Événements</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('evenements.title')}</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{evenements.length} événement{evenements.length !== 1 ? 's' : ''}</div>
         </div>
         <button className="header-action" onClick={openAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
-          <Plus size={14} color="#fff" /> Ajouter
+          <Plus size={14} color="#fff" /> {t('common.add')}
         </button>
       </div>
 
       {/* Liste */}
       <div className="f2 scroll-bottom-safe" style={{ padding: '0 20px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Chargement...</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
         ) : sorted.length === 0 ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Aucun événement</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('evenements.aucunEvenement')}</div>
         ) : sorted.map(e => {
           const isPast = !e._end || e._end <= now
           const countdown = e._start && !isPast ? buildCountdown(e._start, now) : null
@@ -223,11 +225,11 @@ export default function Evenements() {
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet" onClick={ev => ev.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">{isEditing ? "Modifier l'événement" : 'Nouvel événement'}</h2>
+            <h2 className="dialog-title mb-16">{isEditing ? t('evenements.modifier') : t('evenements.nouvelEvenement')}</h2>
             <div className="dialog-content">
-              <div><label className="form-label">Nom *</label><input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder="Nom de l'événement" className="form-input" /></div>
+              <div><label className="form-label">{t('evenements.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder={t('evenements.nom')} className="form-input" /></div>
               <div>
-                <label className="form-label">Dates *</label>
+                <label className="form-label">{t('evenements.date')} *</label>
                 <div className="flex-center gap-10">
                   <div className="flex-1"><div className="label-helper">Début</div><input type="date" value={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateDebut: e.target.value }))} className="form-input" /></div>
                   <div className="flex-1"><div className="label-helper">Fin</div><input type="date" value={form.dateFin} min={form.dateDebut} onChange={e => setForm(p => ({ ...p, dateFin: e.target.value }))} className="form-input" /></div>
@@ -243,9 +245,9 @@ export default function Evenements() {
               <div><label className="form-label">Lieu</label><input type="text" value={form.lieu} onChange={e => setForm(p => ({ ...p, lieu: e.target.value }))} placeholder="Salle, adresse..." className="form-input" /></div>
             </div>
             <div className="dialog-footer">
-              <button onClick={closeSheet} className="btn-secondary" style={{ flex: 1, padding: 13 }}>Annuler</button>
+              <button onClick={closeSheet} className="btn-secondary" style={{ flex: 1, padding: 13 }}>{t('common.cancel')}</button>
               <button onClick={save} disabled={saving || !form.nom.trim() || !form.dateDebut} style={{ flex: 2, padding: 13, borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim() || !form.dateDebut) ? 0.6 : 1 }}>
-                {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Ajouter'}
+                {saving ? t('common.saving') : isEditing ? t('common.save') : t('common.add')}
               </button>
             </div>
           </div>
@@ -258,11 +260,11 @@ export default function Evenements() {
         <Portal>
         <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title mb-8">Supprimer cet événement ?</h3>
+            <h3 className="dialog-title mb-8">{t('evenements.supprimerConfirm')}</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} sera définitivement supprimé.</p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>Annuler</button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Supprimer</button>
+              <button onClick={() => setConfirmDel(null)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>{t('common.cancel')}</button>
+              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('evenements.supprimer')}</button>
             </div>
           </div>
         </div>

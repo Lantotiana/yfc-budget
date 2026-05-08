@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { auth } from '../auth'
@@ -6,6 +7,7 @@ import { X } from 'lucide-react'
 import { createNotification } from '../notifications'
 
 export default function TransactionForm({ onAdd, canManageBudget = true }) {
+  const { t } = useTranslation()
   const [type, setType] = useState('entree')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [montant, setMontant] = useState('')
@@ -106,58 +108,58 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
   return (
     <>
       <div className="card">
-        <div className="card-title">Nouvelle transaction</div>
+        <div className="card-title">{t('budget.nouvelleTransaction')}</div>
         {!canManageBudget && (
           <div className="budget-readonly-note">
-            Lecture seule : seuls les Présidents, Vice-présidents et Trésoriers peuvent modifier le budget.
+            {t('budget.readOnly')}
           </div>
         )}
 
         <div className="type-toggle">
           <button type="button" disabled={!canManageBudget} className={`type-btn ${type === 'entree' ? 'active-entree' : ''}`} onClick={() => setType('entree')}>
-            + Entrée
+            + {t('budget.entree')}
           </button>
           <button type="button" disabled={!canManageBudget} className={`type-btn ${type === 'depense' ? 'active-depense' : ''}`} onClick={() => setType('depense')}>
-            − Dépense
+            − {t('budget.depense')}
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className={!canManageBudget ? 'budget-readonly' : ''}>
           <div className="form-row">
             <div className="form-group">
-              <label>Date</label>
+              <label>{t('budget.date')}</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} disabled={!canManageBudget} />
             </div>
             <div className="form-group">
-              <label>Montant (Ar)</label>
+              <label>{t('budget.montant')}</label>
               <input type="number" value={montant} onChange={e => setMontant(e.target.value)} placeholder="0" disabled={!canManageBudget} />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Motif</label>
+            <label>{t('budget.motif')}</label>
             <div className="motif-row">
               <select value={motif} onChange={e => { setMotif(e.target.value); setMotifCustom('') }} disabled={!canManageBudget}>
-                <option value="">Choisir...</option>
+                <option value="">{t('budget.motifPlaceholder')}</option>
                 {filteredMotifs.map(m => (
                   <option key={m.id} value={m.name}>{m.name}</option>
                 ))}
-                <option value="Autre">Autre</option>
+                <option value="Autre">{t('budget.motifAutre')}</option>
               </select>
               <button type="button" className="btn-secondary" onClick={() => setShowModal(true)} disabled={!canManageBudget}>
-                + Motifs
+                {t('budget.motifs')}
               </button>
             </div>
           </div>
 
           {motif === 'Autre' && (
             <div className="form-group">
-              <label>Précisez le motif</label>
+              <label>{t('budget.motifPrecise')}</label>
               <input
                 type="text"
                 value={motifCustom}
                 onChange={e => setMotifCustom(e.target.value)}
-                placeholder="Ex: Achat matériel évangélisation..."
+                placeholder={t('budget.motifExample')}
                 autoFocus
                 disabled={!canManageBudget}
               />
@@ -165,11 +167,11 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
           )}
 
           <div className="form-group">
-            <label>Note (optionnel)</label>
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Détail..." disabled={!canManageBudget} />
+            <label>{t('budget.note')}</label>
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder={t('budget.noteDetail')} disabled={!canManageBudget} />
           </div>
 
-          <button className="btn-primary" disabled={!canManageBudget}>Enregistrer</button>
+          <button className="btn-primary" disabled={!canManageBudget}>{t('budget.enregistrer')}</button>
         </form>
       </div>
 
@@ -178,14 +180,14 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="dialog-header mb-16">
               <h3 className="dialog-title">
-                Motifs {type === 'entree' ? 'Entrée' : 'Dépense'}
+                {type === 'entree' ? t('budget.motifsEntree') : t('budget.motifsDepense')}
               </h3>
               <button onClick={() => setShowModal(false)} className="dialog-close-btn"><X size={18} /></button>
             </div>
 
             <div className="flex-col gap-6 mb-16">
               {filteredMotifs.length === 0 && (
-                <div className="text-13 text-secondary p-12">Aucun motif — ajoutez-en ci-dessous</div>
+                <div className="text-13 text-secondary p-12">{t('budget.aucunMotif')}</div>
               )}
               {filteredMotifs.map(m => (
                 <div key={m.id} className="flex-between p-14 rounded-10 gap-8" style={{background:'var(--surface-alt)'}}>
@@ -201,7 +203,7 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
                     style={{padding:'4px 8px'}}
                     disabled={!canManageBudget}
                   >
-                    Supprimer
+                    {t('common.delete')}
                   </button>
                 </div>
               ))}
@@ -211,7 +213,7 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
               <input
                 value={newMotif}
                 onChange={e => setNewMotif(e.target.value)}
-                placeholder={`Nouveau motif ${type === 'entree' ? 'entrée' : 'dépense'}...`}
+                placeholder={type === 'entree' ? t('budget.nouveauMotif') : t('budget.nouveauMotifDepense')}
                 onKeyDown={e => e.key === 'Enter' && addMotif()}
                 className="flex-1 rounded-10 text-13 bg-input text-primary border-none outline-none"
                 style={{padding:'10px 12px'}}
@@ -223,11 +225,11 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
                 style={{padding:'10px 14px', background:'var(--btn-primary-bg)'}}
                 disabled={!canManageBudget}
               >
-                Ajouter
+                {t('common.add')}
               </button>
             </div>
 
-            <button className="btn-primary" onClick={() => setShowModal(false)}>Fermer</button>
+            <button className="btn-primary" onClick={() => setShowModal(false)}>{t('common.close')}</button>
           </div>
         </div>
       )}

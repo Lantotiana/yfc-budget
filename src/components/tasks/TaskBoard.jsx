@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import TaskColumn from './TaskColumn'
 import TaskTabs from './TaskTabs'
@@ -33,6 +34,7 @@ export default function TaskBoard({
   updateTaskStatus,
   archiveTask,
 }) {
+  const { t } = useTranslation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ search: '', assignee: 'all', priority: 'all', mine: false, overdue: false })
@@ -103,14 +105,14 @@ export default function TaskBoard({
   async function handleCreate(payload) {
     await createTask(payload)
     setCreating(false)
-    setToast('Tâche créée.')
+    setToast(t('tasks.created'))
     window.setTimeout(() => setToast(''), 2200)
   }
 
   async function handleStatus(task, status) {
     await updateTaskStatus(task, status)
     setSelectedTask(prev => prev?.id === task.id ? { ...prev, status } : prev)
-    setToast('Statut mis a jour.')
+    setToast(t('tasks.statusUpdated'))
     window.setTimeout(() => setToast(''), 2200)
   }
 
@@ -133,27 +135,27 @@ export default function TaskBoard({
     <div className="tasks-page">
       <div className="tasks-hero textured-page-header" style={{ '--header-color': '#16b5a3' }}>
         <div>
-          <h1>Tâches</h1>
-          <p>{counters.total} tâche{counters.total !== 1 ? 's' : ''}</p>
+          <h1>{t('tasks.title')}</h1>
+          <p>{counters.total} {t('tasks.title').toLowerCase()}</p>
         </div>
-        {canCreate && <button type="button" onClick={() => setCreating(true)}>Nouvelle tâche</button>}
+        {canCreate && <button type="button" onClick={() => setCreating(true)}>{t('tasks.newTask')}</button>}
       </div>
 
       <div className="tasks-summary">
-        <button type="button" className="summary-todo" onClick={() => setActiveTab('todo')}><span>À faire</span><strong>{counters.todo}</strong></button>
-        <button type="button" className="summary-progress" onClick={() => setActiveTab('in_progress')}><span>En cours</span><strong>{counters.in_progress}</strong></button>
-        <button type="button" className="summary-done" onClick={() => setActiveTab('done')}><span>Terminé</span><strong>{counters.done}</strong></button>
-        <div className="summary-overdue"><span>En retard</span><strong>{counters.overdue}</strong></div>
+        <button type="button" className="summary-todo" onClick={() => setActiveTab('todo')}><span>{t('tasks.aTodo')}</span><strong>{counters.todo}</strong></button>
+        <button type="button" className="summary-progress" onClick={() => setActiveTab('in_progress')}><span>{t('tasks.inProgress')}</span><strong>{counters.in_progress}</strong></button>
+        <button type="button" className="summary-done" onClick={() => setActiveTab('done')}><span>{t('tasks.done')}</span><strong>{counters.done}</strong></button>
+        <div className="summary-overdue"><span>{t('tasks.overdue')}</span><strong>{counters.overdue}</strong></div>
       </div>
 
       <TaskFilters filters={filters} setFilters={setFilters} assignableMembers={assignableMembers} compact={!isDesktop} />
 
       {error && <div className="task-load-error">{error}</div>}
       {membersError && <div className="task-load-error">{membersError}</div>}
-      {membersLoading && <div className="task-load-note">Chargement des membres assignables...</div>}
+      {membersLoading && <div className="task-load-note">{t('tasks.loadingMembers')}</div>}
 
       {loading ? (
-        <div className="task-board-loading">Chargement des tâches...</div>
+        <div className="task-board-loading">{t('tasks.loadingTasks')}</div>
       ) : isDesktop ? (
         <div className="task-board">
           {TASK_COLUMNS.map(column => (
@@ -206,8 +208,8 @@ export default function TaskBoard({
             <div className="task-modal" onClick={e => e.stopPropagation()}>
               <div className="task-modal-head">
                 <div>
-                  <span className="tasks-badge status-todo">Nouvelle</span>
-                  <h2>Créer une tâche</h2>
+                  <span className="tasks-badge status-todo">{t('tasks.newLabel')}</span>
+                  <h2>{t('tasks.newTaskTitle')}</h2>
                 </div>
               </div>
               <TaskForm

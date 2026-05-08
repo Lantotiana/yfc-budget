@@ -17,9 +17,9 @@ export const TASK_PRIORITY_LABELS = {
 }
 
 export const TASK_COLUMNS = [
-  { key: 'todo', label: TASK_STATUS_LABELS.todo, empty: 'Aucune tâche à faire' },
-  { key: 'in_progress', label: TASK_STATUS_LABELS.in_progress, empty: 'Aucune tâche en cours' },
-  { key: 'done', label: TASK_STATUS_LABELS.done, empty: 'Aucune tâche terminée' },
+  { key: 'todo', labelKey: 'tasks.todo', emptyKey: 'tasks.emptyTodo' },
+  { key: 'in_progress', labelKey: 'tasks.inProgress', emptyKey: 'tasks.emptyInProgress' },
+  { key: 'done', labelKey: 'tasks.done', emptyKey: 'tasks.emptyDone' },
 ]
 
 export const TASK_MANAGER_ROLES = [
@@ -87,10 +87,10 @@ export function toDateInputValue(value) {
 }
 
 export function getDueDateStatus(deadline, status) {
-  if (status === 'done') return { label: 'Terminé', color: 'neutral', isOverdue: false }
+  if (status === 'done') return { labelKey: 'tasks.done', color: 'neutral', isOverdue: false }
 
   const date = toDate(deadline)
-  if (!date) return { label: 'Deadline requise', color: 'red', isOverdue: true }
+  if (!date) return { labelKey: 'tasks.deadlineRequired', color: 'red', isOverdue: true }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -100,21 +100,21 @@ export function getDueDateStatus(deadline, status) {
 
   if (diffDays < 0) {
     const count = Math.abs(diffDays)
-    return { label: count === 1 ? 'En retard hier' : `En retard de ${count} jours`, color: 'red', isOverdue: true }
+    return { labelKey: count === 1 ? 'tasks.overdueYesterday' : 'tasks.overdueNDays', labelN: count, color: 'red', isOverdue: true }
   }
-  if (diffDays === 0) return { label: "Aujourd'hui", color: 'red', isOverdue: false }
-  if (diffDays === 1) return { label: 'Demain', color: 'orange', isOverdue: false }
-  if (diffDays <= 3) return { label: `Dans ${diffDays} jours`, color: 'orange', isOverdue: false }
-  return { label: `Dans ${diffDays} jours`, color: 'green', isOverdue: false }
+  if (diffDays === 0) return { labelKey: 'tasks.today', color: 'red', isOverdue: false }
+  if (diffDays === 1) return { labelKey: 'tasks.tomorrow', color: 'orange', isOverdue: false }
+  if (diffDays <= 3) return { labelKey: 'tasks.inDays', labelN: diffDays, color: 'orange', isOverdue: false }
+  return { labelKey: 'tasks.inDays', labelN: diffDays, color: 'green', isOverdue: false }
 }
 
 export function validateTaskPayload(payload) {
   const errors = {}
-  if (!payload.title?.trim()) errors.title = 'Le titre est obligatoire.'
-  if (!payload.deadline || !toDate(payload.deadline)) errors.deadline = 'La deadline est obligatoire.'
-  if (!Array.isArray(payload.assignedTo) || payload.assignedTo.length === 0) errors.assignedTo = 'Assigne au moins un membre.'
-  if (!TASK_STATUSES.includes(payload.status)) errors.status = 'Statut invalide.'
-  if (!TASK_PRIORITIES.includes(payload.priority)) errors.priority = 'Priorité invalide.'
+  if (!payload.title?.trim()) errors.title = 'tasks.errorTitle'
+  if (!payload.deadline || !toDate(payload.deadline)) errors.deadline = 'tasks.errorDeadline'
+  if (!Array.isArray(payload.assignedTo) || payload.assignedTo.length === 0) errors.assignedTo = 'tasks.errorAssignee'
+  if (!TASK_STATUSES.includes(payload.status)) errors.status = 'tasks.errorStatus'
+  if (!TASK_PRIORITIES.includes(payload.priority)) errors.priority = 'tasks.errorPriority'
   return errors
 }
 

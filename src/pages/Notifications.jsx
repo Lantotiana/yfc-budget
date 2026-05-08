@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { useTranslation } from 'react-i18next'
 
 const typeIcon = {
   budget: Wallet,
@@ -100,6 +101,7 @@ function groupLabel(iso) {
 export default function Notifications({ user }) {
   const navigate = useNavigate()
   const { C } = useTheme()
+  const { t } = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -161,9 +163,9 @@ export default function Notifications({ user }) {
       {/* Header */}
       <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Notifications</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('notifications.title')}</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>
-            {visibleNotifications.length} activité{visibleNotifications.length !== 1 ? 's' : ''} récente{visibleNotifications.length !== 1 ? 's' : ''}
+            {visibleNotifications.length}
           </div>
         </div>
         <div className="header-action" style={{ width: 36, height: 36, borderRadius: 12, background: C.violetD, color: C.violet, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -173,10 +175,10 @@ export default function Notifications({ user }) {
 
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>Chargement...</div>
+          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
         ) : visibleNotifications.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
-            Aucune notification pour le moment.
+            {t('notifications.aucune')}
           </div>
         ) : Object.entries(grouped).map(([label, items]) => (
           <div key={label} style={{ marginBottom: 16 }}>
@@ -201,7 +203,7 @@ export default function Notifications({ user }) {
                     <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{cleanText(notif.titre)}</div>
                     {notif.detail && <div style={{ fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanText(notif.detail)}</div>}
                     <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4, display: 'flex', gap: 6 }}>
-                      <span>{cleanText(notif.actor?.nom) || 'Utilisateur'}</span>
+                      <span>{cleanText(notif.actor?.nom) || t('notifications.utilisateurInconnu')}</span>
                       <span>·</span>
                       <span>{formatTime(notif.createdAt)}</span>
                     </div>

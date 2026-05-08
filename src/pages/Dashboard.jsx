@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, ClipboardList, TrendingUp, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
@@ -80,6 +81,7 @@ function StatCard({ label, value, col, colD, Icon, type, onClick }) {
 }
 
 export default function Dashboard({ user }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
@@ -142,7 +144,7 @@ export default function Dashboard({ user }) {
   ), [navigate])
 
   useEffect(() => {
-    setToolbar({ title: 'Tableau de bord YFC', actions: desktopActions })
+    setToolbar({ title: t('dashboard.title') + ' YFC', actions: desktopActions })
     return () => setToolbar({ actions: null })
   }, [desktopActions, setToolbar])
 
@@ -161,29 +163,29 @@ export default function Dashboard({ user }) {
         <div className="desktop-page-intro desktop-hide-page-header">
           <div>
             <span>Vue générale</span>
-            <h2>Tableau de bord YFC</h2>
+            <h2>{t('dashboard.title')} YFC</h2>
             <p>Suivi centralisé des membres, finances, événements et activités staff.</p>
           </div>
           <button type="button" onClick={() => navigate('/budget')}>Voir le budget</button>
         </div>
 
         <div className="desktop-stats-grid">
-          <DesktopStatCard label="Membres" value={membres.length} detail={`${staffCount} staffs`} color="#0cc0df" Icon={Users} onClick={() => navigate('/membres')} />
-          <DesktopStatCard label="Solde actuel" value={fmt(solde)} detail="Toutes périodes" color={solde >= 0 ? '#22c55e' : '#ef4444'} Icon={Wallet} onClick={() => navigate('/budget')} />
-          <DesktopStatCard label="Entrées du mois" value={fmt(monthEntrees)} detail="Mois courant" color="#22c55e" Icon={ArrowDownLeft} onClick={() => navigate('/budget')} />
+          <DesktopStatCard label={t('dashboard.membres')} value={membres.length} detail={`${staffCount} staffs`} color="#0cc0df" Icon={Users} onClick={() => navigate('/membres')} />
+          <DesktopStatCard label={t('dashboard.solde')} value={fmt(solde)} detail="Toutes périodes" color={solde >= 0 ? '#22c55e' : '#ef4444'} Icon={Wallet} onClick={() => navigate('/budget')} />
+          <DesktopStatCard label={t('dashboard.totalEntrees')} value={fmt(monthEntrees)} detail="Mois courant" color="#22c55e" Icon={ArrowDownLeft} onClick={() => navigate('/budget')} />
           <DesktopStatCard label="Tâches actives" value={taskStats.todo + taskStats.inProgress} detail={`${taskStats.overdue} en retard`} color={taskStats.overdue ? '#ef4444' : '#0cc0df'} Icon={ClipboardList} onClick={() => navigate('/tasks')} />
         </div>
 
         <div className="desktop-dashboard-grid">
-          <DesktopSectionCard title="Budget">
+          <DesktopSectionCard title={t('budget.title')}>
             <div className="desktop-budget-summary">
-              <div><span>Total entrées</span><strong className="positive">{fmt(totalEntrees)}</strong></div>
-              <div><span>Total sorties</span><strong className="negative">{fmt(totalDepenses)}</strong></div>
-              <div><span>Solde</span><strong className={solde >= 0 ? 'positive' : 'negative'}>{fmt(solde)}</strong></div>
+              <div><span>{t('dashboard.totalEntrees')}</span><strong className="positive">{fmt(totalEntrees)}</strong></div>
+              <div><span>{t('dashboard.totalDepenses')}</span><strong className="negative">{fmt(totalDepenses)}</strong></div>
+              <div><span>{t('dashboard.solde')}</span><strong className={solde >= 0 ? 'positive' : 'negative'}>{fmt(solde)}</strong></div>
             </div>
           </DesktopSectionCard>
 
-          <DesktopSectionCard title="Événements">
+          <DesktopSectionCard title={t('dashboard.evenements')}>
             <div className="desktop-next-event">
               <CalendarDays size={24} />
               <div>
@@ -210,12 +212,12 @@ export default function Dashboard({ user }) {
             </div>
           </DesktopSectionCard>
 
-          <DesktopSectionCard title="Transactions récentes" className="desktop-wide-card" action={<button type="button" onClick={() => navigate('/budget')}>Voir tout</button>}>
+          <DesktopSectionCard title={`${t('dashboard.transactions')} récentes`} className="desktop-wide-card" action={<button type="button" onClick={() => navigate('/budget')}>Voir tout</button>}>
             <div className="desktop-activity-list">
               {loading ? (
-                <div className="desktop-empty">Chargement...</div>
+                <div className="desktop-empty">{t('common.loading')}</div>
               ) : recentTransactions.length === 0 ? (
-                <div className="desktop-empty">Aucune transaction</div>
+                <div className="desktop-empty">{t('budget.aucuneTransaction')}</div>
               ) : recentTransactions.map(tx => {
                 const isEntree = tx.type === 'entree'
                 return (
@@ -232,7 +234,7 @@ export default function Dashboard({ user }) {
             </div>
           </DesktopSectionCard>
 
-          <DesktopSectionCard title="Membres" action={<button type="button" onClick={() => navigate('/membres')}>Gérer</button>}>
+          <DesktopSectionCard title={t('dashboard.membres')} action={<button type="button" onClick={() => navigate('/membres')}>Gérer</button>}>
             <div className="desktop-member-preview">
               {membres.slice(0, 5).map(m => (
                 <button key={m.id} type="button" onClick={() => navigate('/membres')}>
@@ -243,7 +245,7 @@ export default function Dashboard({ user }) {
                   </div>
                 </button>
               ))}
-              {membres.length === 0 && <div className="desktop-empty">Aucun membre</div>}
+              {membres.length === 0 && <div className="desktop-empty">{t('membres.aucunMembre')}</div>}
             </div>
           </DesktopSectionCard>
 
@@ -278,8 +280,8 @@ export default function Dashboard({ user }) {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '12px 20px 0', gap: 12 }}>
         {/* Entrées / Dépenses */}
         <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
-          <StatCard label="Entrées"  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income"  onClick={() => navigate('/budget')} />
-          <StatCard label="Dépenses" value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" onClick={() => navigate('/budget')} />
+          <StatCard label={t('dashboard.totalEntrees')}  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income"  onClick={() => navigate('/budget')} />
+          <StatCard label={t('dashboard.totalDepenses')} value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" onClick={() => navigate('/budget')} />
         </div>
 
         {/* Membres / Événements */}
@@ -289,7 +291,7 @@ export default function Dashboard({ user }) {
               <Users size={14} color={C.violet} />
             </div>
             <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={membres.length} /></div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Membres</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{t('dashboard.membres')}</div>
             <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>total inscrits</div>
           </button>
           <button onClick={() => navigate('/evenements')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
@@ -297,7 +299,7 @@ export default function Dashboard({ user }) {
               <CalendarDays size={14} color={C.amber} />
             </div>
             <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={upcomingCount} /></div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Événements</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{t('dashboard.evenements')}</div>
             <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
           </button>
         </div>
@@ -316,7 +318,7 @@ export default function Dashboard({ user }) {
         {/* Transactions récentes */}
         <div className="f5" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexShrink: 0 }}>
-            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Transactions récentes</div>
+            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{t('dashboard.transactions')} récentes</div>
             <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 'var(--font-xs)', color: C.amber, fontWeight: 500 }}>
               Voir tout
             </button>
@@ -324,9 +326,9 @@ export default function Dashboard({ user }) {
 
           <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Chargement...</div>
+              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
             ) : recentTransactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>Aucune transaction</div>
+              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>{t('budget.aucuneTransaction')}</div>
             ) : (
               recentTransactions.map(tx => {
                 const isEntree = tx.type === 'entree'

@@ -11,6 +11,8 @@ import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
 import { normalizeAccessText, sameEmail } from '../utils/access'
 import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
@@ -19,6 +21,7 @@ const SHEET_SYNC_ROLES = ['president', 'vice president', 'vice-president', 'resp
 export default function Parametres({ user, userData, setUserData }) {
   const navigate = useNavigate()
   const { dark, toggle, C } = useTheme()
+  const { t } = useTranslation()
   const fileRef = useRef()
 
   const [nom, setNom] = useState(userData?.nom || '')
@@ -102,13 +105,13 @@ export default function Parametres({ user, userData, setUserData }) {
       setUserData(prev => ({ ...prev, nom: nom.trim(), photoURL }))
       await createNotification({
         type: 'profil',
-        titre: 'Profil mis à jour',
+        titre: t('parametres.notifProfilMaj'),
         detail: nom.trim(),
         cible: user.uid,
         route: '/parametres',
       })
-      flash('Profil mis à jour !')
-    } catch { flash('Erreur lors de la sauvegarde.', false) }
+      flash(t('parametres.profilMisAJour'))
+    } catch { flash(t('parametres.erreurSauvegarde'), false) }
     setSaving(false)
   }
 
@@ -128,20 +131,20 @@ export default function Parametres({ user, userData, setUserData }) {
         setUserData(prev => ({ ...prev, photoURL: data.secure_url }))
         await createNotification({
           type: 'profil',
-          titre: 'Photo de profil modifiée',
+          titre: t('parametres.notifPhotoMaj'),
           detail: userData?.nom || user.email,
           cible: user.uid,
           route: '/parametres',
         })
-        flash('Photo mise à jour !')
-      } else { flash('Erreur upload photo.', false) }
-    } catch { flash('Erreur upload photo.', false) }
+        flash(t('parametres.photoMisAJour'))
+      } else { flash(t('parametres.erreurPhoto'), false) }
+    } catch { flash(t('parametres.erreurPhoto'), false) }
     setUploadingPhoto(false)
   }
 
   async function savePassword() {
-    if (newPwd.length < 6) { flash('Mot de passe trop court (6 caractères min).', false); return }
-    if (newPwd !== confirmPwd) { flash('Les mots de passe ne correspondent pas.', false); return }
+    if (newPwd.length < 6) { flash(t('parametres.mdpTropCourt'), false); return }
+    if (newPwd !== confirmPwd) { flash(t('parametres.mdpNonCorrespondant'), false); return }
     setSavingPwd(true)
     try {
       const cred = EmailAuthProvider.credential(user.email, oldPwd)
@@ -150,18 +153,23 @@ export default function Parametres({ user, userData, setUserData }) {
       setOldPwd(''); setNewPwd(''); setConfirmPwd('')
       await createNotification({
         type: 'profil',
-        titre: 'Mot de passe modifié',
+        titre: t('parametres.notifMdpMaj'),
         detail: userData?.nom || user.email,
         cible: user.uid,
         route: '/parametres',
       })
-      flash('Mot de passe modifié !')
+      flash(t('parametres.mdpModifie'))
     } catch(e) {
       if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        flash('Mot de passe actuel incorrect.', false)
-      } else { flash('Erreur : ' + e.message, false) }
+        flash(t('parametres.mdpActuelIncorrect'), false)
+      } else { flash(t('common.error') + ' : ' + e.message, false) }
     }
     setSavingPwd(false)
+  }
+
+  function changeLanguage(lang) {
+    i18n.changeLanguage(lang)
+    localStorage.setItem('yfc-lang', lang)
   }
 
   const inp = {
@@ -181,14 +189,14 @@ export default function Parametres({ user, userData, setUserData }) {
     textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14,
   }
 
-  const roleLabel = memberRole.staffRole || (memberRole.staff ? 'Staff sans rôle attribué' : 'Membre')
+  const roleLabel = memberRole.staffRole || (memberRole.staff ? t('parametres.staffSansRole') : t('membres.membre'))
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
 
       {/* Header */}
       <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#64748b', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
-        <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Paramètres</div>
+        <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('parametres.title')}</div>
       </div>
 
       <div className="page-content" style={{ padding: '16px 20px', paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
@@ -202,7 +210,7 @@ export default function Parametres({ user, userData, setUserData }) {
 
         {/* Application */}
         <div style={section}>
-          <div style={sectionLabel}>Application</div>
+          <div style={sectionLabel}>{t('parametres.application')}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}` }}>
             <span style={{ flex: 1, fontSize: 'var(--font-xs)', color: C.t2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appUrl}</span>
@@ -217,7 +225,7 @@ export default function Parametres({ user, userData, setUserData }) {
               style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 10, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-xs)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {linkCopied ? <Check size={13} /> : <Share2 size={13} />}
-              {linkCopied ? 'Copié !' : 'Partager'}
+              {linkCopied ? t('common.copied') : t('common.share')}
             </button>
           </div>
 
@@ -262,12 +270,12 @@ export default function Parametres({ user, userData, setUserData }) {
           {showQR && (
             <div className="modal-overlay" onClick={() => setShowQR(false)}>
               <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 280, textAlign: 'center' }}>
-                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, marginBottom: 16 }}>Scanner pour accéder à l'app</div>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, marginBottom: 16 }}>{t('parametres.scanner')}</div>
                 <div style={{ display: 'inline-block', padding: 12, borderRadius: 16, background: '#fff' }}>
                   <QRCodeSVG value={appUrl} size={180} fgColor="#0f172a" bgColor="#ffffff" />
                 </div>
                 <div style={{ marginTop: 12, fontSize: 'var(--font-xs)', color: C.t3 }}>{appUrl}</div>
-                <button onClick={() => setShowQR(false)} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Fermer</button>
+                <button onClick={() => setShowQR(false)} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.close')}</button>
               </div>
             </div>
           )}
@@ -275,11 +283,11 @@ export default function Parametres({ user, userData, setUserData }) {
 
         {/* Apparence */}
         <div style={section}>
-          <div style={sectionLabel}>Apparence</div>
+          <div style={sectionLabel}>{t('parametres.apparence')}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>Mode sombre</div>
-              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{dark ? 'Activé' : 'Désactivé'}</div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{t('parametres.modeSombre')}</div>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{dark ? t('parametres.active') : t('parametres.desactive')}</div>
             </div>
             <button
               onClick={toggle}
@@ -292,7 +300,7 @@ export default function Parametres({ user, userData, setUserData }) {
 
         {/* Profil */}
         <div style={section}>
-          <div style={sectionLabel}>Profil</div>
+          <div style={sectionLabel}>{t('parametres.profil')}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div
@@ -305,29 +313,29 @@ export default function Parametres({ user, userData, setUserData }) {
               }
             </div>
             <div>
-              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>Photo de profil</div>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{t('parametres.photoProfile')}</div>
               <button
                 onClick={() => fileRef.current?.click()}
                 style={{ fontSize: 'var(--font-xs)', color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
               >
-                {uploadingPhoto ? 'Envoi en cours...' : 'Modifier la photo'}
+                {uploadingPhoto ? t('parametres.uploading') : t('parametres.modifierPhoto')}
               </button>
             </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label className="form-label">Nom complet</label>
-            <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder="Ton nom" style={inp} />
+            <label className="form-label">{t('parametres.nomComplet')}</label>
+            <input type="text" value={nom} onChange={e => setNom(e.target.value)} placeholder={t('parametres.namePlaceholder')} style={inp} />
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label className="form-label">Email</label>
+            <label className="form-label">{t('parametres.email')}</label>
             <input type="email" value={user?.email || ''} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label className="form-label">Rôle</label>
+            <label className="form-label">{t('parametres.role')}</label>
             <input type="text" value={roleLabel} disabled style={{ ...inp, opacity: 0.5, cursor: 'not-allowed' }} />
           </div>
 
@@ -336,19 +344,19 @@ export default function Parametres({ user, userData, setUserData }) {
             disabled={saving || !nom.trim()}
             style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
           >
-            {saving ? 'Enregistrement...' : 'Sauvegarder le profil'}
+            {saving ? t('parametres.enregistrement') : t('parametres.sauvegarder')}
           </button>
         </div>
 
         {/* Mot de passe */}
         {canOpenAdminTools && (
           <div style={section}>
-            <div style={sectionLabel}>Administration</div>
+            <div style={sectionLabel}>{t('parametres.administration')}</div>
             <button
               onClick={() => navigate('/admin')}
               style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              Ouvrir la page admin
+              {t('parametres.ouvrirAdmin')}
             </button>
           </div>
         )}
@@ -356,7 +364,7 @@ export default function Parametres({ user, userData, setUserData }) {
         {/* Tags des membres */}
         {isAdmin && (
           <div style={section}>
-            <div style={sectionLabel}>Tags des membres</div>
+            <div style={sectionLabel}>{t('parametres.tagsMembres')}</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
               {availableTags.map(tag => (
@@ -371,7 +379,7 @@ export default function Parametres({ user, userData, setUserData }) {
                       <Trash2 size={14} />
                     </button>
                   ) : (
-                    <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>protégé</span>
+                    <span style={{ fontSize: 10, color: C.t3, fontStyle: 'italic' }}>{t('common.protected')}</span>
                   )}
                 </div>
               ))}
@@ -380,14 +388,14 @@ export default function Parametres({ user, userData, setUserData }) {
             {confirmDeleteTag && (
               <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'rgba(244,63,94,0.07)', border: '1px solid rgba(244,63,94,0.2)' }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 4 }}>
-                  Supprimer «&nbsp;{confirmDeleteTag}&nbsp;» ?
+                  {t('parametres.supprimerTag', { tag: confirmDeleteTag })}
                 </div>
                 <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 12 }}>
-                  Les membres qui ont ce tag conserveront leur donnée existante.
+                  {t('parametres.supprimerTagDesc')}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Annuler</button>
-                  <button onClick={() => removeTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>Supprimer</button>
+                  <button onClick={() => setConfirmDeleteTag(null)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>{t('common.cancel')}</button>
+                  <button onClick={() => removeTag(confirmDeleteTag)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)' }}>{t('common.delete')}</button>
                 </div>
               </div>
             )}
@@ -398,7 +406,7 @@ export default function Parametres({ user, userData, setUserData }) {
                 value={newTagInput}
                 onChange={e => setNewTagInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
-                placeholder="Nouveau tag..."
+                placeholder={t('parametres.nouveauTag')}
                 style={{ ...inp, flex: 1 }}
               />
               <button
@@ -407,7 +415,7 @@ export default function Parametres({ user, userData, setUserData }) {
                 disabled={!newTagInput.trim() || availableTags.includes(newTagInput.trim())}
                 style={{ padding: '10px 16px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-sm)', opacity: (newTagInput.trim() && !availableTags.includes(newTagInput.trim())) ? 1 : 0.5, whiteSpace: 'nowrap' }}
               >
-                + Ajouter
+                {t('parametres.ajouterTag')}
               </button>
             </div>
           </div>
@@ -415,12 +423,12 @@ export default function Parametres({ user, userData, setUserData }) {
 
         {/* Mot de passe */}
         <div style={section}>
-          <div style={sectionLabel}>Changer le mot de passe</div>
+          <div style={sectionLabel}>{t('parametres.changerMdp')}</div>
 
           {[
-            { label: 'Mot de passe actuel',  val: oldPwd,     set: setOldPwd,     show: showOld, toggleShow: () => setShowOld(p => !p) },
-            { label: 'Nouveau mot de passe', val: newPwd,     set: setNewPwd,     show: showNew, toggleShow: () => setShowNew(p => !p) },
-            { label: 'Confirmer le nouveau', val: confirmPwd, set: setConfirmPwd, show: showNew, toggleShow: null },
+            { label: t('parametres.mdpActuel'),   val: oldPwd,     set: setOldPwd,     show: showOld, toggleShow: () => setShowOld(p => !p) },
+            { label: t('parametres.nouveauMdp'),  val: newPwd,     set: setNewPwd,     show: showNew, toggleShow: () => setShowNew(p => !p) },
+            { label: t('parametres.confirmerMdp'), val: confirmPwd, set: setConfirmPwd, show: showNew, toggleShow: null },
           ].map((f, i) => (
             <div key={i} style={{ marginBottom: 12 }}>
               <label className="form-label">{f.label}</label>
@@ -449,7 +457,7 @@ export default function Parametres({ user, userData, setUserData }) {
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
             style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
           >
-            {savingPwd ? 'Modification...' : 'Modifier le mot de passe'}
+            {savingPwd ? t('parametres.modification') : t('parametres.modifierMdp')}
           </button>
         </div>
 
@@ -458,7 +466,7 @@ export default function Parametres({ user, userData, setUserData }) {
           onClick={() => signOut(auth)}
           style={{ width: '100%', padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
         >
-          Se déconnecter
+          {t('parametres.deconnecter')}
         </button>
       </div>
     </div>

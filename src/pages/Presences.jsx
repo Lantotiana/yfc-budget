@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
@@ -10,6 +11,7 @@ import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 export default function Presences({ user, userData }) {
+  const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const navigate = useNavigate()
@@ -23,9 +25,9 @@ export default function Presences({ user, userData }) {
 
   const desktopActions = useMemo(() => (
     <button className="desktop-toolbar-btn" type="button" onClick={() => setShowNewEvent(true)}>
-      <CalendarPlus size={16} /> Nouvelle
+      <CalendarPlus size={16} /> {t('presences.nouvelEvenement')}
     </button>
-  ), [])
+  ), [t])
 
   useEffect(() => {
     setToolbar({ actions: desktopActions })
@@ -105,14 +107,14 @@ export default function Presences({ user, userData }) {
       <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Présences</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('presences.title')}</div>
             <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{evenements.length} réunion{evenements.length !== 1 ? 's' : ''}</div>
           </div>
           <button
             onClick={() => setShowNewEvent(true)}
             style={{ padding: '9px 16px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600, fontFamily: 'inherit' }}
           >
-            + Nouvelle
+            + {t('presences.nouvelEvenement')}
           </button>
         </div>
       </div>
@@ -120,7 +122,7 @@ export default function Presences({ user, userData }) {
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {evenements.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
-            Aucune réunion. Créez-en une pour commencer.
+            {t('presences.aucunEvenement')}
           </div>
         ) : evenements.map(ev => {
           const { total, presentCount } = getEventStats(ev)
@@ -169,10 +171,10 @@ export default function Presences({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={() => setShowNewEvent(false)}>
           <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">Nouvelle réunion</h2>
+            <h2 className="dialog-title mb-16">{t('presences.nouvelEvenement')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label className="form-label">Nom de la réunion *</label>
+                <label className="form-label">{t('presences.nom')} *</label>
                 <input
                   type="text"
                   value={newEventForm.titre}
@@ -183,7 +185,7 @@ export default function Presences({ user, userData }) {
                 />
               </div>
               <div>
-                <label className="form-label">Date</label>
+                <label className="form-label">{t('presences.date')}</label>
                 <input
                   type="date"
                   value={newEventForm.date}
@@ -232,13 +234,13 @@ export default function Presences({ user, userData }) {
               </div>
             </div>
             <div className="dialog-footer" style={{ marginTop: '1.5rem' }}>
-              <button onClick={() => setShowNewEvent(false)} className="btn-secondary" style={{ flex: 1, padding: '13px' }}>Annuler</button>
+              <button onClick={() => setShowNewEvent(false)} className="btn-secondary" style={{ flex: 1, padding: '13px' }}>{t('common.cancel')}</button>
               <button
                 onClick={createEvent}
                 disabled={savingEvent || !newEventForm.titre.trim()}
                 style={{ flex: 2, padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
               >
-                {savingEvent ? 'Création...' : 'Créer la réunion'}
+                {savingEvent ? t('common.saving') : t('presences.nouvelEvenement')}
               </button>
             </div>
           </div>

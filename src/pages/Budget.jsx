@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import TransactionForm from '../components/TransactionForm'
@@ -14,6 +15,7 @@ function fmt(n) {
 }
 
 export default function Budget({ user, userData }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { C } = useTheme()
   const { detailType } = useParams()
@@ -136,18 +138,18 @@ export default function Budget({ user, userData }) {
     <div className="sin budget-page" style={{ minHeight: '100vh', background: C.bg }}>
       {/* Header */}
       <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-        <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Budget</div>
+        <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('budget.title')}</div>
         <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Young For Christ</div>
       </div>
 
       {/* Entrées / Dépenses */}
       <div className="f2" style={{ padding: '0 20px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div onClick={() => navigate('/budget/entrees')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>ENTRÉES</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.entrees')}</div>
           <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
         </div>
         <div onClick={() => navigate('/budget/depenses')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>DÉPENSES</div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.depenses')}</div>
           <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.coral }}>{fmt(allDepenses)}</div>
         </div>
       </div>
@@ -156,7 +158,7 @@ export default function Budget({ user, userData }) {
       <div className="f3" style={{ padding: '0 20px 12px' }}>
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>SOLDE ACTUEL</div>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>{t('budget.soldeActuel')}</div>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: solde >= 0 ? C.teal : C.coral }}>
               {solde < 0 ? '−' : ''}{fmt(Math.abs(solde))}
             </div>
@@ -169,7 +171,7 @@ export default function Budget({ user, userData }) {
 
 
       <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {loading && <div className="loading">Chargement...</div>}
+        {loading && <div className="loading">{t('common.loading')}</div>}
         <TransactionForm onAdd={addTransaction} canManageBudget={canManageBudget} />
         <TransactionList
           transactions={filtered}

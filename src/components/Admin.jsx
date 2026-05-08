@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
@@ -143,6 +144,7 @@ function Avatar({ u, size = 38, online = false }) {
 }
 
 function UserSheet({ u, onClose, onSave, C }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     nom: u.nom || '',
     photoURL: u.photoURL || '',
@@ -245,14 +247,14 @@ function UserSheet({ u, onClose, onSave, C }) {
             onClick={handleDelete}
             style={{ padding: '12px', borderRadius: 14, border: 'none', background: 'rgba(244,63,94,0.12)', color: '#f43f5e', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
           >
-            Supprimer
+            {t('common.delete')}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
             style={{ padding: '12px', borderRadius: 14, border: 'none', background: '#10b981', color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: saving ? 0.7 : 1 }}
           >
-            <Check size={16} />{saving ? 'Enregistrement...' : 'Enregistrer'}
+            <Check size={16} />{saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>
@@ -265,6 +267,7 @@ function canUseSheetSync(role) {
 }
 
 function GoogleSheetsSyncPanel({ C, canSync }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState({ state: 'idle', message: 'Pas encore synchronise', data: null })
   const [busy, setBusy] = useState(null)
 
@@ -294,7 +297,7 @@ function GoogleSheetsSyncPanel({ C, canSync }) {
           <FileSpreadsheet size={18} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="card-title mt-0" style={{ marginBottom: 2 }}>Synchronisation Google Sheets</div>
+          <div className="card-title mt-0" style={{ marginBottom: 2 }}>{t('admin.synchroniser')}</div>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>Firebase reste la source officielle des donnees.</div>
         </div>
       </div>
@@ -303,10 +306,10 @@ function GoogleSheetsSyncPanel({ C, canSync }) {
         <button
           type="button"
           disabled={!canSync || busy}
-          onClick={() => callFunction('syncAllToGoogleSheets', 'Synchronisation')}
+          onClick={() => callFunction('syncAllToGoogleSheets', t('admin.synchronisation'))}
           style={{ padding: '11px 10px', borderRadius: 12, border: 'none', background: '#0cc0df', color: '#fff', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: !canSync || busy ? 0.65 : 1 }}
         >
-          <RefreshCw size={14} /> {busy === 'syncAllToGoogleSheets' ? 'Synchro...' : 'Synchroniser'}
+          <RefreshCw size={14} /> {busy === 'syncAllToGoogleSheets' ? t('admin.synchronisation') : t('admin.synchroniser')}
         </button>
         <button
           type="button"
@@ -344,6 +347,7 @@ function GoogleSheetsSyncPanel({ C, canSync }) {
 }
 
 export default function Admin({ user, userData }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { dark, C } = useTheme()
   const [users, setUsers] = useState([])
@@ -398,7 +402,7 @@ export default function Admin({ user, userData }) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
         <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>Administration</div>
+          <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1 }}>{t('admin.title')}</div>
         </div>
         <div className="page-content">
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
@@ -417,7 +421,7 @@ export default function Admin({ user, userData }) {
             <ArrowLeft size={18} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Administration</div>
+            <div style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('admin.title')}</div>
             <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Gestion des demandes et des comptes</div>
           </div>
           <div style={{ width: 38, height: 38, borderRadius: 12, background: C.tealD, color: C.teal, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -432,7 +436,7 @@ export default function Admin({ user, userData }) {
         {user?.email === ADMIN_EMAIL && (
         <>
         <section style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-          <div className="card-title mt-0">En attente ({enAttente.length})</div>
+          <div className="card-title mt-0">{t('admin.enAttente')} ({enAttente.length})</div>
           {enAttente.length === 0 ? (
             <div className="text-13 text-secondary p-12 mb-8">Aucune demande en attente</div>
           ) : enAttente.map(u => (
@@ -452,16 +456,16 @@ export default function Admin({ user, userData }) {
                   className="rounded-8 text-11 font-700 text-white border-none cursor-pointer"
                   style={{ padding: '6px 10px', background: '#d4f4ee', color: '#0f766e', opacity: sending === u.id ? 0.7 : 1 }}
                 >
-                  {sending === u.id ? '...' : 'Approuver'}
+                  {sending === u.id ? '...' : t('admin.approuver')}
                 </button>
-                <button onClick={() => supprimer(u.id)} className="btn-danger text-11 px-12">Refuser</button>
+                <button onClick={() => supprimer(u.id)} className="btn-danger text-11 px-12">{t('admin.rejeter')}</button>
               </div>
             </div>
           ))}
         </section>
 
         <section style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: 16, marginBottom: 12 }}>
-          <div className="card-title mt-0">Membres approuvés ({approuves.length})</div>
+          <div className="card-title mt-0">{t('admin.approuve')} ({approuves.length})</div>
           {approuves.map(u => (
             <button
               key={u.id}
