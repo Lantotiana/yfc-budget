@@ -74,7 +74,8 @@ export default function PresenceDetail({ user, userData }) {
   const filteredMembres = search.trim()
     ? tagFilteredMembres.filter(m =>
         normSearch(m.nom).includes(normSearch(search)) ||
-        normSearch(m.prenoms).includes(normSearch(search))
+        normSearch(m.prenoms).includes(normSearch(search)) ||
+        normSearch(m.nomPrefere).includes(normSearch(search))
       )
     : tagFilteredMembres
 
@@ -412,10 +413,10 @@ export default function PresenceDetail({ user, userData }) {
               }}
             >
               <div style={{ width: 38, height: 38, borderRadius: 14, flexShrink: 0, background: present ? C.tealD : C.surf2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)', color: present ? C.teal : C.t2 }}>
-                {(m.nom || '?')[0].toUpperCase()}
+                {(displayName(m) || '?')[0].toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.nom} {m.prenoms}</div>
+                <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName(m)}</div>
               </div>
               <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s', transform: present ? 'scale(1)' : 'scale(0.9)', opacity: presenceLocked ? 0.58 : 1 }}>
                 {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
