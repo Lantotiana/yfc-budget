@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { Pin, Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
@@ -59,12 +60,28 @@ export default function Evenements() {
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const now = useNow()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [evenements, setEvenements] = useState([])
   const [loading, setLoading] = useState(true)
   const [sheet, setSheet] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
+  const [highlightedId, setHighlightedId] = useState('')
+
+  useEffect(() => {
+    const id = searchParams.get('event')
+    if (!id || loading || evenements.length === 0) return
+    setHighlightedId(id)
+    const scrollTimer = window.setTimeout(() => {
+      document.querySelector(`[data-item-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 180)
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedId('')
+      setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('event'); return n }, { replace: true })
+    }, 2600)
+    return () => { window.clearTimeout(scrollTimer); window.clearTimeout(clearTimer) }
+  }, [searchParams, evenements, loading])
 
   useEffect(() => {
     const q = query(collection(db, 'evenements_agenda'), orderBy('dateDebut'))
@@ -94,13 +111,14 @@ export default function Evenements() {
         lieu: form.lieu.trim(),
       }
       if (sheet === 'add') {
-        await addDoc(collection(db, 'evenements_agenda'), data)
+        const ref = await addDoc(collection(db, 'evenements_agenda'), data)
         await createNotification({
           type: 'evenement',
           titre: 'Nouvel événement créé',
           detail: `${data.nom} - ${toDisplayDate(data.dateDebut)}`,
           cible: data.nom,
           route: '/evenements',
+          metadata: { eventId: ref.id },
         })
       } else {
         await updateDoc(doc(db, 'evenements_agenda', sheet.id), data)
@@ -110,6 +128,7 @@ export default function Evenements() {
           detail: `${data.nom} - ${toDisplayDate(data.dateDebut)}`,
           cible: data.nom,
           route: '/evenements',
+          metadata: { eventId: sheet.id },
         })
       }
       closeSheet()
@@ -189,7 +208,7 @@ export default function Evenements() {
           const dateLabel = formatDateRange(e.dateDebut, e.dateFin)
           const timeLabel = formatTimeRange(e.heureDebut, e.heureFin)
           return (
-            <div key={e.id} onClick={() => openEdit(e)} style={{ background: C.surf, border: `1px solid ${isPast ? C.bord : C.teal + '40'}`, borderRadius: 18, padding: 18, marginBottom: 12, cursor: 'pointer', position: 'relative', overflow: 'hidden', opacity: isPast ? 0.7 : 1 }}>
+            <div key={e.id} data-item-id={e.id} className={highlightedId === e.id ? 'item-highlighted' : ''} onClick={() => openEdit(e)} style={{ background: C.surf, border: `1px solid ${isPast ? C.bord : C.teal + '40'}`, borderRadius: 18, padding: 18, marginBottom: 12, cursor: 'pointer', position: 'relative', overflow: 'hidden', opacity: isPast ? 0.7 : 1 }}>
               {!isPast && <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: C.teal, borderRadius: '3px 0 0 3px' }} />}
               <div style={{ paddingLeft: isPast ? 0 : 8 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>

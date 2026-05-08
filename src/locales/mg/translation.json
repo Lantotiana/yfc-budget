@@ -5,7 +5,8 @@
     "budget": "Tetibola",
     "presences": "Fanatrehana",
     "membres": "Mpikambana",
-    "events": "Fotoana"
+    "events": "Fotoana",
+    "tasks": "Asa"
   },
   "common": {
     "loading": "Miandry...",
@@ -235,7 +236,7 @@
     "deadline": "Fetr'andro",
     "assignedTo": "Nomena",
     "description": "Famaritana",
-    "title": "Lohateny",
+    "fieldTitle": "Lohateny",
     "titlePlaceholder": "Lohateny ny asa...",
     "descPlaceholder": "Famaritana (tsy voatery)...",
     "create": "Mamorona asa",

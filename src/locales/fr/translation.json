@@ -5,7 +5,8 @@
     "budget": "Budget",
     "presences": "Présences",
     "membres": "Membres",
-    "events": "Events"
+    "events": "Events",
+    "tasks": "Tâches"
   },
   "common": {
     "loading": "Chargement...",
@@ -235,7 +236,7 @@
     "deadline": "Deadline",
     "assignedTo": "Assigné à",
     "description": "Description",
-    "title": "Titre",
+    "fieldTitle": "Titre",
     "titlePlaceholder": "Titre de la tâche...",
     "descPlaceholder": "Description (optionnel)...",
     "create": "Créer la tâche",

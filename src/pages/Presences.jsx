@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { toDisplayDate } from '../utils'
@@ -15,6 +15,8 @@ export default function Presences({ user, userData }) {
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [highlightedId, setHighlightedId] = useState('')
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
   const [allPresences, setAllPresences] = useState({})
@@ -62,6 +64,20 @@ export default function Presences({ user, userData }) {
       }
     })
   }, [])
+
+  useEffect(() => {
+    const id = searchParams.get('presence')
+    if (!id || evenements.length === 0) return
+    setHighlightedId(id)
+    const scrollTimer = window.setTimeout(() => {
+      document.querySelector(`[data-item-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 180)
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedId('')
+      setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('presence'); return n }, { replace: true })
+    }, 2600)
+    return () => { window.clearTimeout(scrollTimer); window.clearTimeout(clearTimer) }
+  }, [searchParams, evenements])
 
   function getEventStats(event) {
     const eventTags = event.tags || []
@@ -132,6 +148,8 @@ export default function Presences({ user, userData }) {
           return (
             <button
               key={ev.id}
+              data-item-id={ev.id}
+              className={highlightedId === ev.id ? 'item-highlighted' : ''}
               type="button"
               onClick={() => navigate(`/presences/${ev.id}`)}
               style={{ width: '100%', display: 'block', textAlign: 'left', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', marginBottom: 10, cursor: 'pointer' }}

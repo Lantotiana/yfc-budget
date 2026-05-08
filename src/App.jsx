@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
-import { CalendarCheck, CalendarDays, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
+import { CalendarCheck, CheckSquare, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { auth } from './auth'
 import { db } from './firebase'
@@ -123,7 +123,7 @@ function BottomNav({ user }) {
     { path: '/budget', label: t('nav.budget'), Icon: Wallet, color: '#10b981' },
     { path: '/presences', label: t('nav.presences'), Icon: CalendarCheck },
     { path: '/membres', label: t('nav.membres'), Icon: Users, color: '#f43f5e' },
-    { path: '/evenements', label: t('nav.events'), Icon: CalendarDays, color: '#f59e0b' },
+    { path: '/tasks', label: t('nav.tasks'), Icon: CheckSquare, color: '#8b5cf6' },
   ]
   const baseVisible = Boolean(user && location.pathname !== '/login' && !location.pathname.startsWith('/verify'))
   const visible = baseVisible && !isDesktop

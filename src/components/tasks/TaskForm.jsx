@@ -96,7 +96,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
     <form className="task-form" onSubmit={submit}>
       {errors.global && <div className="task-form-error">{t(errors.global)}</div>}
       <div>
-        <label>{t('tasks.title')} *</label>
+        <label>{t('tasks.fieldTitle')} *</label>
         <input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} placeholder={t('tasks.titlePlaceholder')} />
         {errors.title && <small>{t(errors.title)}</small>}
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
@@ -57,6 +57,22 @@ export default function Membres({ user, userData }) {
   const [showTagSettings, setShowTagSettings] = useState(false)
   const [confirmDeleteTag, setConfirmDeleteTag] = useState(null)
   const isAdmin = user?.email === ADMIN_EMAIL
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [highlightedId, setHighlightedId] = useState('')
+
+  useEffect(() => {
+    const id = searchParams.get('membre')
+    if (!id || loading || membres.length === 0) return
+    setHighlightedId(id)
+    const scrollTimer = window.setTimeout(() => {
+      document.querySelector(`[data-item-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 180)
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedId('')
+      setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('membre'); return n }, { replace: true })
+    }, 2600)
+    return () => { window.clearTimeout(scrollTimer); window.clearTimeout(clearTimer) }
+  }, [searchParams, membres, loading])
 
   useEffect(() => {
     const q = query(collection(db, 'membres'), orderBy('nom'))
@@ -111,7 +127,7 @@ export default function Membres({ user, userData }) {
       const isStaff = form.staff === true || isApprovedUserEmail(form.email)
       const staffRole = getStaffRoleToSave(isStaff)
       if (sheet === 'add') {
-        await addDoc(collection(db, 'membres'), {
+        const ref = await addDoc(collection(db, 'membres'), {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
           adresse: form.adresse.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
           tailleTshirt: form.tailleTshirt,
@@ -126,6 +142,7 @@ export default function Membres({ user, userData }) {
           detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
           cible: form.nom.trim(),
           route: '/membres',
+          metadata: { membreId: ref.id },
         })
       } else {
         await updateDoc(doc(db, 'membres', sheet.id), {
@@ -146,6 +163,7 @@ export default function Membres({ user, userData }) {
           detail: `${form.nom.trim()} ${form.prenoms.trim()}`.trim(),
           cible: form.nom.trim(),
           route: '/membres',
+          metadata: { membreId: sheet.id },
         })
       }
       closeSheet()
@@ -322,7 +340,7 @@ export default function Membres({ user, userData }) {
           const avatarColor = getAvatarColor(m)
           const isStaff = isStaffMember(m)
           return (
-          <div key={m.id} onClick={() => openEdit(m)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '13px 14px', marginBottom: 8, cursor: 'pointer' }}>
+          <div key={m.id} data-item-id={m.id} className={highlightedId === m.id ? 'item-highlighted' : ''} onClick={() => openEdit(m)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '13px 14px', marginBottom: 8, cursor: 'pointer' }}>
             <div style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, background: `${avatarColor}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-sm)', color: avatarColor }}>
               {(m.nom || '?')[0].toUpperCase()}
             </div>

@@ -154,6 +154,10 @@ export default function Notifications({ user }) {
     if (!notif.route) return ''
     const taskId = notif.metadata?.taskId
     if (notif.route === '/tasks' && taskId) return `/tasks?task=${encodeURIComponent(taskId)}`
+    const eventId = notif.metadata?.eventId
+    if (notif.route === '/evenements' && eventId) return `/evenements?event=${eventId}`
+    const membreId = notif.metadata?.membreId
+    if (notif.route === '/membres' && membreId) return `/membres?membre=${membreId}`
     return notif.route
   }
 
