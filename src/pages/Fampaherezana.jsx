@@ -103,9 +103,14 @@ async function getCreatedBy() {
 async function currentUserCanManageBudget() {
   const user = auth.currentUser
   if (!user?.email) return false
-  const snap = await getDocs(collection(db, 'membres'))
-  const member = snap.docs.map(d => d.data()).find(m => sameEmail(m.email, user.email))
-  return canManageBudgetRole(member?.staffRole)
+  const [membresSnap, usersSnap] = await Promise.all([
+    getDocs(collection(db, 'membres')),
+    getDocs(collection(db, 'users')),
+  ])
+  const member = membresSnap.docs.map(d => d.data()).find(m => sameEmail(m.email, user.email))
+  const userDoc = usersSnap.docs.map(d => d.data()).find(u => sameEmail(u.email, user.email))
+  const effectiveRole = member?.staffRole || userDoc?.staffRole || ''
+  return canManageBudgetRole(effectiveRole)
 }
 
 async function executeAssistantAction(action) {
