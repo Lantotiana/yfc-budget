@@ -135,10 +135,8 @@ export default function Parametres({ user, userData, setUserData }) {
       const status = await getPushAvailability()
       setPushStatus(status)
 
-      if (result.ok) flash('Notifications téléphone activées')
-      else if (result.reason === 'missing-vapid-key') flash('Clé Web Push manquante côté projet', false)
-      else if (result.reason === 'permission-denied') flash('Autorisation de notification refusée', false)
-      else flash('Impossible d activer les notifications', false)
+      if (result.ok) flash('Notifications telephone activees')
+      else flash(getPushErrorMessage(result.reason), false)
     } catch {
       flash('Impossible d activer les notifications', false)
     }
@@ -164,8 +162,8 @@ export default function Parametres({ user, userData, setUserData }) {
       const result = await syncPushNotifications()
       const status = await getPushAvailability()
       setPushStatus(status)
-      if (result.ok) flash('Notifications téléphone synchronisées')
-      else flash('Impossible de synchroniser les notifications', false)
+      if (result.ok) flash('Notifications telephone synchronisees')
+      else flash(getPushErrorMessage(result.reason), false)
     } catch {
       flash('Impossible de synchroniser les notifications', false)
     }
@@ -391,7 +389,7 @@ export default function Parametres({ user, userData, setUserData }) {
               : !pushStatus.supported
                 ? 'Ce téléphone ou ce navigateur ne supporte pas les notifications push web.'
                 : pushStatus.enabled
-                  ? 'Les notifications push sont actives sur cet appareil.'
+                  ? 'Autorisation accordee sur cet appareil. Appuie sur Synchroniser pour finaliser le push.'
                   : pushStatus.permission === 'denied'
                     ? 'Les notifications sont bloquées dans le navigateur.'
                     : 'Les notifications push ne sont pas encore activées sur cet appareil.'}
@@ -401,10 +399,10 @@ export default function Parametres({ user, userData, setUserData }) {
             <button
               type="button"
               onClick={handleEnablePush}
-              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied'}
-              style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied') ? 0.6 : 1 }}
+              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled}
+              style={{ padding: '10px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.6 : 1 }}
             >
-              {pushLoading ? 'Activation...' : 'Activer'}
+              {pushLoading ? 'Activation...' : pushStatus.enabled ? 'Autorise' : 'Activer'}
             </button>
             <button
               type="button"
@@ -599,4 +597,7 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
+
+
+
 
