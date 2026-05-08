@@ -445,7 +445,7 @@
 }
 
 .task-card.highlighted {
-  animation: taskCardBounce 0.65s cubic-bezier(.36,.07,.19,.97) both;
+  animation: taskCardBounce 0.65s 0.5s cubic-bezier(.36,.07,.19,.97) both;
   will-change: transform;
 }
 
