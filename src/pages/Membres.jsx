@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
-import { Plus, Search, Trash2, Download, Settings } from 'lucide-react'
+import { Plus, Search, Trash2, Download, Settings, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
@@ -308,9 +308,21 @@ export default function Membres({ user, userData }) {
             </button>
           </div>
         </div>
-        <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}><Search size={15} /></span>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t('membres.rechercher')} style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }} />
+        <div className="tx-search-wrapper">
+          <div className="tx-search-icon"><Search size={14} /></div>
+          <input
+            className="tx-search-input"
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t('membres.rechercher')}
+            style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+          />
+          {search && (
+            <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+              <X size={14} />
+            </button>
+          )}
         </div>
         <div className="member-role-filter" data-active={roleFilter} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
           <span className="member-role-filter-indicator" aria-hidden="true" />

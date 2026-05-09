@@ -38,7 +38,7 @@ export default function TaskBoard({
   const { t } = useTranslation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [searchParams, setSearchParams] = useSearchParams()
-  const [filters, setFilters] = useState({ search: '', assignee: 'all', priority: 'all', mine: false, overdue: false })
+  const [filters, setFilters] = useState({ search: '', assignee: [], priority: 'all', mine: false, overdue: false })
   const [activeTab, setActiveTab] = useState('todo')
   const [selectedTask, setSelectedTask] = useState(null)
   const [creating, setCreating] = useState(false)
@@ -87,17 +87,21 @@ export default function TaskBoard({
     }
   }, [searchParams, setSearchParams, tasks])
 
+  const membersWithTasks = useMemo(() => {
+    const uids = new Set(tasks.flatMap(t => t.assignedTo || []))
+    return assignableMembers.filter(m => uids.has(m.uid))
+  }, [tasks, assignableMembers])
+
   const filteredTasks = useMemo(() => {
     const term = norm(filters.search)
     return tasks.filter(task => {
       if (term && !norm(`${task.title} ${task.description} ${(task.assignedToNames || []).join(' ')}`).includes(term)) return false
-      if (filters.assignee !== 'all' && !(task.assignedTo || []).includes(filters.assignee)) return false
+      if (filters.assignee.length > 0 && !filters.assignee.some(uid => (task.assignedTo || []).includes(uid))) return false
       if (filters.priority !== 'all' && task.priority !== filters.priority) return false
-      if (filters.mine && !(task.assignedTo || []).includes(user?.uid)) return false
       if (filters.overdue && !getDueDateStatus(task.deadline, task.status).isOverdue) return false
       return true
     })
-  }, [filters, tasks, user?.uid])
+  }, [filters, tasks])
 
   const filteredByStatus = useMemo(() => TASK_COLUMNS.reduce((acc, col) => {
     acc[col.key] = filteredTasks.filter(task => task.status === col.key)
@@ -147,14 +151,7 @@ export default function TaskBoard({
         {canCreate && <button type="button" onClick={() => setCreating(true)}>{t('tasks.newTask')}</button>}
       </div>
 
-      <div className="tasks-summary">
-        <button type="button" className="summary-todo" onClick={() => setActiveTab('todo')}><span>{t('tasks.aTodo')}</span><strong>{counters.todo}</strong></button>
-        <button type="button" className="summary-progress" onClick={() => setActiveTab('in_progress')}><span>{t('tasks.inProgress')}</span><strong>{counters.in_progress}</strong></button>
-        <button type="button" className="summary-done" onClick={() => setActiveTab('done')}><span>{t('tasks.done')}</span><strong>{counters.done}</strong></button>
-        <div className="summary-overdue"><span>{t('tasks.overdue')}</span><strong>{counters.overdue}</strong></div>
-      </div>
-
-      <TaskFilters filters={filters} setFilters={setFilters} assignableMembers={assignableMembers} compact={!isDesktop} />
+      <TaskFilters filters={filters} setFilters={setFilters} membersWithTasks={membersWithTasks} />
 
       {error && <div className="task-load-error">{error}</div>}
       {membersError && <div className="task-load-error">{membersError}</div>}

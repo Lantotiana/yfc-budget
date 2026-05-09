@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, ChevronRight, Circle, LoaderCircle } from 'lucide-react'
+import { CheckCircle2, ChevronRight, CircleCheckBig, LoaderCircle } from 'lucide-react'
 import DueDateBadge from './DueDateBadge'
 import PriorityBadge from './PriorityBadge'
 import { initials } from '../../utils/taskUtils'
@@ -19,7 +19,7 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
   const checklist = Array.isArray(task.checklist) ? task.checklist.filter(item => item?.text) : []
   const doneCount = checklist.filter(item => item.done).length
   const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
-  const StatusIcon = task.status === 'done' ? CheckCircle2 : task.status === 'in_progress' ? LoaderCircle : Circle
+  const StatusIcon = task.status === 'done' ? CheckCircle2 : task.status === 'in_progress' ? LoaderCircle : CircleCheckBig
 
   return (
     <button

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { ArrowLeft, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2 } from 'lucide-react'
+import { ArrowLeft, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
@@ -366,17 +366,21 @@ export default function PresenceDetail({ user, userData }) {
 
         {tagFilteredMembres.length > 0 && (
           <>
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.t3, pointerEvents: 'none', display: 'flex' }}>
-                <Search size={15} />
-              </span>
+            <div className="tx-search-wrapper">
+              <div className="tx-search-icon"><Search size={14} /></div>
               <input
-                type="text"
+                className="tx-search-input"
+                type="search"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={t('membres.rechercher')}
-                style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontSize: 'var(--font-sm)', outline: 'none' }}
+                style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
               />
+              {search && (
+                <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+                  <X size={14} />
+                </button>
+              )}
             </div>
             <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden' }}>
               <div style={{ height: '100%', borderRadius: 5, background: progressColor, width: `${presencePercent}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1), background .3s' }} />

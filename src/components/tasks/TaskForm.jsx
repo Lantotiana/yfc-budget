@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarDays, Check, CheckCircle2, ChevronDown, Circle, Flag, GripVertical, LoaderCircle, Plus, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, CheckCircle2, ChevronDown, Circle, CircleCheckBig, GripVertical, LoaderCircle, Plus, Trash2, Triangle, X } from 'lucide-react'
 import { getDueDateStatus, toDateInputValue } from '../../utils/taskUtils'
 
 const EMPTY = {
@@ -129,7 +129,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
     in_progress: t('tasks.inProgress'),
     done: t('tasks.done'),
   }[form.status] || t('tasks.todo')
-  const StatusIcon = form.status === 'done' ? CheckCircle2 : form.status === 'in_progress' ? LoaderCircle : Circle
+  const StatusIcon = form.status === 'done' ? CheckCircle2 : form.status === 'in_progress' ? LoaderCircle : CircleCheckBig
 
   useEffect(() => {
     if (!assigneeOpen) return
@@ -200,7 +200,12 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
         <div className="task-planning-chips" ref={planningRef}>
           <button type="button" className="due-neutral" onClick={openDatePicker}><CalendarDays size={13} /> {deadlineLabel}</button>
           <button type="button" className={`status-${form.status}`} onClick={() => setPlanningMenu(planningMenu === 'status' ? '' : 'status')}><StatusIcon size={13} /> {statusLabel}</button>
-          <button type="button" className={`priority-${form.priority}`} onClick={() => setPlanningMenu(planningMenu === 'priority' ? '' : 'priority')}><Flag size={13} /> {priorityLabel}</button>
+          <button type="button" className={`priority-${form.priority}`} onClick={() => setPlanningMenu(planningMenu === 'priority' ? '' : 'priority')}>
+            {form.priority === 'medium'
+              ? <Circle size={13} />
+              : <Triangle size={13} style={form.priority === 'low' ? { transform: 'rotate(180deg)' } : undefined} />
+            } {priorityLabel}
+          </button>
           <input
             ref={dateRef}
             className="task-planning-native-date"
@@ -231,14 +236,15 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
           {planningMenu === 'priority' && (
             <div className="task-planning-menu">
               {[
-                ['low', t('tasks.priorityLow')],
-                ['medium', t('tasks.priorityMedium')],
-                ['high', t('tasks.priorityHigh')],
-              ].map(([value, label]) => (
+                { value: 'low',    label: t('tasks.priorityLow'),    Icon: Triangle, rotate: true,  color: '#3b82f6' },
+                { value: 'medium', label: t('tasks.priorityMedium'), Icon: Circle,   rotate: false, color: '#16a34a' },
+                { value: 'high',   label: t('tasks.priorityHigh'),   Icon: Triangle, rotate: false, color: '#f97316' },
+              ].map(({ value, label, Icon, rotate, color }) => (
                 <button key={value} type="button" className={form.priority === value ? 'selected' : ''} onClick={() => {
                   setForm(prev => ({ ...prev, priority: value }))
                   setPlanningMenu('')
                 }}>
+                  <Icon size={13} style={{ color, ...(rotate ? { transform: 'rotate(180deg)' } : {}) }} />
                   <span>{label}</span>
                   {form.priority === value && <Check size={16} />}
                 </button>

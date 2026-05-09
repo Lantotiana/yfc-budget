@@ -257,6 +257,7 @@
     "errorStatus": "Statut invalide.",
     "errorPriority": "Priorité invalide.",
     "searchPlaceholder": "Rechercher une tâche...",
+    "searchBtn": "Rechercher",
     "filterAll": "Tous les membres",
     "filterMine": "Mes tâches",
     "filterOverdue": "En retard",

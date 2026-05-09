@@ -1,76 +1,131 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, SlidersHorizontal } from 'lucide-react'
+import { Circle, Clock, Search, Triangle, X } from 'lucide-react'
+import { initials } from '../../utils/taskUtils'
 
-export default function TaskFilters({ filters, setFilters, assignableMembers, compact = false }) {
+
+const PRIORITIES = [
+  { value: 'low',    labelKey: 'tasks.priorityLow',    Icon: Triangle, iconColor: '#3b82f6', rotate: true  },
+  { value: 'medium', labelKey: 'tasks.priorityMedium', Icon: Circle,   iconColor: '#16a34a', rotate: false },
+  { value: 'high',   labelKey: 'tasks.priorityHigh',   Icon: Triangle, iconColor: '#f97316', rotate: false },
+]
+
+export default function TaskFilters({ filters, setFilters, membersWithTasks = [] }) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  const detailsRef = useRef(null)
+  const [spinKey, setSpinKey] = useState({})
 
-  useEffect(() => {
-    if (!open) return
+  function togglePriority(value) {
+    setSpinKey(prev => ({ ...prev, [value]: (prev[value] || 0) + 1 }))
+    setFilters(prev => ({ ...prev, priority: prev.priority === value ? 'all' : value }))
+  }
 
-    function onPointerDown(event) {
-      if (detailsRef.current?.contains(event.target)) return
-      setOpen(false)
-    }
+  function toggleOverdue() {
+    setSpinKey(prev => ({ ...prev, overdue: (prev.overdue || 0) + 1 }))
+    setFilters(prev => ({ ...prev, overdue: !prev.overdue }))
+  }
 
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('touchstart', onPointerDown, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('touchstart', onPointerDown)
-    }
-  }, [open])
+  function toggleAssignee(uid) {
+    setFilters(prev => {
+      const current = prev.assignee
+      return {
+        ...prev,
+        assignee: current.includes(uid) ? current.filter(id => id !== uid) : [...current, uid],
+      }
+    })
+  }
 
-  const content = (
-    <>
-      <label className="task-search">
-        <Search size={16} />
+  return (
+    <div className="task-filter-bar">
+
+      {/* Search bar */}
+      <div className="tx-search-wrapper">
+        <div className="tx-search-icon"><Search size={14} /></div>
         <input
+          className="tx-search-input"
           type="search"
           placeholder={t('tasks.searchPlaceholder')}
           value={filters.search}
           onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+          style={{ paddingLeft: 38, paddingRight: filters.search ? 38 : 12 }}
         />
-      </label>
-      <select value={filters.assignee} onChange={e => setFilters(prev => ({ ...prev, assignee: e.target.value }))}>
-        <option value="all">{t('tasks.filterAll')}</option>
-        {assignableMembers.map(m => <option key={m.uid} value={m.uid}>{m.name}</option>)}
-      </select>
-      <select value={filters.priority} onChange={e => setFilters(prev => ({ ...prev, priority: e.target.value }))}>
-        <option value="all">{t('tasks.filterPriority')}</option>
-        <option value="low">{t('tasks.priorityLow')}</option>
-        <option value="medium">{t('tasks.priorityMedium')}</option>
-        <option value="high">{t('tasks.priorityHigh')}</option>
-      </select>
-      <button
-        type="button"
-        className={filters.mine ? 'active' : ''}
-        onClick={() => setFilters(prev => ({ ...prev, mine: !prev.mine }))}
-      >
-        {t('tasks.filterMine')}
-      </button>
-      <button
-        type="button"
-        className={filters.overdue ? 'active danger' : ''}
-        onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
-      >
-        {t('tasks.filterOverdue')}
-      </button>
-    </>
-  )
-
-  if (compact) {
-    return (
-      <div className="task-filter-details" ref={detailsRef}>
-        <button type="button" className="task-filter-summary" onClick={() => setOpen(prev => !prev)}>
-          <SlidersHorizontal size={16} /> {t('common.search')}
-        </button>
-        {open && <div className="task-filters compact">{content}</div>}
+        {filters.search && (
+          <button
+            type="button"
+            className="tx-search-clear"
+            onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
-    )
-  }
 
-  return <div className="task-filters">{content}</div>
+      {/* Avatars */}
+      {membersWithTasks.length > 0 && (
+        <div className="task-filter-top-row">
+          <div className="task-filter-members-scroll">
+            {membersWithTasks.map(m => (
+              <div
+                key={m.uid}
+                className={`task-filter-avatar-ring${filters.assignee.includes(m.uid) ? ' active' : ''}`}
+              >
+                <button
+                  type="button"
+                  className="task-filter-avatar"
+                  title={m.name}
+                  onClick={() => toggleAssignee(m.uid)}
+                >
+                  {m.photoURL
+                    ? <img src={m.photoURL} alt={m.name} />
+                    : <span>{initials(m.name)}</span>
+                  }
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tags priorité */}
+      <div className="task-filter-tags">
+        {PRIORITIES.map(({ value, labelKey, Icon, iconColor, rotate }) => (
+          <button
+            key={value}
+            type="button"
+            className={`task-filter-tag${filters.priority === value ? ` priority-${value}` : ''}`}
+            onClick={() => togglePriority(value)}
+          >
+            <span
+              key={spinKey[value] || 0}
+              className={spinKey[value] ? 'tag-icon-spin' : ''}
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+            >
+              <Icon
+                size={12}
+                style={{
+                  color: filters.priority === value ? 'currentColor' : iconColor,
+                  transform: rotate ? 'rotate(180deg)' : undefined,
+                  flexShrink: 0,
+                }}
+              />
+            </span>
+            {t(labelKey)}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`task-filter-tag${filters.overdue ? ' danger' : ''}`}
+          onClick={toggleOverdue}
+        >
+          <span
+            key={spinKey.overdue || 0}
+            className={spinKey.overdue ? 'tag-icon-spin' : ''}
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <Clock size={12} style={{ color: filters.overdue ? 'currentColor' : '#ef4444', flexShrink: 0 }} />
+          </span>
+          {t('tasks.filterOverdue')}
+        </button>
+      </div>
+    </div>
+  )
 }
