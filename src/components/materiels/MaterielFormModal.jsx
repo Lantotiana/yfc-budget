@@ -76,6 +76,13 @@ async function toWebpWithMaxHeight(file) {
   return { file: webpFile, width: targetWidth, height: targetHeight }
 }
 
+async function uploadToFirebaseStorage(file) {
+  const storageRef = ref(storage, `materiels/${Date.now()}_${file.name}`)
+  const snapshot = await uploadBytes(storageRef, file, { contentType: 'image/webp' })
+  const url = await getDownloadURL(snapshot.ref)
+  return url
+}
+
 export default function MaterielFormModal({ open, onClose, onSubmit, members, initialData, C, saving }) {
   const fileRef = useRef()
   const [form, setForm] = useState(EMPTY_FORM)
@@ -120,9 +127,7 @@ export default function MaterielFormModal({ open, onClose, onSubmit, members, in
       }
 
       const processed = await toWebpWithMaxHeight(file)
-      const storageRef = ref(storage, `materiels/${Date.now()}_${processed.file.name}`)
-      const snapshot = await uploadBytes(storageRef, processed.file, { contentType: 'image/webp' })
-      const url = await getDownloadURL(snapshot.ref)
+      const url = await uploadToFirebaseStorage(processed.file)
       updateField('photoUrl', url)
     } catch (err) {
       setError(err?.message || "Impossible d'envoyer la photo.")
