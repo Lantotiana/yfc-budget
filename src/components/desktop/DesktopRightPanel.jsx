@@ -19,7 +19,7 @@ export default function DesktopRightPanel() {
   }
 
   return (
-    <aside className="desktop-right-panel">
+    <aside className="desktop-right-panel desktop-verse-panel">
       <div className="desktop-right-card desktop-verse-card">
         <div className="desktop-verse-head">
           <span><BookOpen size={16} /> Verset du jour</span>
@@ -32,7 +32,7 @@ export default function DesktopRightPanel() {
           <>
             <p className="desktop-verse-text">{verse.text}</p>
             <strong>{verse.ref}</strong>
-            {verse.explanation && <small>{verse.explanation}</small>}
+            {verse.explanation && <small className="desktop-verse-expl">{verse.explanation}</small>}
           </>
         ) : (
           <div className="desktop-verse-empty">

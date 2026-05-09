@@ -385,9 +385,9 @@ export default function Membres({ user, userData }) {
       {sheet !== null && (
         <Portal>
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
-          <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
+          <div className="bottom-sheet materiel-form-sheet member-form-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title" style={{ marginBottom: '1.25rem' }}>{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
+            <h2 className="dialog-title">{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div><label className="form-label">{t('membres.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))} placeholder="Nom de famille" className="form-input" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -482,9 +482,9 @@ export default function Membres({ user, userData }) {
                 </div>
               </div>
             </div>
-            <div className="dialog-footer" style={{ display: 'flex', gap: 10, marginTop: '1.5rem' }}>
-              <button onClick={closeSheet} style={{ flex: 1, padding: 13, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.cancel')}</button>
-              <button onClick={save} disabled={saving || !form.nom.trim()} style={{ flex: 2, padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim()) ? 0.6 : 1 }}>
+            <div className="dialog-footer">
+              <button onClick={closeSheet} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
+              <button onClick={save} disabled={saving || !form.nom.trim()} className="materiel-primary-btn">
                 {saving ? t('common.saving') : isEditing ? 'Mettre à jour' : t('common.add')}
               </button>
             </div>

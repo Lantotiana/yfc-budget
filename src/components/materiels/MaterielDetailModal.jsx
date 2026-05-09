@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { Camera } from 'lucide-react'
 import Portal from '../Portal'
 import { db } from '../../firebase'
 import { createNotification } from '../../notifications'
@@ -16,18 +17,18 @@ function MovementRow({ movement, C }) {
       {movement.commentaire && <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 4 }}>{movement.commentaire}</div>}
       {(movement.dateRetourPrevue || movement.dateRetourReelle) && (
         <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4 }}>
-          {movement.dateRetourPrevue && <span>Retour prévu : {new Date(movement.dateRetourPrevue).toLocaleDateString('fr-FR')}</span>}
+          {movement.dateRetourPrevue && <span>Retour prevu : {new Date(movement.dateRetourPrevue).toLocaleDateString('fr-FR')}</span>}
           {movement.dateRetourPrevue && movement.dateRetourReelle && <span> · </span>}
-          {movement.dateRetourReelle && <span>Retour réel : {new Date(movement.dateRetourReelle).toLocaleDateString('fr-FR')}</span>}
+          {movement.dateRetourReelle && <span>Retour reel : {new Date(movement.dateRetourReelle).toLocaleDateString('fr-FR')}</span>}
         </div>
       )}
       {(movement.quantite != null || movement.etatAvant || movement.etatApres) && (
         <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4 }}>
-          {movement.quantite != null && <span>Quantité : {movement.quantite}</span>}
+          {movement.quantite != null && <span>Quantite : {movement.quantite}</span>}
           {movement.quantite != null && (movement.etatAvant || movement.etatApres) && <span> · </span>}
           {movement.etatAvant && <span>Avant : {movement.etatAvant}</span>}
           {movement.etatAvant && movement.etatApres && <span> · </span>}
-          {movement.etatApres && <span>Après : {movement.etatApres}</span>}
+          {movement.etatApres && <span>Apres : {movement.etatApres}</span>}
         </div>
       )}
     </div>
@@ -58,10 +59,10 @@ function ActionModal({ title, fields, onClose, onConfirm, saving, C }) {
               </div>
             ))}
           </div>
-          <div className="dialog-footer" style={{ marginTop: 18 }}>
-            <button className="btn-secondary" onClick={onClose}>Annuler</button>
+          <div className="dialog-footer materiel-action-footer">
+            <button className="btn-secondary materiel-footer-btn" onClick={onClose}>Annuler</button>
             <button
-              style={{ border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', padding: '12px 16px', opacity: saving ? 0.6 : 1 }}
+              className="materiel-primary-btn"
               disabled={saving}
               onClick={() => onConfirm(form)}
             >
@@ -95,6 +96,9 @@ export default function MaterielDetailModal({
   const canArchive = canDeleteMateriel(user, userData, currentMember)
   const statut = getStatutMeta(materiel.statut, C)
   const etat = getEtatMeta(materiel.etat, C)
+  const responsables = Array.isArray(materiel.responsablesNoms) && materiel.responsablesNoms.length > 0
+    ? materiel.responsablesNoms.join(', ')
+    : materiel.responsableNom
 
   async function addMovement(type, extra = {}) {
     await addDoc(collection(db, 'mouvementsMateriels'), {
@@ -144,32 +148,22 @@ export default function MaterielDetailModal({
     await updateMateriel(
       { statut: 'archive', archivedAt: new Date().toISOString() },
       'archivage',
-      { commentaire: 'Archivage du matériel' },
-      'Matériel archivé'
+      { commentaire: 'Archivage du materiel' },
+      'Materiel archive'
     )
   }
 
   const actionConfig = {
     sortie: {
-      title: 'Sortir le matériel',
+      title: 'Sortir le materiel',
       fields: [
         { name: 'personneResponsable', label: 'Personne qui prend', required: true },
-        { name: 'evenementNom', label: 'Motif ou événement' },
+        { name: 'evenementNom', label: 'Motif ou evenement' },
         { name: 'dateSortie', label: 'Date de sortie', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
-        { name: 'dateRetourPrevue', label: 'Date de retour prévue', type: 'date', required: true },
-        {
-          name: 'etatAvant',
-          label: 'État avant sortie',
-          type: 'select',
-          defaultValue: materiel.etat,
-          options: [
-            { value: 'bon', label: 'Bon' },
-            { value: 'a_verifier', label: 'À vérifier' },
-            { value: 'endommage', label: 'Endommagé' },
-            { value: 'en_reparation', label: 'En réparation' },
-            { value: 'perdu', label: 'Perdu' },
-          ],
-        },
+        { name: 'dateRetourPrevue', label: 'Date de retour prevue', type: 'date', required: true },
+        { name: 'etatAvant', label: 'Etat avant sortie', type: 'select', defaultValue: materiel.etat, options: [
+          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'A verifier' }, { value: 'endommage', label: 'Endommage' }, { value: 'en_reparation', label: 'En reparation' }, { value: 'perdu', label: 'Perdu' },
+        ] },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
@@ -182,26 +176,16 @@ export default function MaterielDetailModal({
           currentDueAt: form.dateRetourPrevue,
           currentBorrowedAt: form.dateSortie,
           currentEventName: form.evenementNom || '',
-        }, 'sortie', form, 'Matériel sorti')
+        }, 'sortie', form, 'Materiel sorti')
       },
     },
     retour: {
-      title: 'Retour du matériel',
+      title: 'Retour du materiel',
       fields: [
-        { name: 'dateRetourReelle', label: 'Date de retour réelle', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
-        {
-          name: 'etatApres',
-          label: 'État au retour',
-          type: 'select',
-          defaultValue: materiel.etat,
-          options: [
-            { value: 'bon', label: 'Bon' },
-            { value: 'a_verifier', label: 'À vérifier' },
-            { value: 'endommage', label: 'Endommagé' },
-            { value: 'en_reparation', label: 'En réparation' },
-            { value: 'perdu', label: 'Perdu' },
-          ],
-        },
+        { name: 'dateRetourReelle', label: 'Date de retour reelle', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
+        { name: 'etatApres', label: 'Etat au retour', type: 'select', defaultValue: materiel.etat, options: [
+          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'A verifier' }, { value: 'endommage', label: 'Endommage' }, { value: 'en_reparation', label: 'En reparation' }, { value: 'perdu', label: 'Perdu' },
+        ] },
         { name: 'lieuActuel', label: 'Lieu de retour', required: true, defaultValue: materiel.lieuActuel || 'Local YFC' },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
@@ -216,13 +200,13 @@ export default function MaterielDetailModal({
           currentDueAt: null,
           currentBorrowedAt: null,
           currentEventName: '',
-        }, 'retour', { ...form, etatAvant: materiel.etat }, 'Matériel retourné')
+        }, 'retour', { ...form, etatAvant: materiel.etat }, 'Materiel retourne')
       },
     },
     stock_ajout: {
       title: 'Ajouter du stock',
       fields: [
-        { name: 'quantite', label: 'Quantité ajoutée', type: 'number', min: '1', required: true, defaultValue: 1 },
+        { name: 'quantite', label: 'Quantite ajoutee', type: 'number', min: '1', required: true, defaultValue: 1 },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
@@ -232,13 +216,13 @@ export default function MaterielDetailModal({
         await updateMateriel({
           quantite: nextQty,
           statut: computeStockStatus({ ...materiel, quantite: nextQty }),
-        }, 'stock_ajout', { quantite: quantity, commentaire: form.commentaire }, 'Stock matériel ajouté')
+        }, 'stock_ajout', { quantite: quantity, commentaire: form.commentaire }, 'Stock materiel ajoute')
       },
     },
     stock_retrait: {
       title: 'Retirer du stock',
       fields: [
-        { name: 'quantite', label: 'Quantité retirée', type: 'number', min: '1', required: true, defaultValue: 1 },
+        { name: 'quantite', label: 'Quantite retiree', type: 'number', min: '1', required: true, defaultValue: 1 },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
@@ -249,31 +233,21 @@ export default function MaterielDetailModal({
         await updateMateriel({
           quantite: nextQty,
           statut: computeStockStatus({ ...materiel, quantite: nextQty }),
-        }, 'stock_retrait', { quantite: quantity, commentaire: form.commentaire }, 'Stock matériel retiré')
+        }, 'stock_retrait', { quantite: quantity, commentaire: form.commentaire }, 'Stock materiel retire')
       },
     },
     maintenance: {
-      title: 'Mettre en réparation',
+      title: 'Mettre en reparation',
       fields: [{ name: 'commentaire', label: 'Commentaire', type: 'textarea' }],
       async confirm(form) {
-        await updateMateriel(
-          { etat: 'en_reparation', statut: 'en_reparation' },
-          'maintenance',
-          { etatAvant: materiel.etat, etatApres: 'en_reparation', commentaire: form.commentaire },
-          'Matériel en réparation'
-        )
+        await updateMateriel({ etat: 'en_reparation', statut: 'en_reparation' }, 'maintenance', { etatAvant: materiel.etat, etatApres: 'en_reparation', commentaire: form.commentaire }, 'Materiel en reparation')
       },
     },
     perte: {
       title: 'Marquer comme perdu',
       fields: [{ name: 'commentaire', label: 'Commentaire', type: 'textarea' }],
       async confirm(form) {
-        await updateMateriel(
-          { etat: 'perdu', statut: 'perdu' },
-          'perte',
-          { etatAvant: materiel.etat, etatApres: 'perdu', commentaire: form.commentaire },
-          'Matériel perdu'
-        )
+        await updateMateriel({ etat: 'perdu', statut: 'perdu' }, 'perte', { etatAvant: materiel.etat, etatApres: 'perdu', commentaire: form.commentaire }, 'Materiel perdu')
       },
     },
   }
@@ -282,80 +256,75 @@ export default function MaterielDetailModal({
     <Portal>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal materiel-detail-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 760 }}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
-            <div style={{ width: 88, height: 88, borderRadius: 18, overflow: 'hidden', background: C.surf2, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {materiel.photoUrl ? <img src={materiel.photoUrl} alt={materiel.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ fontSize: 28, color: C.teal }}>□</div>}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                <div className="dialog-title" style={{ marginBottom: 6 }}>{materiel.nom}</div>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={onEdit}
-                    style={{
-                      border: '1px solid rgba(16,181,163,.22)',
-                      borderRadius: 12,
-                      background: C.tealD,
-                      color: C.teal,
-                      padding: '10px 12px',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    Modifier
-                  </button>
+          <div className="materiel-detail-content">
+            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 16 }}>
+              <div className="materiel-detail-photo" style={{ background: C.surf2 }}>
+                {materiel.photoUrl ? (
+                  <img src={materiel.photoUrl} alt={materiel.nom} />
+                ) : (
+                  <Camera size={30} color={C.teal} strokeWidth={2.2} />
                 )}
               </div>
-              <div style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>{materiel.categorie} · {materiel.type === 'consommable' ? 'Consommable' : 'Durable'}</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                <span style={{ padding: '5px 10px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statut.label}</span>
-                <span style={{ padding: '5px 10px', borderRadius: 999, background: etat.bg, color: etat.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{etat.label}</span>
+              <div style={{ flex: 1 }}>
+                <div className="dialog-title" style={{ marginBottom: 6 }}>{materiel.nom}</div>
+                <div style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>{materiel.categorie} · {materiel.type === 'consommable' ? 'Consommable' : 'Durable'}</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                  <span style={{ padding: '5px 10px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statut.label}</span>
+                  <span style={{ padding: '5px 10px', borderRadius: 999, background: etat.bg, color: etat.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{etat.label}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="materiel-detail-grid">
-            <div><strong>Quantité</strong><div>{materiel.quantite || 0} {materiel.unite || 'pièce'}</div></div>
-            <div><strong>Lieu</strong><div>{materiel.lieuActuel || 'Non renseigné'}</div></div>
-            <div><strong>Responsable</strong><div>{materiel.responsableNom || 'Aucun'}</div></div>
-            <div><strong>Valeur estimée</strong><div>{materiel.valeurEstimee != null ? `${Number(materiel.valeurEstimee).toLocaleString('fr-FR')} Ar` : 'Non renseignée'}</div></div>
-            {materiel.currentDueAt && <div><strong>Retour prévu</strong><div>{new Date(materiel.currentDueAt).toLocaleDateString('fr-FR')}</div></div>}
-            {materiel.seuilAlerte != null && <div><strong>Seuil d'alerte</strong><div>{materiel.seuilAlerte}</div></div>}
-          </div>
-
-          {materiel.notes && (
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 6 }}>Notes</div>
-              <div style={{ fontSize: 'var(--font-sm)', color: C.t2, lineHeight: 1.5 }}>{materiel.notes}</div>
+            <div className="materiel-detail-grid">
+              <div><strong>Quantite</strong><div>{materiel.quantite || 0} {materiel.unite || 'piece'}</div></div>
+              <div><strong>Lieu</strong><div>{materiel.lieuActuel || 'Non renseigne'}</div></div>
+              <div><strong>Responsables</strong><div>{responsables || 'Aucun'}</div></div>
+              <div><strong>Valeur estimee</strong><div>{materiel.valeurEstimee != null ? `${Number(materiel.valeurEstimee).toLocaleString('fr-FR')} Ar` : 'Non renseignee'}</div></div>
+              {materiel.currentDueAt && <div><strong>Retour prevu</strong><div>{new Date(materiel.currentDueAt).toLocaleDateString('fr-FR')}</div></div>}
+              {materiel.seuilAlerte != null && <div><strong>Seuil d'alerte</strong><div>{materiel.seuilAlerte}</div></div>}
             </div>
-          )}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
-            {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && <button className="btn-secondary" onClick={() => setAction('sortie')}>Sortir</button>}
-            {canEdit && materiel.type === 'durable' && materiel.statut === 'emprunte' && <button className="btn-secondary" onClick={() => setAction('retour')}>Retourner</button>}
-            {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_ajout')}>Ajouter du stock</button>}
-            {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_retrait')}>Retirer du stock</button>}
-            {canEdit && materiel.etat !== 'en_reparation' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('maintenance')}>Mettre en réparation</button>}
-            {canEdit && materiel.statut !== 'perdu' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('perte')}>Marquer comme perdu</button>}
-            {canArchive && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={handleArchive}>Archiver</button>}
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 8 }}>Historique</div>
-            {movements.length === 0 ? (
-              <div style={{ color: C.t2, fontSize: 'var(--font-sm)' }}>Aucun mouvement pour le moment.</div>
-            ) : (
-              <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-                {movements.map(item => <MovementRow key={item.id} movement={item} C={C} />)}
+            {materiel.notes && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 6 }}>Notes</div>
+                <div style={{ fontSize: 'var(--font-sm)', color: C.t2, lineHeight: 1.5 }}>{materiel.notes}</div>
               </div>
             )}
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
+              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && <button className="btn-secondary" onClick={() => setAction('sortie')}>Sortir</button>}
+              {canEdit && materiel.type === 'durable' && materiel.statut === 'emprunte' && <button className="btn-secondary" onClick={() => setAction('retour')}>Retourner</button>}
+              {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_ajout')}>Ajouter du stock</button>}
+              {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_retrait')}>Retirer du stock</button>}
+              {canEdit && materiel.etat !== 'en_reparation' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('maintenance')}>Mettre en reparation</button>}
+              {canEdit && materiel.statut !== 'perdu' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('perte')}>Marquer comme perdu</button>}
+              {canArchive && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={handleArchive}>Archiver</button>}
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 8 }}>Historique</div>
+              {movements.length === 0 ? (
+                <div style={{ color: C.t2, fontSize: 'var(--font-sm)' }}>Aucun mouvement pour le moment.</div>
+              ) : (
+                <div>
+                  {movements.map(item => <MovementRow key={item.id} movement={item} C={C} />)}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="dialog-footer" style={{ marginTop: 18 }}>
-            <button className="btn-secondary" onClick={onClose}>Fermer</button>
+          <div className="dialog-footer materiel-detail-footer">
+            <div className="materiel-detail-footer-main">
+              <button className="btn-secondary materiel-footer-btn" onClick={onClose}>Fermer</button>
+              {canEdit && (
+                <button
+                  className="materiel-primary-btn"
+                  onClick={onEdit}
+                >
+                  Modifier
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

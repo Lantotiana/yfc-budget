@@ -28,6 +28,15 @@ function normalizeTaskPayload(payload) {
   const deadline = payload.deadline instanceof Date
     ? payload.deadline
     : new Date(`${payload.deadline}T12:00:00`)
+  const checklist = Array.isArray(payload.checklist)
+    ? payload.checklist
+      .map((item, index) => ({
+        id: item.id || `item_${index}_${Date.now()}`,
+        text: String(item.text || '').trim(),
+        done: item.done === true,
+      }))
+      .filter(item => item.text)
+    : []
 
   return {
     title: payload.title.trim(),
@@ -37,6 +46,7 @@ function normalizeTaskPayload(payload) {
     deadline,
     assignedTo: payload.assignedTo || [],
     assignedToNames: payload.assignedToNames || [],
+    checklist,
   }
 }
 

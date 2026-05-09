@@ -196,9 +196,9 @@ export default function Presences({ user, userData }) {
       {showNewEvent && (
         <Portal>
         <div className="bottom-sheet-overlay" onClick={() => setShowNewEvent(false)}>
-          <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
+          <div className="bottom-sheet fixed-footer-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">{t('presences.nouvelEvenement')}</h2>
+            <h2 className="dialog-title">{t('presences.nouvelEvenement')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="form-label">{t('presences.nom')} *</label>
@@ -260,12 +260,12 @@ export default function Presences({ user, userData }) {
                 )}
               </div>
             </div>
-            <div className="dialog-footer" style={{ marginTop: '1.5rem' }}>
-              <button onClick={() => setShowNewEvent(false)} className="btn-secondary" style={{ flex: 1, padding: '13px' }}>{t('common.cancel')}</button>
+            <div className="dialog-footer">
+              <button onClick={() => setShowNewEvent(false)} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
               <button
                 onClick={createEvent}
                 disabled={savingEvent || !newEventForm.titre.trim()}
-                style={{ flex: 2, padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEvent || !newEventForm.titre.trim()) ? 0.6 : 1 }}
+                className="materiel-primary-btn"
               >
                 {savingEvent ? t('common.saving') : t('presences.nouvelEvenement')}
               </button>

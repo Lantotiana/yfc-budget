@@ -5,6 +5,9 @@ export default function MaterielCard({ materiel, C, onOpen }) {
   const statut = getStatutMeta(materiel.statut, C)
   const etat = getEtatMeta(materiel.etat, C)
   const due = getDueReturnInfo(materiel.currentDueAt, materiel.statut, C)
+  const responsables = Array.isArray(materiel.responsablesNoms) && materiel.responsablesNoms.length > 0
+    ? materiel.responsablesNoms.join(', ')
+    : materiel.responsableNom
 
   return (
     <button
@@ -47,7 +50,7 @@ export default function MaterielCard({ materiel, C, onOpen }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.t2 }}>
           <UserRound size={13} />
-          <span>{materiel.responsableNom || 'Aucun responsable'}</span>
+          <span>{responsables || 'Aucun responsable'}</span>
         </div>
         {materiel.type === 'consommable' && materiel.statut === 'stock_faible' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.coral }}>

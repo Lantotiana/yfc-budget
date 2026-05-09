@@ -430,9 +430,9 @@ export default function PresenceDetail({ user, userData }) {
       {showEdit && editForm && (
         <Portal>
         <div className="bottom-sheet-overlay" onClick={() => setShowEdit(false)}>
-          <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
+          <div className="bottom-sheet fixed-footer-sheet presence-edit-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">{t('common.edit')} {t('presences.evenement')}</h2>
+            <h2 className="dialog-title">{t('common.edit')} {t('presences.evenement')}</h2>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="form-label">{t('presences.nom')} *</label>
@@ -490,23 +490,23 @@ export default function PresenceDetail({ user, userData }) {
                 )}
               </div>
             </div>
-            <div className="dialog-footer" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="dialog-footer presence-edit-footer">
+              <div className="presence-edit-footer-row">
                 <button
                   onClick={deleteEvent}
-                  style={{ padding: '13px', borderRadius: 12, border: 'none', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  className="materiel-danger-btn"
                 >
                   <Trash2 size={14} /> {t('common.delete')}
                 </button>
                 <button
                   onClick={saveEdit}
                   disabled={savingEdit || !editForm.titre.trim()}
-                  style={{ padding: '13px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (savingEdit || !editForm.titre.trim()) ? 0.6 : 1 }}
+                  className="materiel-primary-btn"
                 >
                   {savingEdit ? t('presences.enregistrement') : t('common.save')}
                 </button>
               </div>
-              <button onClick={() => setShowEdit(false)} className="btn-secondary" style={{ width: '100%', padding: '13px' }}>
+              <button onClick={() => setShowEdit(false)} className="btn-secondary materiel-footer-btn">
                 {t('common.cancel')}
               </button>
             </div>

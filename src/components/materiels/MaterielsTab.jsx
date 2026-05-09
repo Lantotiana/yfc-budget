@@ -25,7 +25,14 @@ function getDisplayName(member) {
 }
 
 function buildSearchValue(item) {
-  return [item.nom, item.categorie, item.responsableNom, item.lieuActuel, item.notes].filter(Boolean).join(' ').toLowerCase()
+  return [
+    item.nom,
+    item.categorie,
+    item.responsableNom,
+    ...(Array.isArray(item.responsablesNoms) ? item.responsablesNoms : []),
+    item.lieuActuel,
+    item.notes,
+  ].filter(Boolean).join(' ').toLowerCase()
 }
 
 export default function MaterielsTab({ user, userData, C, onAddReady }) {
@@ -127,10 +134,18 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
     setSaving(true)
     setError('')
     try {
-      const responsibleMember = members.find(item => item.id === payload.responsableId)
+      const responsablesIds = Array.isArray(payload.responsablesIds)
+        ? payload.responsablesIds
+        : (payload.responsableId ? [payload.responsableId] : [])
+      const responsablesNoms = responsablesIds
+        .map(id => getDisplayName(members.find(item => item.id === id)))
+        .filter(Boolean)
       const normalized = {
         ...payload,
-        responsableNom: payload.responsableNom || getDisplayName(responsibleMember) || '',
+        responsablesIds,
+        responsablesNoms,
+        responsableId: responsablesIds[0] || '',
+        responsableNom: responsablesNoms.join(', '),
       }
 
       if (editing) {

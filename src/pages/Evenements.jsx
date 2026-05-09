@@ -242,9 +242,9 @@ export default function Evenements() {
       {sheet !== null && (
         <Portal>
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
-          <div className="bottom-sheet" onClick={ev => ev.stopPropagation()}>
+          <div className="bottom-sheet fixed-footer-sheet" onClick={ev => ev.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title mb-16">{isEditing ? t('evenements.modifier') : t('evenements.nouvelEvenement')}</h2>
+            <h2 className="dialog-title">{isEditing ? t('evenements.modifier') : t('evenements.nouvelEvenement')}</h2>
             <div className="dialog-content">
               <div><label className="form-label">{t('evenements.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder={t('evenements.nom')} className="form-input" /></div>
               <div>
@@ -264,8 +264,8 @@ export default function Evenements() {
               <div><label className="form-label">Lieu</label><input type="text" value={form.lieu} onChange={e => setForm(p => ({ ...p, lieu: e.target.value }))} placeholder="Salle, adresse..." className="form-input" /></div>
             </div>
             <div className="dialog-footer">
-              <button onClick={closeSheet} className="btn-secondary" style={{ flex: 1, padding: 13 }}>{t('common.cancel')}</button>
-              <button onClick={save} disabled={saving || !form.nom.trim() || !form.dateDebut} style={{ flex: 2, padding: 13, borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !form.nom.trim() || !form.dateDebut) ? 0.6 : 1 }}>
+              <button onClick={closeSheet} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
+              <button onClick={save} disabled={saving || !form.nom.trim() || !form.dateDebut} className="materiel-primary-btn">
                 {saving ? t('common.saving') : isEditing ? t('common.save') : t('common.add')}
               </button>
             </div>

@@ -210,14 +210,10 @@ export default function TaskBoard({
 
       {creating && (
         <Portal>
-          <div className="modal-overlay task-modal-overlay" onClick={() => setCreating(false)}>
-            <div className="task-modal" onClick={e => e.stopPropagation()}>
-              <div className="task-modal-head">
-                <div>
-                  <span className="tasks-badge status-todo">{t('tasks.newLabel')}</span>
-                  <h2>{t('tasks.newTaskTitle')}</h2>
-                </div>
-              </div>
+          <div className="bottom-sheet-overlay" onClick={() => setCreating(false)}>
+            <div className="bottom-sheet materiel-form-sheet task-create-sheet" onClick={e => e.stopPropagation()}>
+              <div className="bottom-sheet-handle" />
+              <h2 className="dialog-title">{t('tasks.newTaskTitle')}</h2>
               <TaskForm
                 assignableMembers={assignableMembers}
                 canEditAll={canCreate}

@@ -16,6 +16,9 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
     }
   })
   const people = assignedPeople.length ? assignedPeople : names.map(name => ({ uid: name, name, photoURL: '' }))
+  const checklist = Array.isArray(task.checklist) ? task.checklist.filter(item => item?.text) : []
+  const doneCount = checklist.filter(item => item.done).length
+  const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
 
   return (
     <button
@@ -39,6 +42,17 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
         <DueDateBadge deadline={task.deadline} status={task.status} />
         <PriorityBadge priority={task.priority} />
       </div>
+      {checklist.length > 0 && (
+        <div className="task-card-progress">
+          <div className="task-card-progress-head">
+            <span>Checklist</span>
+            <strong>{doneCount}/{checklist.length}</strong>
+          </div>
+          <div className="task-card-progress-track">
+            <div style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      )}
       <div className="task-card-people">
         <div className="task-avatars">
           {people.slice(0, 4).map(person => (
@@ -48,7 +62,6 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
           ))}
           {people.length > 4 && <span>+{people.length - 4}</span>}
         </div>
-        <small>{people.length ? people.map(person => person.name).join(', ') : t('common.none')}</small>
       </div>
     </button>
   )
