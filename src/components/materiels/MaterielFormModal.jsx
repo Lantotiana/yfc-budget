@@ -21,6 +21,61 @@ const EMPTY_FORM = {
   notes: '',
 }
 
+const MAX_IMAGE_HEIGHT = 500
+const WEBP_QUALITY = 0.82
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(new Error('Lecture image impossible.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [meta, base64] = String(dataUrl).split(',')
+  const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'image/webp'
+  const binary = atob(base64)
+  const len = binary.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i += 1) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
+async function toWebpWithMaxHeight(file) {
+  const sourceUrl = await readFileAsDataUrl(file)
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('Image invalide.'))
+    img.src = sourceUrl
+  })
+
+  const ratio = image.naturalWidth / image.naturalHeight || 1
+  const targetHeight = Math.min(image.naturalHeight || MAX_IMAGE_HEIGHT, MAX_IMAGE_HEIGHT)
+  const targetWidth = Math.max(1, Math.round(targetHeight * ratio))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas indisponible pour la conversion image.')
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight)
+
+  const webpDataUrl = canvas.toDataURL('image/webp', WEBP_QUALITY)
+  const webpBlob = dataUrlToBlob(webpDataUrl)
+  const baseName = (file.name || 'materiel')
+    .replace(/\.[^/.]+$/, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+
+  const webpFile = new File([webpBlob], `${baseName}.webp`, { type: 'image/webp' })
+  return { file: webpFile, width: targetWidth, height: targetHeight }
+}
+
 export default function MaterielFormModal({ open, onClose, onSubmit, members, initialData, C, saving }) {
   const fileRef = useRef()
   const [form, setForm] = useState(EMPTY_FORM)
@@ -58,13 +113,19 @@ export default function MaterielFormModal({ open, onClose, onSubmit, members, in
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingPhoto(true)
+    setError('')
     try {
-      const storageRef = ref(storage, `materiels/${Date.now()}_${file.name}`)
-      const snapshot = await uploadBytes(storageRef, file)
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Veuillez choisir une image valide.')
+      }
+
+      const processed = await toWebpWithMaxHeight(file)
+      const storageRef = ref(storage, `materiels/${Date.now()}_${processed.file.name}`)
+      const snapshot = await uploadBytes(storageRef, processed.file, { contentType: 'image/webp' })
       const url = await getDownloadURL(snapshot.ref)
       updateField('photoUrl', url)
-    } catch {
-      setError("Impossible d'envoyer la photo.")
+    } catch (err) {
+      setError(err?.message || "Impossible d'envoyer la photo.")
     }
     setUploadingPhoto(false)
   }

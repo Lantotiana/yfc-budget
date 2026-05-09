@@ -83,7 +83,7 @@ export default function Home({ user, userData }) {
     },
     { path: '/membres',   Icon: Users,         label: t('home.membres'),   desc: t('home.membresDesc'),   color: '#f43f5e' },
     { path: '/tasks',     Icon: ClipboardList, label: t('home.tasks'),     desc: t('home.tasksDesc'),     color: '#16b5a3' },
-    { path: '/documents', Icon: FolderOpen,    label: 'Documents et matériels', desc: 'Fichiers et inventaire YFC', color: '#06b6d4' },
+    { path: '/documents', Icon: FolderOpen,    label: 'Matériels et Documents', desc: 'Inventaires et fichiers', color: '#06b6d4' },
   ]
   const [verseOpen, setVerseOpen] = useState(false)
   const [verseClosing, setVerseClosing] = useState(false)
