@@ -756,7 +756,7 @@
 }
 
 .task-modal-head h2 {
-  margin: 8px 0 0;
+  margin: 0;
   color: #1f2937;
   font-size: 21px;
   line-height: 1.18;
@@ -3407,10 +3407,11 @@ input:focus, select:focus {
 }
 
 .dialog-title {
-  font-size: var(--font-base);
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  line-height: 1.18;
 }
 
 .dialog-close-btn {
@@ -3435,6 +3436,71 @@ input:focus, select:focus {
   display: flex;
   gap: 10px;
   margin-top: 1.5rem;
+}
+.dialog-footer .btn-secondary,
+.dialog-footer .materiel-footer-btn {
+  flex: 1 !important;
+}
+.dialog-footer .materiel-primary-btn {
+  flex: 2 !important;
+}
+
+/* ====== EVENEMENT MATERIEL PICKER ====== */
+.evenement-materiel-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 200;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+}
+
+.evenement-materiel-option {
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: var(--font-sm);
+  text-align: left;
+}
+
+.evenement-materiel-option:hover {
+  background: var(--hover-bg, rgba(0,0,0,0.04));
+}
+
+.evenement-materiel-statut {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.evenement-materiel-statut.dispo {
+  background: rgba(16,185,129,0.12);
+  color: #059669;
+}
+
+.evenement-materiel-statut.indispo {
+  background: rgba(239,68,68,0.1);
+  color: #dc2626;
+}
+
+.evenement-materiel-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: var(--font-xs);
+  font-weight: 600;
 }
 
 /* ====== BOTTOM SHEET ====== */
@@ -7598,6 +7664,8 @@ body[data-bottom-nav="true"] .page-fab {
 .materiel-cards-grid {
   display: grid;
   gap: 12px;
+  align-content: start;
+  align-items: start;
 }
 
 .materiel-card {
@@ -7809,6 +7877,12 @@ body[data-bottom-nav="true"] .page-fab {
   margin-bottom: 4px;
   color: var(--text-secondary);
   font-size: 12px;
+}
+
+.materiel-detail-grid > div > div {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .materiel-detail-modal .dialog-footer {

@@ -81,12 +81,34 @@ export default function MaterielDetailModal({
   const [movements, setMovements] = useState([])
   const [action, setAction] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [eventReservations, setEventReservations] = useState([])
+  const [futureEvenements, setFutureEvenements] = useState([])
+  const [histPage, setHistPage] = useState(0)
+  const HIST_PAGE_SIZE = 5
 
   useEffect(() => {
     if (!open || !materiel?.id) return undefined
+    setHistPage(0)
     const q = query(collection(db, 'mouvementsMateriels'), orderBy('createdAt', 'desc'))
     return onSnapshot(q, snap => {
       setMovements(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => item.materielId === materiel.id))
+    })
+  }, [materiel?.id, open])
+
+  useEffect(() => {
+    if (!open || !materiel?.id) return undefined
+    const today = new Date().toISOString().slice(0, 10)
+    return onSnapshot(collection(db, 'evenements_agenda'), snap => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const reservations = all
+        .filter(e => {
+          const hasThis = (e.materielsReserves || []).some(m => m.id === materiel.id)
+          const endDate = e.dateFin || e.dateDebut
+          return hasThis && endDate >= today
+        })
+        .sort((a, b) => (a.dateDebut > b.dateDebut ? 1 : -1))
+      setEventReservations(reservations)
+      setFutureEvenements(all.filter(e => (e.dateFin || e.dateDebut) >= today).sort((a, b) => (a.dateDebut > b.dateDebut ? 1 : -1)))
     })
   }, [materiel?.id, open])
 
@@ -95,7 +117,11 @@ export default function MaterielDetailModal({
   const canEdit = canEditMateriel(user, userData, currentMember)
   const canArchive = canDeleteMateriel(user, userData, currentMember)
   const statut = getStatutMeta(materiel.statut, C)
+  const statutLabel = materiel.statut === 'reserve_evenement' && materiel.currentEventName
+    ? `Réservé · ${materiel.currentEventName}`
+    : statut.label
   const etat = getEtatMeta(materiel.etat, C)
+  const nextReservation = eventReservations[0] || null
   const responsables = Array.isArray(materiel.responsablesNoms) && materiel.responsablesNoms.length > 0
     ? materiel.responsablesNoms.join(', ')
     : materiel.responsableNom
@@ -153,30 +179,74 @@ export default function MaterielDetailModal({
     )
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const actionConfig = {
-    sortie: {
-      title: 'Sortir le materiel',
+    emprunt: {
+      title: 'Emprunter le matériel',
       fields: [
-        { name: 'personneResponsable', label: 'Personne qui prend', required: true },
-        { name: 'evenementNom', label: 'Motif ou evenement' },
-        { name: 'dateSortie', label: 'Date de sortie', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
-        { name: 'dateRetourPrevue', label: 'Date de retour prevue', type: 'date', required: true },
-        { name: 'etatAvant', label: 'Etat avant sortie', type: 'select', defaultValue: materiel.etat, options: [
-          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'A verifier' }, { value: 'endommage', label: 'Endommage' }, { value: 'en_reparation', label: 'En reparation' }, { value: 'perdu', label: 'Perdu' },
+        { name: 'personneResponsable', label: 'Personne qui emprunte', required: true },
+        { name: 'evenementNom', label: 'Motif' },
+        { name: 'dateSortie', label: 'Date de sortie', type: 'date', required: true, defaultValue: today },
+        { name: 'dateRetourPrevue', label: 'Date de retour prévue', type: 'date', required: true },
+        { name: 'etatAvant', label: 'État avant sortie', type: 'select', defaultValue: materiel.etat, options: [
+          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'À vérifier' }, { value: 'endommage', label: 'Endommagé' }, { value: 'en_reparation', label: 'En réparation' }, { value: 'perdu', label: 'Perdu' },
         ] },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
         if (!form.personneResponsable || !form.dateRetourPrevue) return
+        const isFuture = form.dateSortie > today
         await updateMateriel({
-          statut: 'emprunte',
+          statut: isFuture ? 'reserve_emprunt' : 'emprunte',
           lieuActuel: form.personneResponsable,
           responsableNom: form.personneResponsable,
           currentBorrower: form.personneResponsable,
           currentDueAt: form.dateRetourPrevue,
           currentBorrowedAt: form.dateSortie,
           currentEventName: form.evenementNom || '',
-        }, 'sortie', form, 'Materiel sorti')
+        }, isFuture ? 'reservation' : 'emprunt', form, isFuture ? 'Matériel réservé pour emprunt' : 'Matériel emprunté')
+      },
+    },
+    utiliser: {
+      title: "Utiliser pour un événement",
+      fields: [
+        { name: 'evenementId', label: 'Événement', type: 'select', required: true, options: [
+          { value: '', label: 'Sélectionner un événement...' },
+          ...futureEvenements.map(e => ({ value: e.id, label: `${e.nom} · ${e.dateDebut}` })),
+        ]},
+        { name: 'personneResponsable', label: 'Responsable (optionnel)' },
+        { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
+      ],
+      async confirm(form) {
+        if (!form.evenementId) return
+        const ev = futureEvenements.find(e => e.id === form.evenementId)
+        if (!ev) return
+        await updateMateriel({
+          statut: 'reserve_evenement',
+          currentEventId: ev.id,
+          currentEventName: ev.nom,
+          currentBorrowedAt: ev.dateDebut,
+          currentDueAt: ev.dateFin || ev.dateDebut,
+          lieuActuel: ev.lieu || materiel.lieuActuel,
+          currentBorrower: form.personneResponsable || '',
+        }, 'utilisation', { evenementNom: ev.nom, dateRetourPrevue: ev.dateFin || ev.dateDebut, commentaire: form.commentaire }, 'Matériel réservé pour événement')
+      },
+    },
+    liberer: {
+      title: 'Libérer le matériel',
+      fields: [
+        { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
+      ],
+      async confirm(form) {
+        await updateMateriel({
+          statut: 'disponible',
+          currentBorrower: '',
+          currentDueAt: null,
+          currentBorrowedAt: null,
+          currentEventId: '',
+          currentEventName: '',
+        }, 'liberation', { commentaire: form.commentaire || 'Réservation annulée' }, null)
       },
     },
     retour: {
@@ -269,7 +339,7 @@ export default function MaterielDetailModal({
                 <div className="dialog-title" style={{ marginBottom: 6 }}>{materiel.nom}</div>
                 <div style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>{materiel.categorie} · {materiel.type === 'consommable' ? 'Consommable' : 'Durable'}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                  <span style={{ padding: '5px 10px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statut.label}</span>
+                  <span style={{ padding: '5px 10px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statutLabel}</span>
                   <span style={{ padding: '5px 10px', borderRadius: 999, background: etat.bg, color: etat.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{etat.label}</span>
                 </div>
               </div>
@@ -291,9 +361,23 @@ export default function MaterielDetailModal({
               </div>
             )}
 
+            {nextReservation && (
+              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 'var(--font-xs)', color: '#92400e', lineHeight: 1.5 }}>
+                ⚠ Réservé pour <strong>{nextReservation.nom}</strong> du {nextReservation.dateDebut}{nextReservation.dateFin && nextReservation.dateFin !== nextReservation.dateDebut ? ` au ${nextReservation.dateFin}` : ''}. Vérifier la disponibilité avant emprunt.
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
-              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && <button className="btn-secondary" onClick={() => setAction('sortie')}>Sortir</button>}
+              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && (
+                <button className="btn-secondary" onClick={() => setAction('emprunt')} style={nextReservation ? { borderColor: '#f59e0b', color: '#b45309' } : {}}>
+                  Emprunter{nextReservation ? ' ⚠' : ''}
+                </button>
+              )}
+              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && (
+                <button className="btn-secondary" onClick={() => setAction('utiliser')}>Utiliser</button>
+              )}
               {canEdit && materiel.type === 'durable' && materiel.statut === 'emprunte' && <button className="btn-secondary" onClick={() => setAction('retour')}>Retourner</button>}
+              {canEdit && materiel.type === 'durable' && (materiel.statut === 'reserve_emprunt' || materiel.statut === 'reserve_evenement') && <button className="btn-secondary" onClick={() => setAction('liberer')}>Libérer</button>}
               {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_ajout')}>Ajouter du stock</button>}
               {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_retrait')}>Retirer du stock</button>}
               {canEdit && materiel.etat !== 'en_reparation' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('maintenance')}>Mettre en reparation</button>}
@@ -302,12 +386,33 @@ export default function MaterielDetailModal({
             </div>
 
             <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 8 }}>Historique</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase' }}>Historique</div>
+                {movements.length > HIST_PAGE_SIZE && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setHistPage(p => Math.max(0, p - 1))}
+                      disabled={histPage === 0}
+                      style={{ width: 26, height: 26, borderRadius: 8, border: `1px solid ${C.bord}`, background: 'none', cursor: histPage === 0 ? 'default' : 'pointer', color: histPage === 0 ? C.t3 : C.t1, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: histPage === 0 ? 0.4 : 1 }}
+                    >‹</button>
+                    <span style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>{histPage + 1} / {Math.ceil(movements.length / HIST_PAGE_SIZE)}</span>
+                    <button
+                      type="button"
+                      onClick={() => setHistPage(p => Math.min(Math.ceil(movements.length / HIST_PAGE_SIZE) - 1, p + 1))}
+                      disabled={histPage >= Math.ceil(movements.length / HIST_PAGE_SIZE) - 1}
+                      style={{ width: 26, height: 26, borderRadius: 8, border: `1px solid ${C.bord}`, background: 'none', cursor: histPage >= Math.ceil(movements.length / HIST_PAGE_SIZE) - 1 ? 'default' : 'pointer', color: histPage >= Math.ceil(movements.length / HIST_PAGE_SIZE) - 1 ? C.t3 : C.t1, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: histPage >= Math.ceil(movements.length / HIST_PAGE_SIZE) - 1 ? 0.4 : 1 }}
+                    >›</button>
+                  </div>
+                )}
+              </div>
               {movements.length === 0 ? (
                 <div style={{ color: C.t2, fontSize: 'var(--font-sm)' }}>Aucun mouvement pour le moment.</div>
               ) : (
                 <div>
-                  {movements.map(item => <MovementRow key={item.id} movement={item} C={C} />)}
+                  {movements.slice(histPage * HIST_PAGE_SIZE, (histPage + 1) * HIST_PAGE_SIZE).map(item => (
+                    <MovementRow key={item.id} movement={item} C={C} />
+                  ))}
                 </div>
               )}
             </div>

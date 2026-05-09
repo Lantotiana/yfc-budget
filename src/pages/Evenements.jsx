@@ -1,15 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Pin, Plus, Trash2, MapPin, Clock, Calendar } from 'lucide-react'
+import { Pin, Plus, Trash2, MapPin, Clock, Calendar, Search, X, Package2, Tag } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
-const EMPTY = { nom: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', lieu: '' }
+import { DEFAULT_MEMBRE_TAGS } from '../constants'
+const EMPTY = { nom: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', lieu: '', materielsReserves: [], tags: ['Membre'] }
 
 function useNow() {
   const [now, setNow] = useState(new Date())
@@ -68,6 +69,11 @@ export default function Evenements() {
   const [saving, setSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
   const [highlightedId, setHighlightedId] = useState('')
+  const [materiels, setMateriels] = useState([])
+  const [materielSearch, setMaterielSearch] = useState('')
+  const [showMaterielDropdown, setShowMaterielDropdown] = useState(false)
+  const [membres, setMembres] = useState([])
+  const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
 
   useEffect(() => {
     const id = searchParams.get('event')
@@ -91,12 +97,63 @@ export default function Evenements() {
     })
   }, [])
 
+  useEffect(() => {
+    const q = query(collection(db, 'materiels'), orderBy('nom'))
+    return onSnapshot(q, snap => {
+      setMateriels(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.statut !== 'archive'))
+    })
+  }, [])
+
+  useEffect(() => {
+    const q = query(collection(db, 'membres'), orderBy('nom'))
+    return onSnapshot(q, snap => setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+  }, [])
+
+  useEffect(() => {
+    return onSnapshot(doc(db, 'appSettings', 'membreTags'), snap => {
+      if (snap.exists() && Array.isArray(snap.data().list) && snap.data().list.length > 0) {
+        setAvailableTags(snap.data().list)
+      }
+    })
+  }, [])
+
   function openAdd()  { setForm(EMPTY); setSheet('add') }
   function openEdit(e) {
-    setForm({ nom: e.nom || '', dateDebut: e.dateDebut || '', dateFin: e.dateFin || '', heureDebut: e.heureDebut || '', heureFin: e.heureFin || '', lieu: e.lieu || '' })
+    setForm({
+      nom: e.nom || '',
+      dateDebut: e.dateDebut || '',
+      dateFin: e.dateFin || '',
+      heureDebut: e.heureDebut || '',
+      heureFin: e.heureFin || '',
+      lieu: e.lieu || '',
+      materielsReserves: Array.isArray(e.materielsReserves) ? e.materielsReserves : [],
+      tags: Array.isArray(e.tags) ? e.tags : ['Membre'],
+    })
     setSheet(e)
   }
-  function closeSheet() { setSheet(null); setForm(EMPTY) }
+
+  function toggleTag(tag) {
+    setForm(p => ({ ...p, tags: p.tags.includes(tag) ? p.tags.filter(t => t !== tag) : [...p.tags, tag] }))
+  }
+  function closeSheet() { setSheet(null); setForm(EMPTY); setMaterielSearch(''); setShowMaterielDropdown(false) }
+
+  const filteredMaterielOptions = useMemo(() => {
+    const term = materielSearch.trim().toLowerCase()
+    const reservedIds = new Set(form.materielsReserves.map(m => m.id))
+    return materiels
+      .filter(m => !reservedIds.has(m.id) && (!term || m.nom.toLowerCase().includes(term) || (m.categorie || '').toLowerCase().includes(term)))
+      .slice(0, 6)
+  }, [materiels, materielSearch, form.materielsReserves])
+
+  function addMaterielReserve(m) {
+    setForm(p => ({ ...p, materielsReserves: [...p.materielsReserves, { id: m.id, nom: m.nom, categorie: m.categorie || '' }] }))
+    setMaterielSearch('')
+    setShowMaterielDropdown(false)
+  }
+
+  function removeMaterielReserve(id) {
+    setForm(p => ({ ...p, materielsReserves: p.materielsReserves.filter(m => m.id !== id) }))
+  }
 
   async function save() {
     if (!form.nom.trim() || !form.dateDebut) return
@@ -109,9 +166,20 @@ export default function Evenements() {
         heureDebut: form.heureDebut,
         heureFin: form.heureFin,
         lieu: form.lieu.trim(),
+        materielsReserves: form.materielsReserves,
+        tags: form.tags,
       }
       if (sheet === 'add') {
         const ref = await addDoc(collection(db, 'evenements_agenda'), data)
+        // Auto-créer la fiche de présence liée
+        const presenceRef = await addDoc(collection(db, 'evenements'), {
+          titre: data.nom,
+          date: data.dateDebut,
+          tags: data.tags,
+          evenementAgendaId: ref.id,
+          createdAt: new Date().toISOString(),
+        })
+        await updateDoc(doc(db, 'evenements_agenda', ref.id), { presenceEventId: presenceRef.id })
         await createNotification({
           type: 'evenement',
           titre: 'Nouvel événement créé',
@@ -122,6 +190,23 @@ export default function Evenements() {
         })
       } else {
         await updateDoc(doc(db, 'evenements_agenda', sheet.id), data)
+        // Mettre à jour ou créer la fiche de présence liée
+        if (sheet.presenceEventId) {
+          await updateDoc(doc(db, 'evenements', sheet.presenceEventId), {
+            titre: data.nom,
+            date: data.dateDebut,
+            tags: data.tags,
+          })
+        } else {
+          const presenceRef = await addDoc(collection(db, 'evenements'), {
+            titre: data.nom,
+            date: data.dateDebut,
+            tags: data.tags,
+            evenementAgendaId: sheet.id,
+            createdAt: new Date().toISOString(),
+          })
+          await updateDoc(doc(db, 'evenements_agenda', sheet.id), { presenceEventId: presenceRef.id })
+        }
         await createNotification({
           type: 'evenement',
           titre: 'Événement modifié',
@@ -223,14 +308,17 @@ export default function Evenements() {
                     <button onClick={ev => { ev.stopPropagation(); togglePin(e) }} style={{ width: 28, height: 28, borderRadius: 9, border: `1px solid ${e.pinned ? C.teal + '80' : C.bord}`, background: e.pinned ? C.tealD : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Pin size={13} color={e.pinned ? C.teal : C.t3} fill={e.pinned ? C.teal : 'none'} />
                     </button>
-                    <button onClick={ev => { ev.stopPropagation(); setConfirmDel(e) }} style={{ width: 28, height: 28, borderRadius: 9, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Trash2 size={13} color={C.coral} />
-                    </button>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {dateLabel && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-xs)', color: C.t2 }}><Calendar size={13} color={C.t3} />{dateLabel}{timeLabel && <><span style={{ color: C.t3 }}>·</span><Clock size={13} color={C.t3} />{timeLabel}</>}</div>}
                   {e.lieu && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-xs)', color: C.t2 }}><MapPin size={13} color={C.t3} />{e.lieu}</div>}
+                  {Array.isArray(e.materielsReserves) && e.materielsReserves.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 'var(--font-xs)', color: C.t3 }}>
+                      <Package2 size={12} color={C.t3} />
+                      {e.materielsReserves.map(m => m.nom).join(', ')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -244,7 +332,10 @@ export default function Evenements() {
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet fixed-footer-sheet" onClick={ev => ev.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title">{isEditing ? t('evenements.modifier') : t('evenements.nouvelEvenement')}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 className="dialog-title" style={{ margin: 0 }}>{isEditing ? t('evenements.modifier') : t('evenements.nouvelEvenement')}</h2>
+              {isEditing && <button type="button" className="task-icon-btn" onClick={() => { setConfirmDel(sheet); closeSheet() }} style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#ef4444' }}><Trash2 size={16} /></button>}
+            </div>
             <div className="dialog-content">
               <div><label className="form-label">{t('evenements.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(p => ({ ...p, nom: e.target.value }))} placeholder={t('evenements.nom')} className="form-input" /></div>
               <div>
@@ -262,6 +353,92 @@ export default function Evenements() {
                 </div>
               </div>
               <div><label className="form-label">Lieu</label><input type="text" value={form.lieu} onChange={e => setForm(p => ({ ...p, lieu: e.target.value }))} placeholder="Salle, adresse..." className="form-input" /></div>
+
+              <div>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Tag size={12} />Participants par tag</label>
+                <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginBottom: 8 }}>Aucun tag = tous les membres</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {availableTags.map(tag => {
+                    const selected = form.tags.includes(tag)
+                    const count = membres.filter(m => Array.isArray(m.tags) && m.tags.includes(tag)).length
+                    return (
+                      <button key={tag} type="button" onClick={() => toggleTag(tag)}
+                        style={{ padding: '7px 14px', borderRadius: 999,
+                          border: `1.5px solid ${selected ? '#6366f1' : C.bord}`,
+                          background: selected ? 'rgba(99,102,241,0.12)' : C.surf2,
+                          color: selected ? '#6366f1' : C.t2,
+                          fontSize: 'var(--font-xs)', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {tag} <span style={{ opacity: 0.7 }}>({count})</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {form.tags.length > 0 && (
+                  <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10,
+                    background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
+                    fontSize: 'var(--font-xs)', color: '#6366f1', fontWeight: 600 }}>
+                    {(() => {
+                      const n = membres.filter(m => Array.isArray(m.tags) && m.tags.some(t => form.tags.includes(t))).length
+                      return `${n} membre${n !== 1 ? 's' : ''} correspondent`
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Package2 size={13} />Matériels nécessaires</label>
+                <div style={{ position: 'relative' }}>
+                  <div className="tx-search-wrapper" style={{ marginBottom: 0 }}>
+                    <div className="tx-search-icon"><Search size={14} /></div>
+                    <input
+                      className="tx-search-input"
+                      type="text"
+                      placeholder="Rechercher un matériel..."
+                      value={materielSearch}
+                      onChange={e => { setMaterielSearch(e.target.value); setShowMaterielDropdown(true) }}
+                      onFocus={() => setShowMaterielDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowMaterielDropdown(false), 150)}
+                      style={{ paddingLeft: 38 }}
+                    />
+                    {materielSearch && (
+                      <button type="button" className="tx-search-clear" onClick={() => { setMaterielSearch(''); setShowMaterielDropdown(false) }}>
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  {showMaterielDropdown && filteredMaterielOptions.length > 0 && (
+                    <div className="evenement-materiel-dropdown" style={{ background: C.surf, border: `1px solid ${C.bord}` }}>
+                      {filteredMaterielOptions.map((m, i) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onMouseDown={() => addMaterielReserve(m)}
+                          className="evenement-materiel-option"
+                          style={{ borderBottom: i < filteredMaterielOptions.length - 1 ? `1px solid ${C.bord}` : 'none', color: C.t1 }}
+                        >
+                          <span style={{ flex: 1 }}>{m.nom}{m.categorie ? <span style={{ color: C.t3, fontWeight: 400, marginLeft: 6 }}>· {m.categorie}</span> : null}</span>
+                          <span className={`evenement-materiel-statut ${m.statut === 'disponible' ? 'dispo' : 'indispo'}`}>
+                            {m.statut === 'disponible' ? 'Dispo' : 'Indispo'}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {form.materielsReserves.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                    {form.materielsReserves.map(m => (
+                      <div key={m.id} className="evenement-materiel-chip" style={{ background: C.tealD, border: `1px solid ${C.teal}40`, color: C.teal }}>
+                        <Package2 size={11} />
+                        <span>{m.nom}</span>
+                        <button type="button" onClick={() => removeMaterielReserve(m.id)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', display: 'flex', lineHeight: 1 }}>
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="dialog-footer">
               <button onClick={closeSheet} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
@@ -282,8 +459,8 @@ export default function Evenements() {
             <h3 className="dialog-title mb-8">{t('evenements.supprimerConfirm')}</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} sera définitivement supprimé.</p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>{t('common.cancel')}</button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('evenements.supprimer')}</button>
+              <button onClick={() => setConfirmDel(null)} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
+              <button onClick={confirmDelete} className="materiel-primary-btn" style={{ background: C.coral, color: '#fff' }}>{t('evenements.supprimer')}</button>
             </div>
           </div>
         </div>

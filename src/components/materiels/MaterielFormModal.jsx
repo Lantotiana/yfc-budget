@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown, X } from 'lucide-react'
+import { Check, ChevronDown, Trash2, X } from 'lucide-react'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import Portal from '../Portal'
 import { storage } from '../../firebase'
@@ -83,7 +83,7 @@ async function uploadToFirebaseStorage(file) {
   return getDownloadURL(snapshot.ref)
 }
 
-export default function MaterielFormModal({ open, onClose, onSubmit, members, initialData, C, saving }) {
+export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, members, initialData, C, saving }) {
   const fileRef = useRef(null)
   const searchRef = useRef(null)
   const responsibleRef = useRef(null)
@@ -92,6 +92,8 @@ export default function MaterielFormModal({ open, onClose, onSubmit, members, in
   const [responsibleOpen, setResponsibleOpen] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [error, setError] = useState('')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -220,12 +222,56 @@ export default function MaterielFormModal({ open, onClose, onSubmit, members, in
     await onSubmit(payload)
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      await onDelete()
+      setConfirmingDelete(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
+    <>
+    {confirmingDelete && (
+      <Portal>
+        <div className="modal-overlay" onClick={() => setConfirmingDelete(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
+            <div className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce matériel ?</div>
+            <p style={{ fontSize: 'var(--font-sm)', color: C.t2, marginBottom: 20 }}>Cette action est irréversible.</p>
+            <div className="dialog-footer">
+              <button className="btn-secondary materiel-footer-btn" onClick={() => setConfirmingDelete(false)}>Annuler</button>
+              <button
+                className="materiel-primary-btn"
+                style={{ background: C.coral, color: '#fff' }}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Suppression...' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    )}
     <Portal>
       <div className="bottom-sheet-overlay" onClick={onClose}>
         <div className="bottom-sheet materiel-form-sheet" onClick={e => e.stopPropagation()}>
           <div className="bottom-sheet-handle" />
-          <div className="dialog-title">{initialData ? 'Modifier le materiel' : 'Ajouter un materiel'}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div className="dialog-title" style={{ margin: 0 }}>{initialData ? 'Modifier le materiel' : 'Ajouter un materiel'}</div>
+            {initialData && onDelete && (
+              <button
+                type="button"
+                className="task-icon-btn"
+                onClick={() => setConfirmingDelete(true)}
+                style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#ef4444' }}
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
             <div className="dialog-content" style={{ display: 'grid', gap: 12 }}>
               {error && (
@@ -420,5 +466,6 @@ export default function MaterielFormModal({ open, onClose, onSubmit, members, in
         </div>
       </div>
     </Portal>
+    </>
   )
 }

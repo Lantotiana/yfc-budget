@@ -342,10 +342,10 @@ function DocumentsOverlay({ preview, setPreview, confirmDel, setConfirmDel, hand
               « {confirmDel.nom} » sera définitivement supprimé.
             </p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setConfirmDel(null)} className="btn-secondary materiel-footer-btn">
                 {t('common.cancel')}
               </button>
-              <button onClick={handleDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={handleDelete} className="materiel-primary-btn" style={{ background: C.coral, color: '#fff' }}>
                 {t('common.delete')}
               </button>
             </div>

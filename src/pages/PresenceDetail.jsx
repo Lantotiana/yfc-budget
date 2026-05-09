@@ -436,7 +436,12 @@ export default function PresenceDetail({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={() => setShowEdit(false)}>
           <div className="bottom-sheet fixed-footer-sheet presence-edit-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title">{t('common.edit')} {t('presences.evenement')}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 className="dialog-title" style={{ margin: 0 }}>{t('common.edit')} {t('presences.evenement')}</h2>
+              <button type="button" className="task-icon-btn" onClick={deleteEvent} style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#ef4444' }}>
+                <Trash2 size={16} />
+              </button>
+            </div>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="form-label">{t('presences.nom')} *</label>
@@ -494,24 +499,16 @@ export default function PresenceDetail({ user, userData }) {
                 )}
               </div>
             </div>
-            <div className="dialog-footer presence-edit-footer">
-              <div className="presence-edit-footer-row">
-                <button
-                  onClick={deleteEvent}
-                  className="materiel-danger-btn"
-                >
-                  <Trash2 size={14} /> {t('common.delete')}
-                </button>
-                <button
-                  onClick={saveEdit}
-                  disabled={savingEdit || !editForm.titre.trim()}
-                  className="materiel-primary-btn"
-                >
-                  {savingEdit ? t('presences.enregistrement') : t('common.save')}
-                </button>
-              </div>
+            <div className="dialog-footer">
               <button onClick={() => setShowEdit(false)} className="btn-secondary materiel-footer-btn">
                 {t('common.cancel')}
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={savingEdit || !editForm.titre.trim()}
+                className="materiel-primary-btn"
+              >
+                {savingEdit ? t('presences.enregistrement') : t('common.save')}
               </button>
             </div>
           </div>

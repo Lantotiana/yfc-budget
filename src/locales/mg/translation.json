@@ -228,6 +228,7 @@
     "emptyTodo": "Tsy misy asa atao",
     "emptyInProgress": "Tsy misy asa En cours",
     "emptyDone": "Tsy misy asa vita",
+    "emptyFiltered": "Tsy misy asa amin'ity sokajy ity",
     "priorityLow": "Ambany",
     "priorityMedium": "Antonony",
     "priorityHigh": "Avo",

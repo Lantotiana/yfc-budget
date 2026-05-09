@@ -124,9 +124,9 @@ export function getDisplayMemberName(userDoc = {}, memberDoc = {}) {
     userDoc.nomPrefere ||
     memberDoc.prenoms?.split(/\s+/)[0] ||
     userDoc.prenom ||
-    memberDoc.nom ||
-    userDoc.nom ||
-    userDoc.displayName ||
+    userDoc.displayName?.split(/\s+/)[0] ||
+    memberDoc.nom?.split(/\s+/)[0] ||
+    userDoc.nom?.split(/\s+/)[0] ||
     userDoc.email ||
     'Staff'
   )

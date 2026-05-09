@@ -34,7 +34,6 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
   const [selected, setSelected] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [confirmDel, setConfirmDel] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'materiels'), orderBy('updatedAt', 'desc'))
@@ -111,6 +110,13 @@ if (search.trim() && !buildSearchValue(item).includes(search.trim().toLowerCase(
     })
   }
 
+  async function handleDeleteMateriel() {
+    if (!editing) return
+    await deleteDoc(doc(db, 'materiels', editing.id))
+    setShowForm(false)
+    setEditing(null)
+  }
+
   async function handleSaveMateriel(payload) {
     setSaving(true)
     setError('')
@@ -169,19 +175,9 @@ if (search.trim() && !buildSearchValue(item).includes(search.trim().toLowerCase(
     }
   }
 
-  async function handleDeleteMateriel() {
-    if (!confirmDel) return
-    try {
-      await deleteDoc(doc(db, 'materiels', confirmDel.id))
-    } catch (err) {
-      setError(err?.message || 'Impossible de supprimer ce matériel.')
-    }
-    setConfirmDel(null)
-  }
-
   return (
-    <div>
-      <div className="tx-search-wrapper" style={{ marginBottom: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <div className="tx-search-wrapper" style={{ marginBottom: 12, flexShrink: 0 }}>
         <div className="tx-search-icon"><Search size={14} /></div>
         <input
           className="tx-search-input"
@@ -198,7 +194,7 @@ if (search.trim() && !buildSearchValue(item).includes(search.trim().toLowerCase(
         )}
       </div>
 
-      <div className="materiel-stats-grid">
+      <div className="materiel-stats-grid" style={{ flexShrink: 0 }}>
         {STAT_CARDS.map(({ label, value, color, filterKey }) => {
           const active = filterKey !== null && statusFilter === filterKey
           const Tag = filterKey !== null ? 'button' : 'div'
@@ -226,25 +222,31 @@ if (search.trim() && !buildSearchValue(item).includes(search.trim().toLowerCase(
       </div>
 
       {error && (
-        <div style={{ marginBottom: 12, padding: '12px 14px', borderRadius: 14, background: C.coralD, color: C.coral, fontSize: 'var(--font-sm)', fontWeight: 600 }}>
+        <div style={{ marginBottom: 12, padding: '12px 14px', borderRadius: 14, background: C.coralD, color: C.coral, fontSize: 'var(--font-sm)', fontWeight: 600, flexShrink: 0 }}>
           {error}
         </div>
       )}
 
-      <div className="materiel-cards-grid" style={{ marginTop: 16 }}>
+      <div className="materiel-cards-grid" style={{ marginTop: 16, flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
         {visibleMateriels.length === 0 ? (
-          <div style={{ padding: '2rem 0', color: C.t2, textAlign: 'center', fontSize: 'var(--font-sm)' }}>
+          <div style={{ padding: '2rem 0', color: C.t2, textAlign: 'center', fontSize: 'var(--font-sm)', gridColumn: '1 / -1' }}>
             {materiels.length === 0 ? 'Aucun matériel enregistré pour le moment.' : 'Ce matériel est introuvable.'}
           </div>
         ) : visibleMateriels.map(item => (
-          <MaterielCard key={item.id} materiel={item} C={C} onOpen={() => setSelected(item)} onDelete={canManage ? () => setConfirmDel(item) : undefined} />
+          <MaterielCard key={item.id} materiel={item} C={C} onOpen={() => setSelected(item)} />
         ))}
+        {!canEdit && (
+          <div style={{ gridColumn: '1 / -1', marginTop: 8, background: C.surf2, borderRadius: 14, padding: 14, fontSize: 'var(--font-xs)', color: C.t2 }}>
+            Lecture seule : seuls les responsables autorisés peuvent gérer les matériels.
+          </div>
+        )}
       </div>
 
       <MaterielFormModal
         open={showForm}
         onClose={() => { setShowForm(false); setEditing(null) }}
         onSubmit={handleSaveMateriel}
+        onDelete={editing ? handleDeleteMateriel : undefined}
         members={members}
         initialData={editing}
         C={C}
@@ -263,30 +265,6 @@ if (search.trim() && !buildSearchValue(item).includes(search.trim().toLowerCase(
         currentMember={currentMember}
       />
 
-      {confirmDel && (
-        <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer ce matériel ?</h3>
-            <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>
-              « {confirmDel.nom} » sera définitivement supprimé.
-            </p>
-            <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Annuler
-              </button>
-              <button onClick={handleDeleteMateriel} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!canEdit && (
-        <div style={{ marginTop: 16, background: C.surf2, borderRadius: 14, padding: 14, fontSize: 'var(--font-xs)', color: C.t2 }}>
-          Lecture seule : seuls les responsables autorisés peuvent gérer les matériels.
-        </div>
-      )}
     </div>
   )
 }

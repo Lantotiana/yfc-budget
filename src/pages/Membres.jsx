@@ -385,9 +385,6 @@ export default function Membres({ user, userData }) {
               {m.telephone && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1 }}>{m.telephone}</div>}
               {m.email && <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>}
             </div>
-            <button onClick={e => { e.stopPropagation(); setConfirmDel(m) }} style={{ width: 32, height: 32, borderRadius: 10, border: `1px solid ${C.bord}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Trash2 size={14} color={C.coral} />
-            </button>
           </div>
           )
         })}
@@ -399,7 +396,10 @@ export default function Membres({ user, userData }) {
         <div className="bottom-sheet-overlay" onClick={closeSheet}>
           <div className="bottom-sheet materiel-form-sheet member-form-sheet" onClick={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
-            <h2 className="dialog-title">{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 className="dialog-title" style={{ margin: 0 }}>{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
+              {isEditing && <button type="button" className="task-icon-btn" onClick={() => { setConfirmDel(sheet); closeSheet() }} style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#ef4444' }}><Trash2 size={16} /></button>}
+            </div>
             <div className="dialog-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div><label className="form-label">{t('membres.nom')} *</label><input type="text" value={form.nom} onChange={e => setForm(prev => ({ ...prev, nom: e.target.value }))} placeholder="Nom de famille" className="form-input" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -495,7 +495,7 @@ export default function Membres({ user, userData }) {
               </div>
             </div>
             <div className="dialog-footer">
-              <button onClick={closeSheet} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
+              <button type="button" className="btn-secondary materiel-footer-btn" onClick={closeSheet}>{t('common.cancel')}</button>
               <button onClick={save} disabled={saving || !form.nom.trim()} className="materiel-primary-btn">
                 {saving ? t('common.saving') : isEditing ? 'Mettre à jour' : t('common.add')}
               </button>
@@ -585,8 +585,8 @@ export default function Membres({ user, userData }) {
             <h3 className="dialog-title" style={{ marginBottom: 8 }}>{t('membres.supprimerMembre')}</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} {confirmDel.prenoms} sera définitivement supprimé.</p>
             <div className="dialog-footer">
-              <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: `1.5px solid ${C.bord2}`, borderRadius: 12, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.cancel')}</button>
-              <button onClick={confirmDelete} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: C.coral, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.delete')}</button>
+              <button onClick={() => setConfirmDel(null)} className="btn-secondary materiel-footer-btn">{t('common.cancel')}</button>
+              <button onClick={confirmDelete} className="materiel-primary-btn" style={{ background: C.coral, color: '#fff' }}>{t('common.delete')}</button>
             </div>
           </div>
         </div>

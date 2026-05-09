@@ -47,7 +47,6 @@ export default function TaskBoard({
   const [highlightedTaskId, setHighlightedTaskId] = useState('')
   const [toast, setToast] = useState('')
   const [confetti, setConfetti] = useState(false)
-  const [confirmDel, setConfirmDel] = useState(null)
   const canCreate = canCreateTasks(user)
   const canDrag = Boolean(user?.uid)
 
@@ -110,6 +109,8 @@ export default function TaskBoard({
     return acc
   }, {}), [filteredTasks])
 
+  const isFiltered = filters.search.trim() !== '' || filters.assignee.length > 0 || filters.priority !== 'all' || filters.overdue
+
   async function handleCreate(payload) {
     await createTask(payload)
     setCreating(false)
@@ -169,7 +170,6 @@ export default function TaskBoard({
               column={column}
               tasks={filteredByStatus[column.key] || []}
               onOpen={setSelectedTask}
-              onDelete={canCreate ? setConfirmDel : undefined}
               assignableMembers={assignableMembers}
               canCreate={canCreate}
               onCreate={() => setCreating(true)}
@@ -178,6 +178,7 @@ export default function TaskBoard({
               highlightedTaskId={highlightedTaskId}
               onDragStart={handleDragStart}
               onDropTask={handleDropTask}
+              isFiltered={isFiltered}
             />
           ))}
         </div>
@@ -187,11 +188,11 @@ export default function TaskBoard({
           active={activeTab}
           setActive={setActiveTab}
           onOpen={setSelectedTask}
-          onDelete={canCreate ? setConfirmDel : undefined}
           assignableMembers={assignableMembers}
           highlightedTaskId={highlightedTaskId}
           canCreate={canCreate}
           onCreate={() => setCreating(true)}
+          isFiltered={isFiltered}
         />
       )}
 
@@ -206,6 +207,7 @@ export default function TaskBoard({
           onUpdate={updateTask}
           onStatus={handleStatus}
           onArchive={archiveTask}
+          onDelete={canCreate ? async () => { await deleteTask(selectedTask); setSelectedTask(null) } : undefined}
         />
       )}
 
@@ -221,27 +223,6 @@ export default function TaskBoard({
                 onCancel={() => setCreating(false)}
                 onSubmit={handleCreate}
               />
-            </div>
-          </div>
-        </Portal>
-      )}
-
-      {confirmDel && (
-        <Portal>
-          <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <h3 className="dialog-title" style={{ marginBottom: 8 }}>Supprimer cette tâche ?</h3>
-              <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
-                « {confirmDel.title} » sera définitivement supprimée.
-              </p>
-              <div className="dialog-footer">
-                <button onClick={() => setConfirmDel(null)} style={{ flex: 1, padding: 12, border: '1.5px solid var(--border-color)', borderRadius: 12, background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Annuler
-                </button>
-                <button onClick={async () => { await deleteTask(confirmDel); setConfirmDel(null) }} style={{ flex: 1, padding: 12, border: 'none', borderRadius: 12, background: '#ef4444', color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Supprimer
-                </button>
-              </div>
             </div>
           </div>
         </Portal>

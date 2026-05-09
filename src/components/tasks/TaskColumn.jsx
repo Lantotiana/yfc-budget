@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import TaskCard from './TaskCard'
 
-export default function TaskColumn({ column, tasks, onOpen, onDelete, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, highlightedTaskId, onDragStart, onDropTask }) {
+export default function TaskColumn({ column, tasks, onOpen, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, highlightedTaskId, onDragStart, onDropTask, isFiltered }) {
   const { t } = useTranslation()
   const [dragOver, setDragOver] = useState(false)
 
@@ -33,15 +33,14 @@ export default function TaskColumn({ column, tasks, onOpen, onDelete, assignable
       <div className="task-column-list">
         {tasks.length === 0 ? (
           <div className="task-empty-state">
-            <p>{t(column.emptyKey)}</p>
-            {canCreate && column.key !== 'done' && <button type="button" onClick={onCreate}>{t('tasks.newTaskTitle')}</button>}
+            <p>{isFiltered ? t('tasks.emptyFiltered') : t(column.emptyKey)}</p>
+            {!isFiltered && canCreate && column.key !== 'done' && <button type="button" onClick={onCreate}>{t('tasks.newTaskTitle')}</button>}
           </div>
         ) : tasks.map(task => (
           <TaskCard
             key={task.id}
             task={task}
             onOpen={onOpen}
-            onDelete={onDelete ? () => onDelete(task) : undefined}
             assignableMembers={assignableMembers}
             draggable={canDrag}
             dragging={draggingTaskId === task.id}

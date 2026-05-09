@@ -228,6 +228,7 @@
     "emptyTodo": "Aucune tâche à faire",
     "emptyInProgress": "Aucune tâche en cours",
     "emptyDone": "Aucune tâche terminée",
+    "emptyFiltered": "Aucune tâche dans cette catégorie",
     "priorityLow": "Faible",
     "priorityMedium": "Moyenne",
     "priorityHigh": "Haute",

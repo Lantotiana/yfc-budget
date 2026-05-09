@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import Portal from '../Portal'
 import TaskForm from './TaskForm'
 import { canEditTask } from '../../utils/taskUtils'
@@ -12,24 +13,23 @@ export default function TaskModal({
   assignableMembers,
   onClose,
   onUpdate,
+  onDelete,
 }) {
   const { t } = useTranslation()
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   if (!task) return null
 
   const canEdit = canEditTask(task, user, userData, currentMember)
 
   return (
+    <>
     <Portal>
-      <div className="modal-overlay task-modal-overlay" onClick={onClose}>
-        <div className="task-modal" onClick={e => e.stopPropagation()}>
-          <div className="task-modal-head">
-            <div>
-              <span className={`tasks-badge status-${task.status}`}>
-                {t(`tasks.${task.status === 'in_progress' ? 'inProgress' : task.status === 'todo' ? 'aTodo' : 'done'}`)}
-              </span>
-              <h2>{task.title}</h2>
-            </div>
-            <button type="button" className="task-icon-btn" onClick={onClose} aria-label="Fermer"><X size={18} /></button>
+      <div className="bottom-sheet-overlay" onClick={onClose}>
+        <div className="bottom-sheet materiel-form-sheet task-create-sheet" onClick={e => e.stopPropagation()}>
+          <div className="bottom-sheet-handle" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 className="dialog-title" style={{ margin: 0 }}>{task.title}</h2>
+            {onDelete && <button type="button" className="task-icon-btn" onClick={() => setConfirmingDelete(true)} aria-label="Supprimer" style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#ef4444' }}><Trash2 size={16} /></button>}
           </div>
 
           <TaskForm
@@ -45,6 +45,23 @@ export default function TaskModal({
           />
         </div>
       </div>
+
     </Portal>
+
+    {confirmingDelete && (
+      <Portal>
+        <div className="modal-overlay" onClick={() => setConfirmingDelete(false)} style={{ zIndex: 5500 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
+            <div className="dialog-title" style={{ marginBottom: 8 }}>Supprimer cette tâche ?</div>
+            <p style={{ fontSize: 'var(--font-sm)', marginBottom: 20 }}>Cette action est irréversible.</p>
+            <div className="dialog-footer">
+              <button className="btn-secondary materiel-footer-btn" onClick={() => setConfirmingDelete(false)}>{t('common.cancel')}</button>
+              <button className="materiel-primary-btn" style={{ background: '#ef4444', color: '#fff' }} onClick={onDelete}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    )}
+    </>
   )
 }
