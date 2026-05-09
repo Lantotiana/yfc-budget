@@ -316,14 +316,7 @@ export default function MaterielDetailModal({
           <div className="dialog-footer materiel-detail-footer">
             <div className="materiel-detail-footer-main">
               <button className="btn-secondary materiel-footer-btn" onClick={onClose}>Fermer</button>
-              {canEdit && (
-                <button
-                  className="materiel-primary-btn"
-                  onClick={onEdit}
-                >
-                  Modifier
-                </button>
-              )}
+              {canEdit && <button className="materiel-primary-btn" onClick={onEdit}>Modifier</button>}
             </div>
           </div>
         </div>

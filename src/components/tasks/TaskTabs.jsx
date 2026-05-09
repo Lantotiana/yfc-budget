@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import TaskCard from './TaskCard'
 import { TASK_COLUMNS } from '../../utils/taskUtils'
 
-export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, assignableMembers, highlightedTaskId, canCreate, onCreate }) {
+export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, onDelete, assignableMembers, highlightedTaskId, canCreate, onCreate }) {
   const { t } = useTranslation()
   const column = TASK_COLUMNS.find(item => item.key === active) || TASK_COLUMNS[0]
   const tasks = tasksByStatus[active] || []
@@ -34,6 +34,7 @@ export default function TaskTabs({ tasksByStatus, active, setActive, onOpen, ass
             key={task.id}
             task={task}
             onOpen={onOpen}
+            onDelete={onDelete ? () => onDelete(task) : undefined}
             assignableMembers={assignableMembers}
             highlighted={highlightedTaskId === task.id}
           />

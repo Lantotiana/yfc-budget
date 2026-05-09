@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -278,6 +279,10 @@ export default function useTasks({ user, userData } = {}) {
     })
   }, [])
 
+  const deleteTask = useCallback(async task => {
+    await deleteDoc(doc(db, 'tasks', task.id))
+  }, [])
+
   return {
     tasks,
     tasksByStatus,
@@ -291,6 +296,7 @@ export default function useTasks({ user, userData } = {}) {
     updateTask,
     updateTaskStatus,
     archiveTask,
+    deleteTask,
     getTasksByStatus,
   }
 }

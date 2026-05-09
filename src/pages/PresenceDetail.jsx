@@ -357,8 +357,12 @@ export default function PresenceDetail({ user, userData }) {
           </div>
         </div>
 
+      </div>
+
+      {/* Member list */}
+      <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
         {/* Stats + search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: tagFilteredMembres.length > 0 ? 12 : 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: tagFilteredMembres.length > 0 ? 10 : 0 }}>
           <div style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>
             <span style={{ fontWeight: 700, color: C.t1 }}>{presentCount}</span> / {tagFilteredMembres.length} {t('presences.presents')}
           </div>
@@ -382,15 +386,11 @@ export default function PresenceDetail({ user, userData }) {
                 </button>
               )}
             </div>
-            <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden' }}>
+            <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden', marginBottom: 14 }}>
               <div style={{ height: '100%', borderRadius: 5, background: progressColor, width: `${presencePercent}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1), background .3s' }} />
             </div>
           </>
         )}
-      </div>
-
-      {/* Member list */}
-      <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
         {membres.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             {t('membres.aucunMembre')}

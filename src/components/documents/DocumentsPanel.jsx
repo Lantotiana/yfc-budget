@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { Upload, Download, Trash2, FileText, File, X } from 'lucide-react'
+import { Upload, Download, Trash2, FileText, File, Search, X } from 'lucide-react'
 import { db, storage } from '../../firebase'
 import { createNotification } from '../../notifications'
 import { useTheme } from '../../context/ThemeContext'
@@ -38,6 +38,7 @@ export default function DocumentsPanel({
   const { setToolbar } = useDesktopToolbar()
   const fileRef = useRef()
   const [documents, setDocuments] = useState([])
+  const [search, setSearch] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
   const [confirmDel, setConfirmDel] = useState(null)
@@ -138,6 +139,10 @@ export default function DocumentsPanel({
     return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
+  const visibleDocuments = search.trim()
+    ? documents.filter(d => d.nom?.toLowerCase().includes(search.trim().toLowerCase()))
+    : documents
+
   const panelTitle = title || t('documents.title')
   const panelSubtitle = subtitle || `${documents.length} document${documents.length !== 1 ? 's' : ''}`
 
@@ -190,10 +195,26 @@ export default function DocumentsPanel({
   return (
     <>
       <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
+      <div className="tx-search-wrapper" style={{ marginBottom: 12 }}>
+        <div className="tx-search-icon"><Search size={14} /></div>
+        <input
+          className="tx-search-input"
+          type="search"
+          placeholder="Rechercher un document..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+        />
+        {search && (
+          <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+            <X size={14} />
+          </button>
+        )}
+      </div>
       <DocumentsPanelContent
         C={C}
         t={t}
-        documents={documents}
+        documents={visibleDocuments}
         uploading={uploading}
         uploadProgress={uploadProgress}
         error={error}

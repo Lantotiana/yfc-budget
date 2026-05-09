@@ -308,6 +308,10 @@ export default function Membres({ user, userData }) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Filtres + Liste */}
+      <div className="page-content" style={{ paddingBottom: '5rem' }}>
         <div className="tx-search-wrapper">
           <div className="tx-search-icon"><Search size={14} /></div>
           <input
@@ -324,7 +328,7 @@ export default function Membres({ user, userData }) {
             </button>
           )}
         </div>
-        <div className="member-role-filter" data-active={roleFilter} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
+        <div className="member-role-filter" data-active={roleFilter} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}` }}>
           <span className="member-role-filter-indicator" aria-hidden="true" />
           {[
             { key: 'all', label: t('common.all'), count: membres.length },
@@ -357,10 +361,6 @@ export default function Membres({ user, userData }) {
             )
           })}
         </div>
-      </div>
-
-      {/* Liste */}
-      <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
         ) : filtered.length === 0 ? (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import TaskCard from './TaskCard'
 
-export default function TaskColumn({ column, tasks, onOpen, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, highlightedTaskId, onDragStart, onDropTask }) {
+export default function TaskColumn({ column, tasks, onOpen, onDelete, assignableMembers, canCreate, onCreate, canDrag, draggingTaskId, highlightedTaskId, onDragStart, onDropTask }) {
   const { t } = useTranslation()
   const [dragOver, setDragOver] = useState(false)
 
@@ -41,6 +41,7 @@ export default function TaskColumn({ column, tasks, onOpen, assignableMembers, c
             key={task.id}
             task={task}
             onOpen={onOpen}
+            onDelete={onDelete ? () => onDelete(task) : undefined}
             assignableMembers={assignableMembers}
             draggable={canDrag}
             dragging={draggingTaskId === task.id}
