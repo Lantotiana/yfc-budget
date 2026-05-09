@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Circle, LoaderCircle } from 'lucide-react'
 import DueDateBadge from './DueDateBadge'
 import PriorityBadge from './PriorityBadge'
 import { initials } from '../../utils/taskUtils'
@@ -19,6 +19,7 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
   const checklist = Array.isArray(task.checklist) ? task.checklist.filter(item => item?.text) : []
   const doneCount = checklist.filter(item => item.done).length
   const progress = checklist.length ? Math.round((doneCount / checklist.length) * 100) : 0
+  const StatusIcon = task.status === 'done' ? CheckCircle2 : task.status === 'in_progress' ? LoaderCircle : Circle
 
   return (
     <button
@@ -38,7 +39,10 @@ export default function TaskCard({ task, onOpen, assignableMembers = [], draggab
       </div>
       {task.description && <p>{task.description}</p>}
       <div className="task-card-badges">
-        <span className={`tasks-badge status-${task.status}`}>{t(`tasks.${task.status === 'in_progress' ? 'inProgress' : task.status === 'todo' ? 'aTodo' : 'done'}`)}</span>
+        <span className={`tasks-badge status-${task.status}`}>
+          <StatusIcon size={13} />
+          {t(`tasks.${task.status === 'in_progress' ? 'inProgress' : task.status === 'todo' ? 'aTodo' : 'done'}`)}
+        </span>
         <DueDateBadge deadline={task.deadline} status={task.status} />
         <PriorityBadge priority={task.priority} />
       </div>

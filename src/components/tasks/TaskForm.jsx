@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react'
-import { toDateInputValue } from '../../utils/taskUtils'
+import { CalendarDays, Check, CheckCircle2, ChevronDown, Circle, Flag, GripVertical, LoaderCircle, Plus, Trash2, X } from 'lucide-react'
+import { getDueDateStatus, toDateInputValue } from '../../utils/taskUtils'
 
 const EMPTY = {
   title: '',
@@ -111,7 +111,11 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
   }
 
   const deadlineLabel = form.deadline
-    ? new Date(`${form.deadline}T12:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    ? (() => {
+      const due = getDueDateStatus(form.deadline, form.status)
+      const relative = due.labelN !== undefined ? t(due.labelKey, { n: due.labelN }) : t(due.labelKey)
+      return ['tasks.today', 'tasks.tomorrow'].includes(due.labelKey) ? relative : new Date(`${form.deadline}T12:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    })()
     : t('tasks.deadlineRequired')
 
   const priorityLabel = {
@@ -125,6 +129,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
     in_progress: t('tasks.inProgress'),
     done: t('tasks.done'),
   }[form.status] || t('tasks.todo')
+  const StatusIcon = form.status === 'done' ? CheckCircle2 : form.status === 'in_progress' ? LoaderCircle : Circle
 
   useEffect(() => {
     if (!assigneeOpen) return
@@ -193,9 +198,9 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
       <div>
         <label className="form-label">Planning</label>
         <div className="task-planning-chips" ref={planningRef}>
-          <button type="button" className="due-neutral" onClick={openDatePicker}>{deadlineLabel}</button>
-          <button type="button" className={`status-${form.status}`} onClick={() => setPlanningMenu(planningMenu === 'status' ? '' : 'status')}>{statusLabel}</button>
-          <button type="button" className={`priority-${form.priority}`} onClick={() => setPlanningMenu(planningMenu === 'priority' ? '' : 'priority')}>{priorityLabel}</button>
+          <button type="button" className="due-neutral" onClick={openDatePicker}><CalendarDays size={13} /> {deadlineLabel}</button>
+          <button type="button" className={`status-${form.status}`} onClick={() => setPlanningMenu(planningMenu === 'status' ? '' : 'status')}><StatusIcon size={13} /> {statusLabel}</button>
+          <button type="button" className={`priority-${form.priority}`} onClick={() => setPlanningMenu(planningMenu === 'priority' ? '' : 'priority')}><Flag size={13} /> {priorityLabel}</button>
           <input
             ref={dateRef}
             className="task-planning-native-date"
