@@ -235,7 +235,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
-  const [loaderMessageIndex, setLoaderMessageIndex] = useState(0)
+  const [loaderMessageIndex, setLoaderMessageIndex] = useState(() => Math.floor(Math.random() * LOADER_MESSAGES.length))
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
@@ -279,7 +279,12 @@ export default function App() {
   useEffect(() => {
     if (!authLoading) return
     const id = setInterval(() => {
-      setLoaderMessageIndex(i => (i + 1) % LOADER_MESSAGES.length)
+      setLoaderMessageIndex(current => {
+        if (LOADER_MESSAGES.length <= 1) return current
+        let next = current
+        while (next === current) next = Math.floor(Math.random() * LOADER_MESSAGES.length)
+        return next
+      })
     }, 1700)
     return () => clearInterval(id)
   }, [authLoading])
