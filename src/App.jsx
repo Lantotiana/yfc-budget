@@ -290,11 +290,6 @@ export default function App() {
         <div className="app-loader-brand">
           <span>YFC</span>
         </div>
-        <div className="app-loader-orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
         <h1>Young For Christ</h1>
         <p key={loaderMessageIndex}>{LOADER_MESSAGES[loaderMessageIndex]}</p>
         <div className="app-loader-dots" aria-hidden="true">

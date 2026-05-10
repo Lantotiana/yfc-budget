@@ -3898,30 +3898,6 @@ input:focus, select:focus {
   font-size: 20px;
 }
 
-.app-loader-orbit {
-  position: absolute;
-  top: 24px;
-  width: 124px;
-  height: 124px;
-  border-radius: 50%;
-  border: 1px solid var(--teal-d);
-  animation: appLoaderSpin 5s linear infinite;
-}
-
-.app-loader-orbit span {
-  content: "";
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--teal);
-  box-shadow: 0 0 14px var(--teal-d);
-}
-
-.app-loader-orbit span:nth-child(1) { top: 4px; left: 56px; }
-.app-loader-orbit span:nth-child(2) { right: 9px; bottom: 25px; background: var(--violet); box-shadow: 0 0 14px var(--violet-d); }
-.app-loader-orbit span:nth-child(3) { left: 10px; bottom: 24px; background: var(--amber); box-shadow: 0 0 14px var(--amber-d); }
-
 .app-loader-card h1 {
   position: relative;
   z-index: 1;
