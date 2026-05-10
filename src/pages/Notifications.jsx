@@ -158,6 +158,10 @@ export default function Notifications({ user }) {
     if (notif.route === '/evenements' && eventId) return `/evenements?event=${eventId}`
     const membreId = notif.metadata?.membreId
     if (notif.route === '/membres' && membreId) return `/membres?membre=${membreId}`
+    const docId = notif.metadata?.docId
+    if (notif.route === '/documents' && docId) return `/documents?doc=${docId}`
+    const lienId = notif.metadata?.lienId
+    if (notif.route === '/documents' && lienId) return `/documents?lien=${lienId}`
     return notif.route
   }
 
