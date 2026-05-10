@@ -3858,39 +3858,24 @@ input:focus, select:focus {
 /* ====== APP LOADER ====== */
 .app-loader-screen {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(16, 185, 129, 0.16), transparent 30%),
-    linear-gradient(180deg, var(--bg-body), var(--surf2));
+  background: var(--bg-body);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 28px;
+  font-family: inherit;
 }
 
 .app-loader-card {
-  width: min(330px, 100%);
-  min-height: 290px;
+  width: min(320px, 100%);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  overflow: hidden;
-  border-radius: 28px;
-  background: color-mix(in srgb, var(--surf) 88%, transparent);
-  border: 1px solid var(--border-light);
-  box-shadow: 0 24px 60px rgba(15,23,42,0.12);
-  padding: 34px 24px 28px;
-}
-
-.app-loader-card::before {
-  content: "";
-  position: absolute;
-  inset: 18px;
-  border-radius: 24px;
-  border: 1px dashed rgba(16,185,129,0.18);
-  pointer-events: none;
+  padding: 24px 18px;
+  font-family: inherit;
 }
 
 .app-loader-brand {
@@ -3900,12 +3885,12 @@ input:focus, select:focus {
   z-index: 1;
   display: grid;
   place-items: center;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #10b981, #0cc0df);
+  border-radius: 22px;
+  background: var(--teal);
   color: #fff;
   font-weight: 900;
   letter-spacing: 0.04em;
-  box-shadow: 0 18px 38px rgba(16,185,129,0.28);
+  box-shadow: 0 18px 36px var(--teal-d);
   animation: appLoaderFloat 2.4s ease-in-out infinite;
 }
 
@@ -3915,11 +3900,11 @@ input:focus, select:focus {
 
 .app-loader-orbit {
   position: absolute;
-  top: 64px;
+  top: 24px;
   width: 124px;
   height: 124px;
   border-radius: 50%;
-  border: 1px solid rgba(16,185,129,0.14);
+  border: 1px solid var(--teal-d);
   animation: appLoaderSpin 5s linear infinite;
 }
 
@@ -3929,13 +3914,13 @@ input:focus, select:focus {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 14px rgba(16,185,129,0.55);
+  background: var(--teal);
+  box-shadow: 0 0 14px var(--teal-d);
 }
 
 .app-loader-orbit span:nth-child(1) { top: 4px; left: 56px; }
-.app-loader-orbit span:nth-child(2) { right: 9px; bottom: 25px; background: #0cc0df; }
-.app-loader-orbit span:nth-child(3) { left: 10px; bottom: 24px; background: #f59e0b; }
+.app-loader-orbit span:nth-child(2) { right: 9px; bottom: 25px; background: var(--violet); box-shadow: 0 0 14px var(--violet-d); }
+.app-loader-orbit span:nth-child(3) { left: 10px; bottom: 24px; background: var(--amber); box-shadow: 0 0 14px var(--amber-d); }
 
 .app-loader-card h1 {
   position: relative;
@@ -3944,6 +3929,7 @@ input:focus, select:focus {
   color: var(--text-primary);
   font-size: 22px;
   line-height: 1.1;
+  font-family: inherit;
 }
 
 .app-loader-card p {
@@ -3954,6 +3940,7 @@ input:focus, select:focus {
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.35;
+  font-family: inherit;
   animation: appLoaderText .28s ease both;
 }
 
@@ -3969,7 +3956,7 @@ input:focus, select:focus {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
+  background: var(--teal);
   animation: appLoaderDot 1s ease-in-out infinite;
 }
 
