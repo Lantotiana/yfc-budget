@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { collection, onSnapshot, orderBy, query, limit } from 'firebase/firestore'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { CalendarCheck, CheckSquare, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,26 +7,26 @@ import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import Login from './components/Login'
-import Home from './pages/Home'
-import Budget from './pages/Budget'
-import Membres from './pages/Membres'
-import Presences from './pages/Presences'
-import PresenceDetail from './pages/PresenceDetail'
-import Parametres from './pages/Parametres'
-import Evenements from './pages/Evenements'
-import Dashboard from './pages/Dashboard'
-import Documents from './pages/Documents'
-import Notifications from './pages/Notifications'
-import Fampaherezana from './pages/Fampaherezana'
-import MessagesStaff from './pages/MessagesStaff'
-import Tasks from './pages/Tasks'
-import Admin from './components/Admin'
-import VerifyReceipt from './pages/VerifyReceipt'
 import AppLayout from './layouts/AppLayout'
 import useMediaQuery from './hooks/useMediaQuery'
-import { bindForegroundPushNotifications, syncPushNotifications } from './services/pushNotifications'
 import './App.css'
+
+const Login = lazy(() => import('./components/Login'))
+const Home = lazy(() => import('./pages/Home'))
+const Budget = lazy(() => import('./pages/Budget'))
+const Membres = lazy(() => import('./pages/Membres'))
+const Presences = lazy(() => import('./pages/Presences'))
+const PresenceDetail = lazy(() => import('./pages/PresenceDetail'))
+const Parametres = lazy(() => import('./pages/Parametres'))
+const Evenements = lazy(() => import('./pages/Evenements'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Documents = lazy(() => import('./pages/Documents'))
+const Notifications = lazy(() => import('./pages/Notifications'))
+const Fampaherezana = lazy(() => import('./pages/Fampaherezana'))
+const MessagesStaff = lazy(() => import('./pages/MessagesStaff'))
+const Tasks = lazy(() => import('./pages/Tasks'))
+const Admin = lazy(() => import('./components/Admin'))
+const VerifyReceipt = lazy(() => import('./pages/VerifyReceipt'))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -223,6 +222,45 @@ function AppPage({ user, userData, children }) {
   )
 }
 
+function AppShellSkeleton() {
+  return (
+    <div className="app-shell-skeleton" aria-label="Chargement de l'application">
+      <header className="app-shell-skeleton-topbar">
+        <div className="app-shell-skeleton-avatar" />
+        <div className="app-shell-skeleton-title">
+          <span />
+          <strong />
+        </div>
+        <div className="app-shell-skeleton-icon" />
+        <div className="app-shell-skeleton-icon" />
+      </header>
+      <main className="app-shell-skeleton-main">
+        <section className="app-shell-skeleton-hero" />
+        <div className="app-shell-skeleton-grid">
+          {Array.from({ length: 6 }).map((_, i) => <span key={i} />)}
+        </div>
+      </main>
+      <nav className="app-shell-skeleton-nav" aria-hidden="true">
+        {Array.from({ length: 5 }).map((_, i) => <span key={i} />)}
+      </nav>
+    </div>
+  )
+}
+
+function PageSkeleton() {
+  return (
+    <div className="page-skeleton" aria-label="Chargement de la page">
+      <div className="page-skeleton-header">
+        <span />
+        <strong />
+      </div>
+      <div className="page-skeleton-cards">
+        {Array.from({ length: 5 }).map((_, i) => <span key={i} />)}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
@@ -263,110 +301,111 @@ export default function App() {
 
   useEffect(() => {
     if (!user?.uid) return
-    syncPushNotifications().catch(() => {})
-    bindForegroundPushNotifications(() => {}).catch(() => {})
+    // Les notifications push chargent Firebase Messaging/Functions: on les sort du bundle critique.
+    import('./services/pushNotifications').then(({ bindForegroundPushNotifications, syncPushNotifications }) => {
+      syncPushNotifications().catch(() => {})
+      bindForegroundPushNotifications(() => {}).catch(() => {})
+    }).catch(() => {})
   }, [user?.uid])
 
-  if (authLoading) return (
-    <div className="app-loader-screen" aria-label="Chargement">
-      <div className="app-loader-icon" />
-    </div>
-  )
+  if (authLoading) return <AppShellSkeleton />
 
   return (
     <BrowserRouter>
       <ScrollToTop />
       <BackNavigationGuard user={user} />
       <BottomNav user={user} />
-      <Routes>
-        <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-        <Route path="/" element={
-          <AppPage user={user} userData={userData}>
-            <Home user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/budget" element={
-          <AppPage user={user} userData={userData}>
-            <Budget user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/budget/:detailType" element={
-          <AppPage user={user} userData={userData}>
-            <Budget user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/membres" element={
-          <AppPage user={user} userData={userData}>
-            <Membres user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/presences" element={
-          <AppPage user={user} userData={userData}>
-            <Presences user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/presences/:id" element={
-          <AppPage user={user} userData={userData}>
-            <PresenceDetail user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/dashboard" element={
-          <AppPage user={user} userData={userData}>
-            <Dashboard user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/evenements" element={
-          <AppPage user={user} userData={userData}>
-            <Evenements user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/parametres" element={
-          <AppPage user={user} userData={userData}>
-            <Parametres
-              user={user}
-              userData={userData}
-              setUserData={setUserData}
-            />
-          </AppPage>
-        } />
-        <Route path="/documents" element={
-          <AppPage user={user} userData={userData}>
-            <Documents user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/tasks" element={
-          <AppPage user={user} userData={userData}>
-            <Tasks user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/notifications" element={
-          <AppPage user={user} userData={userData}>
-            <Notifications user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/messages" element={
-          <AppPage user={user} userData={userData}>
-            <MessagesStaff user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/admin" element={
-          <AppPage user={user} userData={userData}>
-            <Admin user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/assistant" element={
-          <AppPage user={user} userData={userData}>
-            <Fampaherezana user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="/fampaherezana" element={
-          <AppPage user={user} userData={userData}>
-            <Fampaherezana user={user} userData={userData} />
-          </AppPage>
-        } />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
+          <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
+          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/" element={
+            <AppPage user={user} userData={userData}>
+              <Home user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/budget" element={
+            <AppPage user={user} userData={userData}>
+              <Budget user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/budget/:detailType" element={
+            <AppPage user={user} userData={userData}>
+              <Budget user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/membres" element={
+            <AppPage user={user} userData={userData}>
+              <Membres user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/presences" element={
+            <AppPage user={user} userData={userData}>
+              <Presences user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/presences/:id" element={
+            <AppPage user={user} userData={userData}>
+              <PresenceDetail user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/dashboard" element={
+            <AppPage user={user} userData={userData}>
+              <Dashboard user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/evenements" element={
+            <AppPage user={user} userData={userData}>
+              <Evenements user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/parametres" element={
+            <AppPage user={user} userData={userData}>
+              <Parametres
+                user={user}
+                userData={userData}
+                setUserData={setUserData}
+              />
+            </AppPage>
+          } />
+          <Route path="/documents" element={
+            <AppPage user={user} userData={userData}>
+              <Documents user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/tasks" element={
+            <AppPage user={user} userData={userData}>
+              <Tasks user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/notifications" element={
+            <AppPage user={user} userData={userData}>
+              <Notifications user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/messages" element={
+            <AppPage user={user} userData={userData}>
+              <MessagesStaff user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/admin" element={
+            <AppPage user={user} userData={userData}>
+              <Admin user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/assistant" element={
+            <AppPage user={user} userData={userData}>
+              <Fampaherezana user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="/fampaherezana" element={
+            <AppPage user={user} userData={userData}>
+              <Fampaherezana user={user} userData={userData} />
+            </AppPage>
+          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
       <SpeedInsights />
     </BrowserRouter>
   )

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
-import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
-import { sameEmail } from '../utils/access'
 import DesktopSidebar from '../components/desktop/DesktopSidebar'
 import DesktopTopbar from '../components/desktop/DesktopTopbar'
 import DesktopRightPanel from '../components/desktop/DesktopRightPanel'
 import { DesktopToolbarContext } from '../context/DesktopToolbarContext'
 
 export default function DesktopLayout({ user, userData, children }) {
-  const [membres, setMembres] = useState([])
+  const [currentMember, setCurrentMember] = useState(null)
   const [toolbar, setToolbar] = useState({ actions: null })
+  const [searchHydrated, setSearchHydrated] = useState(false)
   const [searchData, setSearchData] = useState({
     membres: [],
     transactions: [],
@@ -20,10 +20,19 @@ export default function DesktopLayout({ user, userData, children }) {
   })
 
   useEffect(() => {
+    if (!user?.email) return
+    const q = query(collection(db, 'membres'), where('email', '==', user.email), limit(1))
+    return onSnapshot(q, snap => {
+      setCurrentMember(snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() })
+    }, () => setCurrentMember(null))
+  }, [user?.email])
+
+  useEffect(() => {
+    if (!searchHydrated) return
+    // La recherche desktop traverse plusieurs collections; on ne l'hydrate qu'à la première interaction.
     const unsubs = [
-      onSnapshot(collection(db, 'membres'), snap => {
+      onSnapshot(query(collection(db, 'membres'), orderBy('nom'), limit(80)), snap => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        setMembres(data)
         setSearchData(prev => ({ ...prev, membres: data }))
       }),
       onSnapshot(query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(80)), snap => {
@@ -46,7 +55,7 @@ export default function DesktopLayout({ user, userData, children }) {
     return () => {
       unsubs.forEach(unsub => unsub())
     }
-  }, [])
+  }, [searchHydrated])
 
   useEffect(() => {
     function onError(event) {
@@ -78,7 +87,10 @@ export default function DesktopLayout({ user, userData, children }) {
     return () => observer.disconnect()
   }, [])
 
-  const currentMember = useMemo(() => membres.find(m => sameEmail(m.email, user?.email)), [membres, user?.email])
+  const sidebarMember = useMemo(() => currentMember || {
+    email: user?.email,
+    staffRole: userData?.staffRole || userData?.role || '',
+  }, [currentMember, user?.email, userData?.role, userData?.staffRole])
 
   useEffect(() => {
     document.body.setAttribute('data-desktop-layout', 'true')
@@ -88,9 +100,16 @@ export default function DesktopLayout({ user, userData, children }) {
   return (
     <DesktopToolbarContext.Provider value={{ toolbar, setToolbar }}>
       <div className="desktop-shell">
-        <DesktopSidebar user={user} currentMember={currentMember} />
+        <DesktopSidebar user={user} currentMember={sidebarMember} />
         <div className="desktop-main">
-          <DesktopTopbar user={user} userData={userData} currentMember={currentMember} searchData={searchData} toolbar={toolbar} />
+          <DesktopTopbar
+            user={user}
+            userData={userData}
+            currentMember={sidebarMember}
+            searchData={searchData}
+            toolbar={toolbar}
+            onSearchIntent={() => setSearchHydrated(true)}
+          />
           <div className="desktop-workspace">
             <main className="desktop-content">
               {children}

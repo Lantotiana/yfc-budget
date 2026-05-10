@@ -1,5 +1,5 @@
 import { httpsCallable } from 'firebase/functions'
-import { cloudFunctions } from '../firebase'
+import { cloudFunctions } from '../firebaseFunctions'
 
 const CACHE_PREFIX = 'yfc_budget_summary_'
 

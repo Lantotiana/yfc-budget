@@ -54,7 +54,7 @@ function dateLabel(value) {
   }
 }
 
-export default function DesktopTopbar({ user, userData, currentMember, searchData, toolbar }) {
+export default function DesktopTopbar({ user, userData, currentMember, searchData, toolbar, onSearchIntent }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [search, setSearch] = useState('')
@@ -167,6 +167,11 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
     if (e.key === 'Escape') setSearch('')
   }
 
+  function updateSearch(value) {
+    if (value.trim()) onSearchIntent?.()
+    setSearch(value)
+  }
+
   return (
     <header className="desktop-topbar">
       <div className="desktop-topbar-primary">
@@ -181,7 +186,8 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
               type="search"
               placeholder="Rechercher membre, budget, présence, document..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onFocus={() => onSearchIntent?.()}
+              onChange={e => updateSearch(e.target.value)}
               onKeyDown={onSearchKeyDown}
             />
           </div>
@@ -221,7 +227,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
         <div className="desktop-user-chip">
           <span>
             {userData?.photoURL || user?.photoURL ? (
-              <img src={userData?.photoURL || user?.photoURL} alt="" />
+              <img src={userData?.photoURL || user?.photoURL} alt="" width="32" height="32" decoding="async" />
             ) : (
               initials || 'YF'
             )}

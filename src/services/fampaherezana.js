@@ -1,5 +1,5 @@
 import { httpsCallable } from 'firebase/functions'
-import { cloudFunctions } from '../firebase'
+import { cloudFunctions } from '../firebaseFunctions'
 
 function parseAssistantAction(text) {
   const raw = String(text || '').trim()

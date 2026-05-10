@@ -96,6 +96,7 @@ export default function Dashboard({ user }) {
     let loaded = 0
     const done = () => { if (++loaded === 4) setLoading(false) }
 
+    // Le Dashboard est lazy-loadé: ses totaux restent exacts sans peser sur le bundle initial.
     const u1 = onSnapshot(query(collection(db, 'transactions'), orderBy('date', 'desc')), snap => {
       setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       done()
