@@ -222,10 +222,20 @@ function AppPage({ user, userData, children }) {
   )
 }
 
+const LOADER_MESSAGES = [
+  'On aligne les chaises imaginaires...',
+  'On recompte les ariary avec sérieux...',
+  'On réveille le tableau de bord...',
+  'On vérifie les badges staff...',
+  'On prépare les bonnes nouvelles...',
+  'On range les fichiers YFC...',
+]
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [loaderMessageIndex, setLoaderMessageIndex] = useState(0)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
@@ -266,9 +276,33 @@ export default function App() {
     bindForegroundPushNotifications(() => {}).catch(() => {})
   }, [user?.uid])
 
+  useEffect(() => {
+    if (!authLoading) return
+    const id = setInterval(() => {
+      setLoaderMessageIndex(i => (i + 1) % LOADER_MESSAGES.length)
+    }, 1700)
+    return () => clearInterval(id)
+  }, [authLoading])
+
   if (authLoading) return (
     <div className="app-loader-screen" aria-label="Chargement">
-      <div className="app-loader-icon" />
+      <div className="app-loader-card">
+        <div className="app-loader-brand">
+          <span>YFC</span>
+        </div>
+        <div className="app-loader-orbit" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <h1>Young For Christ</h1>
+        <p key={loaderMessageIndex}>{LOADER_MESSAGES[loaderMessageIndex]}</p>
+        <div className="app-loader-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
     </div>
   )
 
