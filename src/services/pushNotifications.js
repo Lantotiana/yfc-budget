@@ -1,7 +1,6 @@
 import { deleteToken, getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging'
 import { httpsCallable } from 'firebase/functions'
-import { app } from '../firebase'
-import { cloudFunctions } from '../firebaseFunctions'
+import { app, cloudFunctions } from '../firebase'
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY
 

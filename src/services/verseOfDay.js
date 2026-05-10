@@ -1,5 +1,5 @@
 import { httpsCallable } from 'firebase/functions'
-import { cloudFunctions } from '../firebaseFunctions'
+import { cloudFunctions } from '../firebase'
 
 const CACHE_PREFIX = 'yfc_verse_'
 

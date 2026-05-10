@@ -5,6 +5,7 @@ import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestor
 import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
+import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
 import { countUnseenNotifications, getNotificationSeenAt } from '../utils/notificationUtils'
 import { useTranslation } from 'react-i18next'
 
@@ -98,10 +99,7 @@ export default function Home({ user, userData }) {
   useEffect(() => {
     setFallbackOffset(0)
     // Le verset IA utilise Cloud Functions: import différé pour ne pas bloquer le premier rendu Home.
-    import('../services/verseOfDay')
-      .then(({ getVerseOfDay }) => getVerseOfDay())
-      .then(v => { if (v) setAiVerse(v) })
-      .catch(() => {})
+    getVerseOfDay().then(v => { if (v) setAiVerse(v) })
   }, [dayKey])
 
   useEffect(() => {
@@ -178,7 +176,6 @@ export default function Home({ user, userData }) {
     e.stopPropagation()
     if (generatingVerse) return
     setGeneratingVerse(true)
-    const { generateNewVerse } = await import('../services/verseOfDay')
     const verse = await generateNewVerse()
     if (verse) setAiVerse(verse)
     else {
@@ -228,7 +225,7 @@ export default function Home({ user, userData }) {
             }}
           >
             {userData?.photoURL
-              ? <img src={userData.photoURL} alt="avatar" width="52" height="52" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <img src={userData.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : initials
             }
           </div>
