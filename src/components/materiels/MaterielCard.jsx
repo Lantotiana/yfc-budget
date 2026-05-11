@@ -1,7 +1,7 @@
 import { AlertTriangle, Box, Layers, MapPin, Package2, UserRound } from 'lucide-react'
 import { getDueReturnInfo, getEtatMeta, getStatutMeta, getTypeMaterielLabel } from './materielHelpers'
 
-export default function MaterielCard({ materiel, C, onOpen }) {
+export default function MaterielCard({ materiel, C, onOpen, reservedForEvent }) {
   const effectiveStatut = materiel.statut || 'disponible'
   const statut = getStatutMeta(effectiveStatut, C)
   const etat = getEtatMeta(materiel.etat, C)
@@ -53,6 +53,11 @@ export default function MaterielCard({ materiel, C, onOpen }) {
             {due && (
               <span style={{ padding: '5px 9px', borderRadius: 999, background: due.bg, color: due.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>
                 {due.label}
+              </span>
+            )}
+            {reservedForEvent && effectiveStatut !== 'reserve_evenement' && (
+              <span style={{ padding: '5px 9px', borderRadius: 999, background: C.amberD, color: C.amber, fontSize: 'var(--font-xs)', fontWeight: 700 }}>
+                Réservé · {reservedForEvent.nom}
               </span>
             )}
           </div>

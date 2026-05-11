@@ -488,8 +488,26 @@ export default function MaterielDetailModal({
             )}
 
             {nextReservation && (
-              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 'var(--font-xs)', color: '#92400e', lineHeight: 1.5 }}>
-                ⚠ Réservé pour <strong>{nextReservation.nom}</strong> du {nextReservation.dateDebut}{nextReservation.dateFin && nextReservation.dateFin !== nextReservation.dateDebut ? ` au ${nextReservation.dateFin}` : ''}. Vérifier la disponibilité avant emprunt.
+              <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 12, background: 'rgba(245,158,11,0.12)', border: '1.5px solid rgba(245,158,11,0.4)', lineHeight: 1.55 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+                  <div>
+                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: '#92400e' }}>
+                      Ce matériel est réservé pour un événement
+                    </div>
+                    <div style={{ fontSize: 'var(--font-xs)', color: '#b45309', marginTop: 3 }}>
+                      <strong>{nextReservation.nom}</strong>
+                      {' · '}
+                      {new Date(nextReservation.dateDebut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      {nextReservation.dateFin && nextReservation.dateFin !== nextReservation.dateDebut
+                        ? ` → ${new Date(nextReservation.dateFin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
+                        : ''}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-xs)', color: '#92400e', marginTop: 4 }}>
+                      Assurez-vous que l'emprunt se termine avant cet événement.
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -501,8 +519,12 @@ export default function MaterielDetailModal({
                 <button className="btn-secondary" onClick={() => setKitModal('retour')}>Retour kit</button>
               )}
               {canEdit && isDurable && effectiveStatut === 'disponible' && (
-                <button className="btn-secondary" onClick={() => setAction('emprunt')} style={nextReservation ? { borderColor: '#f59e0b', color: '#b45309' } : {}}>
-                  Emprunter{nextReservation ? ' ⚠' : ''}
+                <button
+                  className="btn-secondary"
+                  onClick={() => setAction('emprunt')}
+                  style={nextReservation ? { borderColor: '#f59e0b', color: '#b45309', background: 'rgba(245,158,11,0.08)' } : {}}
+                >
+                  {nextReservation ? '⚠ Emprunter quand même' : 'Emprunter'}
                 </button>
               )}
               {canEdit && isDurable && effectiveStatut === 'disponible' && (

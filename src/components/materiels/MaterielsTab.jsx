@@ -52,6 +52,28 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
     })
   }, [])
 
+  const [evenements, setEvenements] = useState([])
+  useEffect(() => {
+    return onSnapshot(collection(db, 'evenements_agenda'), snap => {
+      setEvenements(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+  }, [])
+
+  // materielId → prochain événement qui le réserve
+  const eventReservationMap = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const map = {}
+    const upcoming = evenements
+      .filter(e => (e.dateFin || e.dateDebut) >= today)
+      .sort((a, b) => (a.dateDebut < b.dateDebut ? -1 : 1))
+    upcoming.forEach(e => {
+      ;(e.materielsReserves || []).forEach(m => {
+        if (!map[m.id]) map[m.id] = { nom: e.nom, dateDebut: e.dateDebut, dateFin: e.dateFin }
+      })
+    })
+    return map
+  }, [evenements])
+
   const currentMember = useMemo(() => {
     const email = (user?.email || '').trim().toLowerCase()
     return members.find(member => String(member.email || '').trim().toLowerCase() === email) || null
@@ -318,7 +340,7 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
             {materiels.length === 0 ? 'Aucun matériel enregistré pour le moment.' : 'Ce matériel est introuvable.'}
           </div>
         ) : visibleMateriels.map(item => (
-          <MaterielCard key={item.id} materiel={item} C={C} onOpen={() => setSelected(item)} />
+          <MaterielCard key={item.id} materiel={item} C={C} onOpen={() => setSelected(item)} reservedForEvent={eventReservationMap[item.id] || null} />
         ))}
         {!canEdit && (
           <div style={{ gridColumn: '1 / -1', marginTop: 8, background: C.surf2, borderRadius: 14, padding: 14, fontSize: 'var(--font-xs)', color: C.t2 }}>
