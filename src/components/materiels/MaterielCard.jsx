@@ -1,13 +1,24 @@
-import { AlertTriangle, Box, MapPin, Package2, UserRound } from 'lucide-react'
-import { getDueReturnInfo, getEtatMeta, getStatutMeta } from './materielHelpers'
+import { AlertTriangle, Box, Layers, MapPin, Package2, UserRound } from 'lucide-react'
+import { getDueReturnInfo, getEtatMeta, getStatutMeta, getTypeMaterielLabel } from './materielHelpers'
 
 export default function MaterielCard({ materiel, C, onOpen }) {
-  const statut = getStatutMeta(materiel.statut, C)
+  const effectiveStatut = materiel.statut || 'disponible'
+  const statut = getStatutMeta(effectiveStatut, C)
   const etat = getEtatMeta(materiel.etat, C)
-  const due = getDueReturnInfo(materiel.currentDueAt, materiel.statut, C)
+  const due = getDueReturnInfo(materiel.currentDueAt, effectiveStatut, C)
   const responsables = Array.isArray(materiel.responsablesNoms) && materiel.responsablesNoms.length > 0
     ? materiel.responsablesNoms.join(', ')
     : materiel.responsableNom
+
+  const isKit = materiel.typeMatériel === 'kit'
+  const isConsommable = materiel.typeMatériel === 'consommable_suivi' || materiel.type === 'consommable'
+  const kitCount = isKit ? (materiel.kitElements || []).length : 0
+
+  function getTypeDisplay() {
+    if (isConsommable) return `${materiel.quantite || 0} ${materiel.unite || 'pièce'}`
+    if (isKit) return `Kit · ${kitCount} élément${kitCount !== 1 ? 's' : ''}`
+    return getTypeMaterielLabel(materiel.typeMatériel) || 'Matériel durable'
+  }
 
   return (
     <button
@@ -20,13 +31,22 @@ export default function MaterielCard({ materiel, C, onOpen }) {
         <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, background: materiel.photoUrl ? 'transparent' : C.surf2, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {materiel.photoUrl ? (
             <img src={materiel.photoUrl} alt={materiel.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : isKit ? (
+            <Layers size={22} color={C.violet} />
           ) : (
             <Package2 size={22} color={C.teal} />
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 'var(--font-sm)', fontWeight: 800, color: C.t1, lineHeight: 1.3 }}>{materiel.nom}</div>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 3 }}>{materiel.categorie || 'Autre'}</div>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 800, color: C.t1, lineHeight: 1.3, flex: 1 }}>{materiel.nom}</div>
+            {isKit && (
+              <span style={{ flexShrink: 0, padding: '2px 8px', borderRadius: 999, background: C.violetD, color: C.violet, fontSize: 10, fontWeight: 800, marginTop: 1 }}>Kit</span>
+            )}
+          </div>
+          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 3 }}>
+            {materiel.section ? `${materiel.section} · ` : ''}{materiel.categorie || 'Autre'}{materiel.marque ? ` · ${materiel.marque}` : ''}
+          </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
             <span style={{ padding: '5px 9px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statut.label}</span>
             <span style={{ padding: '5px 9px', borderRadius: 999, background: etat.bg, color: etat.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{etat.label}</span>
@@ -41,7 +61,7 @@ export default function MaterielCard({ materiel, C, onOpen }) {
       <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.t2 }}>
           <Box size={13} />
-          <span>{materiel.type === 'consommable' ? `${materiel.quantite || 0} ${materiel.unite || 'pièce'}` : materiel.type === 'durable' ? 'Matériel durable' : 'Matériel'}</span>
+          <span>{getTypeDisplay()}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.t2 }}>
           <MapPin size={13} />
@@ -51,10 +71,16 @@ export default function MaterielCard({ materiel, C, onOpen }) {
           <UserRound size={13} />
           <span>{responsables || 'Aucun responsable'}</span>
         </div>
-        {materiel.type === 'consommable' && materiel.statut === 'stock_faible' && (
+        {isConsommable && effectiveStatut === 'stock_faible' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.coral }}>
             <AlertTriangle size={13} />
             <span>Stock faible</span>
+          </div>
+        )}
+        {isKit && effectiveStatut === 'kit_incomplet' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 'var(--font-xs)', color: C.coral }}>
+            <AlertTriangle size={13} />
+            <span>Kit incomplet</span>
           </div>
         )}
       </div>

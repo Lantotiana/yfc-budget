@@ -1,28 +1,42 @@
 export const MATERIEL_CATEGORIES = ['Sonorisation', 'Média', 'Informatique', 'Mobilier', 'Décoration', 'Événementiel', 'Fournitures', 'Vêtements', 'Autre']
-export const MATERIEL_UNITES = ['pièce', 'lot', 'paquet', 'boîte', 'unité']
+export const MATERIEL_UNITES = ['pièce', 'lot', 'paquet', 'boîte', 'unité', 'rouleau', 'mètre']
+
+export const TYPE_MATERIEL_OPTIONS = [
+  { value: 'kit', label: 'Kit' },
+  { value: 'principal', label: 'Principal' },
+  { value: 'accessoire', label: 'Accessoire' },
+  { value: 'piece', label: 'Pièce / Visserie' },
+  { value: 'consommable_suivi', label: 'Consommable suivi' },
+]
+
+export function getTypeMaterielLabel(t) {
+  return TYPE_MATERIEL_OPTIONS.find(o => o.value === t)?.label || 'Principal'
+}
 
 export function getStatutMeta(statut, C) {
   const map = {
-    disponible: { label: 'Disponible', bg: 'rgba(37, 99, 235, 0.12)', fg: '#2563eb' },
-    emprunte: { label: 'Emprunté', bg: C.amberD, fg: C.amber },
-    reserve: { label: 'Réservé', bg: C.violetD, fg: C.violet },
-    reserve_emprunt: { label: 'Réservé · Emprunt', bg: C.amberD, fg: C.amber },
-    reserve_evenement: { label: 'Réservé · Événement', bg: C.violetD, fg: C.violet },
-    en_reparation: { label: 'En réparation', bg: C.violetD, fg: C.violet },
-    perdu: { label: 'Perdu', bg: C.coralD, fg: C.coral },
-    stock_faible: { label: 'Stock faible', bg: C.coralD, fg: C.coral },
-    archive: { label: 'Archivé', bg: C.surf2, fg: C.t2 },
+    disponible:        { label: 'Disponible',            bg: 'rgba(37,99,235,0.12)',  fg: '#2563eb' },
+    emprunte:          { label: 'Emprunté',               bg: C.amberD,               fg: C.amber   },
+    sorti:             { label: 'Sorti',                  bg: C.amberD,               fg: C.amber   },
+    reserve:           { label: 'Réservé',                bg: C.violetD,              fg: C.violet  },
+    reserve_emprunt:   { label: 'Réservé · Emprunt',      bg: C.amberD,               fg: C.amber   },
+    reserve_evenement: { label: 'Réservé · Événement',    bg: C.violetD,              fg: C.violet  },
+    en_reparation:     { label: 'En réparation',          bg: C.violetD,              fg: C.violet  },
+    perdu:             { label: 'Perdu',                  bg: C.coralD,               fg: C.coral   },
+    stock_faible:      { label: 'Stock faible',           bg: C.coralD,               fg: C.coral   },
+    kit_incomplet:     { label: 'Kit incomplet',          bg: C.coralD,               fg: C.coral   },
+    archive:           { label: 'Archivé',                bg: C.surf2,                fg: C.t2      },
   }
   return map[statut] || { label: statut || 'Inconnu', bg: C.surf2, fg: C.t2 }
 }
 
 export function getEtatMeta(etat, C) {
   const map = {
-    bon: { label: 'Bon état', bg: C.tealD, fg: C.teal },
-    a_verifier: { label: 'À vérifier', bg: C.amberD, fg: C.amber },
-    endommage: { label: 'Endommagé', bg: C.coralD, fg: C.coral },
-    perdu: { label: 'Perdu', bg: C.surf2, fg: C.t2 },
-    en_reparation: { label: 'En réparation', bg: C.violetD, fg: C.violet },
+    bon:          { label: 'Bon état',      bg: C.tealD,  fg: C.teal   },
+    a_verifier:   { label: 'À vérifier',    bg: C.amberD, fg: C.amber  },
+    endommage:    { label: 'Endommagé',     bg: C.coralD, fg: C.coral  },
+    perdu:        { label: 'Perdu',         bg: C.surf2,  fg: C.t2     },
+    en_reparation:{ label: 'En réparation', bg: C.violetD,fg: C.violet },
   }
   return map[etat] || { label: etat || 'Inconnu', bg: C.surf2, fg: C.t2 }
 }
@@ -36,7 +50,7 @@ export function computeStockStatus(materiel) {
 }
 
 export function getDueReturnInfo(dueAt, statut, C) {
-  if (statut !== 'emprunte' || !dueAt) return null
+  if (!['emprunte', 'sorti'].includes(statut) || !dueAt) return null
   const due = new Date(dueAt)
   const today = new Date()
   const start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
@@ -49,20 +63,23 @@ export function getDueReturnInfo(dueAt, statut, C) {
 
 export function formatMovementLabel(type) {
   const map = {
-    creation: 'Création',
-    modification: 'Modification',
-    sortie: 'Sortie',
-    emprunt: 'Emprunt',
-    retour: 'Retour',
-    reservation: 'Réservation',
-    utilisation: 'Utilisation événement',
-    annulation: 'Annulation',
-    liberation: 'Libération',
-    maintenance: 'Maintenance',
-    perte: 'Perte',
-    stock_ajout: 'Ajout de stock',
+    creation:      'Création',
+    modification:  'Modification',
+    sortie:        'Sortie',
+    sortie_kit:    'Sortie kit',
+    emprunt:       'Emprunt',
+    retour:        'Retour',
+    retour_kit:    'Retour kit',
+    reservation:   'Réservation',
+    utilisation:   'Utilisation événement',
+    annulation:    'Annulation',
+    liberation:    'Libération',
+    maintenance:   'Maintenance',
+    perte:         'Perte',
+    stock_ajout:   'Ajout de stock',
     stock_retrait: 'Retrait de stock',
-    archivage: 'Archivage',
+    archivage:     'Archivage',
+    verification:  'Vérification',
   }
   return map[type] || type
 }

@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronDown, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import Portal from '../Portal'
 import { storage } from '../../firebase'
-import { MATERIEL_CATEGORIES, MATERIEL_UNITES } from './materielHelpers'
+import { MATERIEL_CATEGORIES, MATERIEL_UNITES, TYPE_MATERIEL_OPTIONS } from './materielHelpers'
 
 const EMPTY_FORM = {
   nom: '',
+  section: '',
   categorie: 'Sonorisation',
-  type: 'durable',
+  typeMatériel: 'principal',
   quantite: 1,
-  unite: 'piece',
+  unite: 'pièce',
   etat: 'bon',
   statut: 'disponible',
   lieuActuel: '',
@@ -21,11 +22,20 @@ const EMPTY_FORM = {
   photoUrl: '',
   valeurEstimee: '',
   seuilAlerte: '',
+  marque: '',
+  couleur: '',
+  dimensions: '',
+  derniereVerification: '',
+  kitElements: [],
   notes: '',
 }
 
 const MAX_IMAGE_HEIGHT = 500
 const WEBP_QUALITY = 0.82
+
+function createKitElement() {
+  return { id: `el_${Date.now()}_${Math.random().toString(16).slice(2)}`, nom: '', quantitePrevue: 1, unite: 'pièce' }
+}
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -83,7 +93,7 @@ async function uploadToFirebaseStorage(file) {
   return getDownloadURL(snapshot.ref)
 }
 
-export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, members, initialData, C, saving }) {
+export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, members, sections, initialData, C, saving }) {
   const fileRef = useRef(null)
   const searchRef = useRef(null)
   const responsibleRef = useRef(null)
@@ -94,6 +104,9 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
   const [error, setError] = useState('')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [addingSection, setAddingSection] = useState(false)
+  const [newSectionName, setNewSectionName] = useState('')
+  const [localSections, setLocalSections] = useState([])
 
   useEffect(() => {
     if (!open) return
@@ -104,18 +117,31 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
       ? initialData.responsablesNoms
       : (initialData?.responsableNom ? [initialData.responsableNom] : [])
 
+    const derivedTypeMatériel = initialData?.typeMatériel
+      || (initialData?.type === 'consommable' ? 'consommable_suivi' : initialData ? 'principal' : 'principal')
+
     setForm(initialData ? {
       ...EMPTY_FORM,
       ...initialData,
+      section: initialData.section ?? '',
+      typeMatériel: derivedTypeMatériel,
       responsablesIds: initialResponsablesIds,
       responsablesNoms: initialResponsablesNoms,
       valeurEstimee: initialData.valeurEstimee ?? '',
       seuilAlerte: initialData.seuilAlerte ?? '',
+      marque: initialData.marque ?? '',
+      couleur: initialData.couleur ?? '',
+      dimensions: initialData.dimensions ?? '',
+      derniereVerification: initialData.derniereVerification ?? '',
+      kitElements: Array.isArray(initialData.kitElements) ? initialData.kitElements : [],
     } : EMPTY_FORM)
     setError('')
     setResponsibleSearch('')
     setResponsibleOpen(false)
     setUploadingPhoto(false)
+    setAddingSection(false)
+    setNewSectionName('')
+    setLocalSections([])
   }, [initialData, open])
 
   useEffect(() => {
@@ -181,6 +207,18 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
     }
   }
 
+  function addKitElement() {
+    setForm(prev => ({ ...prev, kitElements: [...(prev.kitElements || []), createKitElement()] }))
+  }
+
+  function updateKitElement(id, patch) {
+    setForm(prev => ({ ...prev, kitElements: (prev.kitElements || []).map(el => el.id === id ? { ...el, ...patch } : el) }))
+  }
+
+  function removeKitElement(id) {
+    setForm(prev => ({ ...prev, kitElements: (prev.kitElements || []).filter(el => el.id !== id) }))
+  }
+
   async function handlePhoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -203,11 +241,17 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.nom.trim()) return setError('Le nom est obligatoire.')
-    if (!form.categorie.trim()) return setError('La categorie est obligatoire.')
-    if (Number(form.quantite) < 0) return setError('La quantite doit etre positive.')
+    if (!form.categorie.trim()) return setError('La catégorie est obligatoire.')
+    if (Number(form.quantite) < 0) return setError('La quantité doit être positive.')
+    if (form.typeMatériel === 'kit' && (form.kitElements || []).some(el => !el.nom.trim())) {
+      return setError('Tous les éléments du kit doivent avoir un nom.')
+    }
+
+    const derivedType = form.typeMatériel === 'consommable_suivi' ? 'consommable' : 'durable'
 
     const payload = {
       ...form,
+      type: derivedType,
       nom: form.nom.trim(),
       categorie: form.categorie.trim(),
       quantite: Number(form.quantite || 0),
@@ -215,8 +259,14 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
       seuilAlerte: form.seuilAlerte === '' ? null : Number(form.seuilAlerte),
       notes: form.notes.trim(),
       lieuActuel: form.lieuActuel.trim(),
+      marque: form.marque.trim(),
+      couleur: form.couleur.trim(),
+      dimensions: form.dimensions.trim(),
       responsableId: form.responsablesIds[0] || '',
       responsableNom: form.responsablesNoms.join(', '),
+      kitElements: form.typeMatériel === 'kit'
+        ? (form.kitElements || []).filter(el => el.nom.trim()).map(el => ({ ...el, nom: el.nom.trim(), quantitePrevue: Number(el.quantitePrevue || 1) }))
+        : [],
     }
     setError('')
     await onSubmit(payload)
@@ -231,6 +281,9 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
       setDeleting(false)
     }
   }
+
+  const isKit = form.typeMatériel === 'kit'
+  const isConsommable = form.typeMatériel === 'consommable_suivi'
 
   return (
     <>
@@ -260,7 +313,7 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
         <div className="bottom-sheet materiel-form-sheet" onClick={e => e.stopPropagation()}>
           <div className="bottom-sheet-handle" />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div className="dialog-title" style={{ margin: 0 }}>{initialData ? 'Modifier le materiel' : 'Ajouter un materiel'}</div>
+            <div className="dialog-title" style={{ margin: 0 }}>{initialData ? 'Modifier le matériel' : 'Ajouter un matériel'}</div>
             {initialData && onDelete && (
               <button
                 type="button"
@@ -281,62 +334,159 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
               )}
 
               <label className="form-label">Nom *</label>
-              <input className="form-input" value={form.nom} onChange={e => updateField('nom', e.target.value)} />
+              <input className="form-input" value={form.nom} onChange={e => updateField('nom', e.target.value)} placeholder="Ex: Micro statique Shure SM58" />
+
+              <div>
+                <label className="form-label">Section</label>
+                {addingSection ? (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      className="form-input"
+                      style={{ flex: 1 }}
+                      value={newSectionName}
+                      onChange={e => setNewSectionName(e.target.value)}
+                      placeholder="Nom de la section…"
+                      autoFocus
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const name = newSectionName.trim()
+                          if (name) {
+                            if (!localSections.includes(name)) setLocalSections(prev => [...prev, name])
+                            updateField('section', name)
+                          }
+                          setAddingSection(false)
+                          setNewSectionName('')
+                        } else if (e.key === 'Escape') {
+                          setAddingSection(false)
+                          setNewSectionName('')
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = newSectionName.trim()
+                        if (name) {
+                          if (!localSections.includes(name)) setLocalSections(prev => [...prev, name])
+                          updateField('section', name)
+                        }
+                        setAddingSection(false)
+                        setNewSectionName('')
+                      }}
+                      style={{ flexShrink: 0, height: 42, padding: '0 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 'var(--font-sm)', fontFamily: 'inherit' }}
+                    >
+                      OK
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAddingSection(false); setNewSectionName('') }}
+                      style={{ flexShrink: 0, width: 42, height: 42, borderRadius: 12, border: `1px solid ${C.bord}`, background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.t2 }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <select
+                      className="form-input"
+                      style={{ flex: 1 }}
+                      value={form.section}
+                      onChange={e => updateField('section', e.target.value)}
+                    >
+                      <option value="">— Aucune section —</option>
+                      {[...new Set([...(sections || []), ...localSections])].sort().map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setAddingSection(true)}
+                      title="Ajouter une section"
+                      style={{ flexShrink: 0, width: 42, height: 42, borderRadius: 12, border: `1px solid ${C.bord}`, background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.teal }}
+                    >
+                      <Plus size={17} />
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="materiel-form-grid">
                 <div>
-                  <label className="form-label">Categorie *</label>
+                  <label className="form-label">Catégorie *</label>
                   <select className="form-input" value={form.categorie} onChange={e => updateField('categorie', e.target.value)}>
                     {MATERIEL_CATEGORIES.map(item => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="form-label">Type</label>
-                  <select className="form-input" value={form.type} onChange={e => updateField('type', e.target.value)}>
-                    <option value="durable">Durable</option>
-                    <option value="consommable">Consommable</option>
+                  <select className="form-input" value={form.typeMatériel} onChange={e => updateField('typeMatériel', e.target.value)}>
+                    {TYPE_MATERIEL_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                   </select>
                 </div>
               </div>
 
               <div className="materiel-form-grid">
                 <div>
-                  <label className="form-label">Quantite *</label>
-                  <input className="form-input" type="number" min="0" value={form.quantite} onChange={e => updateField('quantite', e.target.value)} />
+                  <label className="form-label">Marque</label>
+                  <input className="form-input" value={form.marque} onChange={e => updateField('marque', e.target.value)} placeholder="Shure, Yamaha…" />
                 </div>
                 <div>
-                  <label className="form-label">Unite</label>
-                  <select className="form-input" value={form.unite} onChange={e => updateField('unite', e.target.value)}>
-                    {MATERIEL_UNITES.map(item => <option key={item} value={item}>{item}</option>)}
-                  </select>
+                  <label className="form-label">Couleur</label>
+                  <input className="form-input" value={form.couleur} onChange={e => updateField('couleur', e.target.value)} placeholder="Noir, rouge…" />
                 </div>
               </div>
 
+              <div>
+                <label className="form-label">Dimensions / Taille</label>
+                <input className="form-input" value={form.dimensions} onChange={e => updateField('dimensions', e.target.value)} placeholder="Ex: 120×60×75 cm" />
+              </div>
+
+              {!isKit && (
+                <div className="materiel-form-grid">
+                  <div>
+                    <label className="form-label">Quantité *</label>
+                    <input className="form-input" type="number" min="0" value={form.quantite} onChange={e => updateField('quantite', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="form-label">Unité</label>
+                    <select className="form-input" value={form.unite} onChange={e => updateField('unite', e.target.value)}>
+                      {MATERIEL_UNITES.map(item => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div className="materiel-form-grid">
                 <div>
-                  <label className="form-label">Etat</label>
+                  <label className="form-label">État</label>
                   <select className="form-input" value={form.etat} onChange={e => updateField('etat', e.target.value)}>
-                    <option value="bon">Bon</option>
-                    <option value="a_verifier">A verifier</option>
-                    <option value="endommage">Endommage</option>
+                    <option value="bon">Bon état</option>
+                    <option value="a_verifier">À vérifier</option>
+                    <option value="endommage">Endommagé</option>
                     <option value="perdu">Perdu</option>
-                    <option value="en_reparation">En reparation</option>
+                    <option value="en_reparation">En réparation</option>
                   </select>
                 </div>
                 <div>
                   <label className="form-label">Statut</label>
                   <select className="form-input" value={form.statut} onChange={e => updateField('statut', e.target.value)}>
                     <option value="disponible">Disponible</option>
-                    <option value="reserve">Reserve</option>
-                    <option value="en_reparation">En reparation</option>
+                    <option value="reserve">Réservé</option>
+                    <option value="en_reparation">En réparation</option>
                     <option value="perdu">Perdu</option>
-                    {form.type === 'consommable' && <option value="stock_faible">Stock faible</option>}
+                    {isConsommable && <option value="stock_faible">Stock faible</option>}
                   </select>
                 </div>
               </div>
 
               <label className="form-label">Lieu actuel</label>
-              <input className="form-input" value={form.lieuActuel} onChange={e => updateField('lieuActuel', e.target.value)} />
+              <input className="form-input" value={form.lieuActuel} onChange={e => updateField('lieuActuel', e.target.value)} placeholder="Local YFC, Salle…" />
+
+              <div>
+                <label className="form-label">Dernière vérification</label>
+                <input className="form-input" type="date" value={form.derniereVerification} onChange={e => updateField('derniereVerification', e.target.value)} />
+              </div>
 
               <div>
                 <label className="form-label">Responsables</label>
@@ -352,7 +502,7 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
                       <span>
                         {selectedResponsibles.length === 0
                           ? 'Aucun responsable'
-                          : `${selectedResponsibles.length} responsable${selectedResponsibles.length > 1 ? 's' : ''} selectionne${selectedResponsibles.length > 1 ? 's' : ''}`}
+                          : `${selectedResponsibles.length} responsable${selectedResponsibles.length > 1 ? 's' : ''} sélectionné${selectedResponsibles.length > 1 ? 's' : ''}`}
                       </span>
                       <ChevronDown size={16} />
                     </button>
@@ -383,7 +533,7 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
                         </div>
                         <div className="task-assignee-options">
                           {filteredResponsibles.length === 0 ? (
-                            <div className="task-assignee-empty">Aucun membre trouve</div>
+                            <div className="task-assignee-empty">Aucun membre trouvé</div>
                           ) : filteredResponsibles.map(member => {
                             const selected = form.responsablesIds.includes(member.id)
                             return (
@@ -410,14 +560,75 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
 
               <div className="materiel-form-grid">
                 <div>
-                  <label className="form-label">Valeur estimee</label>
-                  <input className="form-input" type="number" min="0" value={form.valeurEstimee} onChange={e => updateField('valeurEstimee', e.target.value)} />
+                  <label className="form-label">Valeur estimée</label>
+                  <input className="form-input" type="number" min="0" value={form.valeurEstimee} onChange={e => updateField('valeurEstimee', e.target.value)} placeholder="Ar" />
                 </div>
                 <div>
                   <label className="form-label">Seuil d'alerte</label>
-                  <input className="form-input" type="number" min="0" value={form.seuilAlerte} onChange={e => updateField('seuilAlerte', e.target.value)} disabled={form.type !== 'consommable'} />
+                  <input
+                    className="form-input"
+                    type="number" min="0"
+                    value={form.seuilAlerte}
+                    onChange={e => updateField('seuilAlerte', e.target.value)}
+                    disabled={!isConsommable}
+                    placeholder={isConsommable ? '' : 'Consommable uniquement'}
+                  />
                 </div>
               </div>
+
+              {isKit && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label className="form-label" style={{ margin: 0 }}>Éléments du kit</label>
+                    <button type="button" className="task-checklist-add" onClick={addKitElement} aria-label="Ajouter un élément">
+                      <Plus size={15} />
+                    </button>
+                  </div>
+                  {(form.kitElements || []).length === 0 ? (
+                    <button type="button" className="task-checklist-create" onClick={addKitElement}>
+                      <Plus size={15} /> Ajouter un élément
+                    </button>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {(form.kitElements || []).map(el => (
+                        <div key={el.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            className="form-input"
+                            value={el.nom}
+                            onChange={e => updateKitElement(el.id, { nom: e.target.value })}
+                            placeholder="Nom de l'élément"
+                            style={{ flex: 1 }}
+                          />
+                          <input
+                            className="form-input"
+                            type="number"
+                            min="1"
+                            value={el.quantitePrevue}
+                            onChange={e => updateKitElement(el.id, { quantitePrevue: e.target.value })}
+                            style={{ width: 60 }}
+                          />
+                          <select
+                            className="form-input"
+                            value={el.unite}
+                            onChange={e => updateKitElement(el.id, { unite: e.target.value })}
+                            style={{ width: 90 }}
+                          >
+                            {MATERIEL_UNITES.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => removeKitElement(el.id)}
+                            style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 10, border: 'none', background: C.coralD, color: C.coral, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            aria-label="Retirer cet élément"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <label className="form-label">Photo</label>
               <div className="materiel-photo-actions">
@@ -459,7 +670,7 @@ export default function MaterielFormModal({ open, onClose, onSubmit, onDelete, m
                 className="materiel-primary-btn"
                 disabled={saving || uploadingPhoto}
               >
-                {saving ? 'Enregistrement...' : initialData ? 'Mettre a jour' : 'Ajouter'}
+                {saving ? 'Enregistrement...' : initialData ? 'Mettre à jour' : 'Ajouter'}
               </button>
             </div>
           </form>

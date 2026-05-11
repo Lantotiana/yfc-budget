@@ -65,6 +65,7 @@ export default function TaskForm({ task, assignableMembers, onSubmit, onCancel, 
     setForm(prev => ({
       ...prev,
       checklist: (prev.checklist || []).map(item => item.id === id ? { ...item, ...patch } : item),
+      ...(patch.done === true && prev.status === 'todo' ? { status: 'in_progress' } : {}),
     }))
   }
 

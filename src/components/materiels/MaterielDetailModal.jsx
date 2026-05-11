@@ -5,7 +5,8 @@ import Portal from '../Portal'
 import { db } from '../../firebase'
 import { createNotification } from '../../notifications'
 import { canDeleteMateriel, canEditMateriel } from '../../utils/materielPermissions'
-import { computeStockStatus, formatMovementLabel, getEtatMeta, getStatutMeta } from './materielHelpers'
+import { computeStockStatus, formatMovementLabel, getEtatMeta, getStatutMeta, getTypeMaterielLabel } from './materielHelpers'
+import KitChecklistModal from './KitChecklistModal'
 
 function MovementRow({ movement, C }) {
   return (
@@ -17,18 +18,23 @@ function MovementRow({ movement, C }) {
       {movement.commentaire && <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 4 }}>{movement.commentaire}</div>}
       {(movement.dateRetourPrevue || movement.dateRetourReelle) && (
         <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4 }}>
-          {movement.dateRetourPrevue && <span>Retour prevu : {new Date(movement.dateRetourPrevue).toLocaleDateString('fr-FR')}</span>}
+          {movement.dateRetourPrevue && <span>Retour prévu : {new Date(movement.dateRetourPrevue).toLocaleDateString('fr-FR')}</span>}
           {movement.dateRetourPrevue && movement.dateRetourReelle && <span> · </span>}
-          {movement.dateRetourReelle && <span>Retour reel : {new Date(movement.dateRetourReelle).toLocaleDateString('fr-FR')}</span>}
+          {movement.dateRetourReelle && <span>Retour réel : {new Date(movement.dateRetourReelle).toLocaleDateString('fr-FR')}</span>}
         </div>
       )}
       {(movement.quantite != null || movement.etatAvant || movement.etatApres) && (
         <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 4 }}>
-          {movement.quantite != null && <span>Quantite : {movement.quantite}</span>}
+          {movement.quantite != null && <span>Quantité : {movement.quantite}</span>}
           {movement.quantite != null && (movement.etatAvant || movement.etatApres) && <span> · </span>}
           {movement.etatAvant && <span>Avant : {movement.etatAvant}</span>}
           {movement.etatAvant && movement.etatApres && <span> · </span>}
-          {movement.etatApres && <span>Apres : {movement.etatApres}</span>}
+          {movement.etatApres && <span>Après : {movement.etatApres}</span>}
+        </div>
+      )}
+      {Array.isArray(movement.missingItems) && movement.missingItems.length > 0 && (
+        <div style={{ fontSize: 'var(--font-xs)', color: C.coral, marginTop: 4 }}>
+          Manquants : {movement.missingItems.join(', ')}
         </div>
       )}
     </div>
@@ -80,6 +86,7 @@ export default function MaterielDetailModal({
 }) {
   const [movements, setMovements] = useState([])
   const [action, setAction] = useState(null)
+  const [kitModal, setKitModal] = useState(null)
   const [saving, setSaving] = useState(false)
   const [eventReservations, setEventReservations] = useState([])
   const [futureEvenements, setFutureEvenements] = useState([])
@@ -116,7 +123,8 @@ export default function MaterielDetailModal({
 
   const canEdit = canEditMateriel(user, userData, currentMember)
   const canArchive = canDeleteMateriel(user, userData, currentMember)
-  const statut = getStatutMeta(materiel.statut, C)
+  const effectiveStatut = materiel.statut || 'disponible'
+  const statut = getStatutMeta(effectiveStatut, C)
   const statutLabel = materiel.statut === 'reserve_evenement' && materiel.currentEventName
     ? `Réservé · ${materiel.currentEventName}`
     : statut.label
@@ -125,6 +133,12 @@ export default function MaterielDetailModal({
   const responsables = Array.isArray(materiel.responsablesNoms) && materiel.responsablesNoms.length > 0
     ? materiel.responsablesNoms.join(', ')
     : materiel.responsableNom
+
+  const isKit = materiel.typeMatériel === 'kit'
+  const isConsommable = materiel.typeMatériel === 'consommable_suivi' || materiel.type === 'consommable'
+  const isDurable = !isKit && !isConsommable
+
+  const lastSortieKit = movements.find(m => m.type === 'sortie_kit')
 
   async function addMovement(type, extra = {}) {
     await addDoc(collection(db, 'mouvementsMateriels'), {
@@ -142,6 +156,8 @@ export default function MaterielDetailModal({
       etatAvant: extra.etatAvant || null,
       etatApres: extra.etatApres || null,
       commentaire: extra.commentaire || '',
+      kitElements: extra.kitElements || null,
+      missingItems: extra.missingItems || null,
       createdAt: new Date().toISOString(),
       createdAtServer: serverTimestamp(),
     })
@@ -169,13 +185,77 @@ export default function MaterielDetailModal({
     }
   }
 
+  async function handleKitConfirm(items, missingItems, meta) {
+    setSaving(true)
+    try {
+      if (kitModal === 'sortie') {
+        await updateDoc(doc(db, 'materiels', materiel.id), {
+          statut: 'sorti',
+          currentBorrower: meta.personneResponsable,
+          currentDueAt: meta.dateRetourPrevue,
+          currentBorrowedAt: new Date().toISOString().slice(0, 10),
+          currentEventName: meta.commentaire || '',
+          updatedAt: serverTimestamp(),
+        })
+        await addMovement('sortie_kit', {
+          personneResponsable: meta.personneResponsable,
+          dateRetourPrevue: meta.dateRetourPrevue,
+          commentaire: meta.commentaire || '',
+          kitElements: items.map(el => ({
+            id: el.id,
+            nom: el.nom,
+            quantiteReelle: Number(el.quantiteReelle ?? el.quantitePrevue ?? 1),
+            unite: el.unite || 'pièce',
+          })),
+        })
+      } else {
+        const nextStatut = missingItems.length > 0 ? 'kit_incomplet' : 'disponible'
+        const nextEtat = missingItems.length > 0 ? 'a_verifier' : materiel.etat === 'a_verifier' ? 'bon' : materiel.etat
+        await updateDoc(doc(db, 'materiels', materiel.id), {
+          statut: nextStatut,
+          etat: nextEtat,
+          currentBorrower: '',
+          currentDueAt: null,
+          currentBorrowedAt: null,
+          currentEventName: '',
+          lieuActuel: meta.lieuActuel || materiel.lieuActuel,
+          updatedAt: serverTimestamp(),
+        })
+        await addMovement('retour_kit', {
+          dateRetourReelle: meta.dateRetourReelle,
+          commentaire: meta.commentaire || (missingItems.length > 0 ? `Kit incomplet : ${missingItems.map(i => i.nom).join(', ')}` : 'Retour complet'),
+          kitElements: items.map(el => ({
+            id: el.id,
+            nom: el.nom,
+            quantiteRetour: Number(el.quantiteRetour || 0),
+            unite: el.unite || 'pièce',
+          })),
+          missingItems: missingItems.map(i => i.nom),
+        })
+        if (missingItems.length > 0) {
+          await createNotification({
+            type: 'document',
+            titre: 'Kit incomplet',
+            detail: `${materiel.nom} · ${missingItems.map(i => i.nom).join(', ')} manquant${missingItems.length > 1 ? 's' : ''}`,
+            cible: materiel.nom,
+            route: '/documents',
+          })
+        }
+      }
+      setKitModal(null)
+      onRefresh?.()
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleArchive() {
     if (!window.confirm(`Archiver ${materiel.nom} ?`)) return
     await updateMateriel(
       { statut: 'archive', archivedAt: new Date().toISOString() },
       'archivage',
-      { commentaire: 'Archivage du materiel' },
-      'Materiel archive'
+      { commentaire: 'Archivage du matériel' },
+      'Matériel archivé'
     )
   }
 
@@ -190,7 +270,7 @@ export default function MaterielDetailModal({
         { name: 'dateSortie', label: 'Date de sortie', type: 'date', required: true, defaultValue: today },
         { name: 'dateRetourPrevue', label: 'Date de retour prévue', type: 'date', required: true },
         { name: 'etatAvant', label: 'État avant sortie', type: 'select', defaultValue: materiel.etat, options: [
-          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'À vérifier' }, { value: 'endommage', label: 'Endommagé' }, { value: 'en_reparation', label: 'En réparation' }, { value: 'perdu', label: 'Perdu' },
+          { value: 'bon', label: 'Bon état' }, { value: 'a_verifier', label: 'À vérifier' }, { value: 'endommage', label: 'Endommagé' }, { value: 'en_reparation', label: 'En réparation' }, { value: 'perdu', label: 'Perdu' },
         ] },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
@@ -250,11 +330,11 @@ export default function MaterielDetailModal({
       },
     },
     retour: {
-      title: 'Retour du materiel',
+      title: 'Retour du matériel',
       fields: [
-        { name: 'dateRetourReelle', label: 'Date de retour reelle', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
-        { name: 'etatApres', label: 'Etat au retour', type: 'select', defaultValue: materiel.etat, options: [
-          { value: 'bon', label: 'Bon' }, { value: 'a_verifier', label: 'A verifier' }, { value: 'endommage', label: 'Endommage' }, { value: 'en_reparation', label: 'En reparation' }, { value: 'perdu', label: 'Perdu' },
+        { name: 'dateRetourReelle', label: 'Date de retour réelle', type: 'date', required: true, defaultValue: new Date().toISOString().slice(0, 10) },
+        { name: 'etatApres', label: 'État au retour', type: 'select', defaultValue: materiel.etat, options: [
+          { value: 'bon', label: 'Bon état' }, { value: 'a_verifier', label: 'À vérifier' }, { value: 'endommage', label: 'Endommagé' }, { value: 'en_reparation', label: 'En réparation' }, { value: 'perdu', label: 'Perdu' },
         ] },
         { name: 'lieuActuel', label: 'Lieu de retour', required: true, defaultValue: materiel.lieuActuel || 'Local YFC' },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
@@ -270,13 +350,13 @@ export default function MaterielDetailModal({
           currentDueAt: null,
           currentBorrowedAt: null,
           currentEventName: '',
-        }, 'retour', { ...form, etatAvant: materiel.etat }, 'Materiel retourne')
+        }, 'retour', { ...form, etatAvant: materiel.etat }, 'Matériel retourné')
       },
     },
     stock_ajout: {
       title: 'Ajouter du stock',
       fields: [
-        { name: 'quantite', label: 'Quantite ajoutee', type: 'number', min: '1', required: true, defaultValue: 1 },
+        { name: 'quantite', label: 'Quantité ajoutée', type: 'number', min: '1', required: true, defaultValue: 1 },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
@@ -286,13 +366,13 @@ export default function MaterielDetailModal({
         await updateMateriel({
           quantite: nextQty,
           statut: computeStockStatus({ ...materiel, quantite: nextQty }),
-        }, 'stock_ajout', { quantite: quantity, commentaire: form.commentaire }, 'Stock materiel ajoute')
+        }, 'stock_ajout', { quantite: quantity, commentaire: form.commentaire }, 'Stock matériel ajouté')
       },
     },
     stock_retrait: {
       title: 'Retirer du stock',
       fields: [
-        { name: 'quantite', label: 'Quantite retiree', type: 'number', min: '1', required: true, defaultValue: 1 },
+        { name: 'quantite', label: 'Quantité retirée', type: 'number', min: '1', required: true, defaultValue: 1 },
         { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
       ],
       async confirm(form) {
@@ -303,21 +383,38 @@ export default function MaterielDetailModal({
         await updateMateriel({
           quantite: nextQty,
           statut: computeStockStatus({ ...materiel, quantite: nextQty }),
-        }, 'stock_retrait', { quantite: quantity, commentaire: form.commentaire }, 'Stock materiel retire')
+        }, 'stock_retrait', { quantite: quantity, commentaire: form.commentaire }, 'Stock matériel retiré')
       },
     },
     maintenance: {
-      title: 'Mettre en reparation',
+      title: 'Mettre en réparation',
       fields: [{ name: 'commentaire', label: 'Commentaire', type: 'textarea' }],
       async confirm(form) {
-        await updateMateriel({ etat: 'en_reparation', statut: 'en_reparation' }, 'maintenance', { etatAvant: materiel.etat, etatApres: 'en_reparation', commentaire: form.commentaire }, 'Materiel en reparation')
+        await updateMateriel({ etat: 'en_reparation', statut: 'en_reparation' }, 'maintenance', { etatAvant: materiel.etat, etatApres: 'en_reparation', commentaire: form.commentaire }, 'Matériel en réparation')
       },
     },
     perte: {
       title: 'Marquer comme perdu',
       fields: [{ name: 'commentaire', label: 'Commentaire', type: 'textarea' }],
       async confirm(form) {
-        await updateMateriel({ etat: 'perdu', statut: 'perdu' }, 'perte', { etatAvant: materiel.etat, etatApres: 'perdu', commentaire: form.commentaire }, 'Materiel perdu')
+        await updateMateriel({ etat: 'perdu', statut: 'perdu' }, 'perte', { etatAvant: materiel.etat, etatApres: 'perdu', commentaire: form.commentaire }, 'Matériel perdu')
+      },
+    },
+    verification: {
+      title: 'Vérification du matériel',
+      fields: [
+        { name: 'etatApres', label: 'État constaté', type: 'select', defaultValue: materiel.etat, options: [
+          { value: 'bon', label: 'Bon état' }, { value: 'a_verifier', label: 'À vérifier' }, { value: 'endommage', label: 'Endommagé' }, { value: 'en_reparation', label: 'En réparation' },
+        ] },
+        { name: 'commentaire', label: 'Commentaire', type: 'textarea' },
+      ],
+      async confirm(form) {
+        const nextStatut = form.etatApres === 'a_verifier' || form.etatApres === 'endommage' ? 'en_reparation' : effectiveStatut
+        await updateMateriel({
+          etat: form.etatApres,
+          statut: nextStatut,
+          derniereVerification: today,
+        }, 'verification', { etatAvant: materiel.etat, etatApres: form.etatApres, commentaire: form.commentaire }, null)
       },
     },
   }
@@ -336,28 +433,57 @@ export default function MaterielDetailModal({
                 )}
               </div>
               <div style={{ flex: 1 }}>
-                <div className="dialog-title" style={{ marginBottom: 6 }}>{materiel.nom}</div>
-                <div style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>{materiel.categorie} · {materiel.type === 'consommable' ? 'Consommable' : 'Durable'}</div>
+                <div className="dialog-title" style={{ marginBottom: 4 }}>{materiel.nom}</div>
+                <div style={{ fontSize: 'var(--font-sm)', color: C.t2 }}>
+                  {materiel.categorie}
+                  {materiel.marque ? ` · ${materiel.marque}` : ''}
+                  {' · '}
+                  {isKit ? 'Kit' : getTypeMaterielLabel(materiel.typeMatériel) || (isConsommable ? 'Consommable' : 'Durable')}
+                </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
                   <span style={{ padding: '5px 10px', borderRadius: 999, background: statut.bg, color: statut.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{statutLabel}</span>
                   <span style={{ padding: '5px 10px', borderRadius: 999, background: etat.bg, color: etat.fg, fontSize: 'var(--font-xs)', fontWeight: 700 }}>{etat.label}</span>
+                  {isKit && (
+                    <span style={{ padding: '5px 10px', borderRadius: 999, background: C.violetD, color: C.violet, fontSize: 'var(--font-xs)', fontWeight: 700 }}>
+                      Kit · {(materiel.kitElements || []).length} élément{(materiel.kitElements || []).length !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="materiel-detail-grid">
-              <div><strong>Quantite</strong><div>{materiel.quantite || 0} {materiel.unite || 'piece'}</div></div>
-              <div><strong>Lieu</strong><div>{materiel.lieuActuel || 'Non renseigne'}</div></div>
+              {materiel.section && <div><strong>Section</strong><div>{materiel.section}</div></div>}
+              {!isKit && <div><strong>Quantité</strong><div>{materiel.quantite || 0} {materiel.unite || 'pièce'}</div></div>}
+              <div><strong>Lieu</strong><div>{materiel.lieuActuel || 'Non renseigné'}</div></div>
               <div><strong>Responsables</strong><div>{responsables || 'Aucun'}</div></div>
-              <div><strong>Valeur estimee</strong><div>{materiel.valeurEstimee != null ? `${Number(materiel.valeurEstimee).toLocaleString('fr-FR')} Ar` : 'Non renseignee'}</div></div>
-              {materiel.currentDueAt && <div><strong>Retour prevu</strong><div>{new Date(materiel.currentDueAt).toLocaleDateString('fr-FR')}</div></div>}
-              {materiel.seuilAlerte != null && <div><strong>Seuil d'alerte</strong><div>{materiel.seuilAlerte}</div></div>}
+              {materiel.valeurEstimee != null && <div><strong>Valeur estimée</strong><div>{Number(materiel.valeurEstimee).toLocaleString('fr-FR')} Ar</div></div>}
+              {materiel.couleur && <div><strong>Couleur</strong><div>{materiel.couleur}</div></div>}
+              {materiel.dimensions && <div><strong>Dimensions</strong><div>{materiel.dimensions}</div></div>}
+              {materiel.derniereVerification && <div><strong>Dernière vérif.</strong><div>{new Date(materiel.derniereVerification).toLocaleDateString('fr-FR')}</div></div>}
+              {materiel.currentDueAt && <div><strong>Retour prévu</strong><div>{new Date(materiel.currentDueAt).toLocaleDateString('fr-FR')}</div></div>}
+              {materiel.currentBorrower && <div><strong>Emprunteur</strong><div>{materiel.currentBorrower}</div></div>}
+              {isConsommable && materiel.seuilAlerte != null && <div><strong>Seuil d'alerte</strong><div>{materiel.seuilAlerte}</div></div>}
             </div>
 
             {materiel.notes && (
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 6 }}>Notes</div>
                 <div style={{ fontSize: 'var(--font-sm)', color: C.t2, lineHeight: 1.5 }}>{materiel.notes}</div>
+              </div>
+            )}
+
+            {isKit && Array.isArray(materiel.kitElements) && materiel.kitElements.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', marginBottom: 8 }}>Éléments du kit</div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {materiel.kitElements.map(el => (
+                    <div key={el.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10, background: C.surf2, border: `1px solid ${C.bord}` }}>
+                      <span style={{ flex: 1, fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{el.nom}</span>
+                      <span style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>{el.quantitePrevue} {el.unite || 'pièce'}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -368,21 +494,28 @@ export default function MaterielDetailModal({
             )}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
-              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && (
+              {canEdit && isKit && effectiveStatut === 'disponible' && (
+                <button className="btn-secondary" onClick={() => setKitModal('sortie')}>Sortie kit</button>
+              )}
+              {canEdit && isKit && (effectiveStatut === 'sorti' || effectiveStatut === 'kit_incomplet') && (
+                <button className="btn-secondary" onClick={() => setKitModal('retour')}>Retour kit</button>
+              )}
+              {canEdit && isDurable && effectiveStatut === 'disponible' && (
                 <button className="btn-secondary" onClick={() => setAction('emprunt')} style={nextReservation ? { borderColor: '#f59e0b', color: '#b45309' } : {}}>
                   Emprunter{nextReservation ? ' ⚠' : ''}
                 </button>
               )}
-              {canEdit && materiel.type === 'durable' && materiel.statut === 'disponible' && (
+              {canEdit && isDurable && effectiveStatut === 'disponible' && (
                 <button className="btn-secondary" onClick={() => setAction('utiliser')}>Utiliser</button>
               )}
-              {canEdit && materiel.type === 'durable' && materiel.statut === 'emprunte' && <button className="btn-secondary" onClick={() => setAction('retour')}>Retourner</button>}
-              {canEdit && materiel.type === 'durable' && (materiel.statut === 'reserve_emprunt' || materiel.statut === 'reserve_evenement') && <button className="btn-secondary" onClick={() => setAction('liberer')}>Libérer</button>}
-              {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_ajout')}>Ajouter du stock</button>}
-              {canEdit && materiel.type === 'consommable' && <button className="btn-secondary" onClick={() => setAction('stock_retrait')}>Retirer du stock</button>}
-              {canEdit && materiel.etat !== 'en_reparation' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('maintenance')}>Mettre en reparation</button>}
-              {canEdit && materiel.statut !== 'perdu' && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('perte')}>Marquer comme perdu</button>}
-              {canArchive && materiel.statut !== 'archive' && <button className="btn-secondary" onClick={handleArchive}>Archiver</button>}
+              {canEdit && isDurable && effectiveStatut === 'emprunte' && <button className="btn-secondary" onClick={() => setAction('retour')}>Retourner</button>}
+              {canEdit && isDurable && (effectiveStatut === 'reserve_emprunt' || effectiveStatut === 'reserve_evenement') && <button className="btn-secondary" onClick={() => setAction('liberer')}>Libérer</button>}
+              {canEdit && isConsommable && <button className="btn-secondary" onClick={() => setAction('stock_ajout')}>Ajouter du stock</button>}
+              {canEdit && isConsommable && <button className="btn-secondary" onClick={() => setAction('stock_retrait')}>Retirer du stock</button>}
+              {canEdit && materiel.etat !== 'en_reparation' && effectiveStatut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('maintenance')}>Mettre en réparation</button>}
+              {canEdit && effectiveStatut !== 'perdu' && effectiveStatut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('perte')}>Marquer comme perdu</button>}
+              {canEdit && effectiveStatut !== 'archive' && <button className="btn-secondary" onClick={() => setAction('verification')}>Vérification</button>}
+              {canArchive && effectiveStatut !== 'archive' && <button className="btn-secondary" onClick={handleArchive}>Archiver</button>}
             </div>
 
             <div style={{ marginTop: 20 }}>
@@ -434,6 +567,17 @@ export default function MaterielDetailModal({
           onConfirm={actionConfig[action].confirm}
           saving={saving}
           C={C}
+        />
+      )}
+      {kitModal && (
+        <KitChecklistModal
+          kit={materiel}
+          mode={kitModal}
+          lastSortieElements={lastSortieKit?.kitElements || null}
+          onClose={() => setKitModal(null)}
+          onConfirm={handleKitConfirm}
+          C={C}
+          saving={saving}
         />
       )}
     </Portal>
