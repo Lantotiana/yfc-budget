@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, useEffect } from 'react'
 import { ArrowLeft, Send } from 'lucide-react'
 import assistantAvatar from '../assets/assistant_avatar.jpg'
 import { useNavigate } from 'react-router-dom'
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { auth } from '../auth'
 import { db } from '../firebase'
 import { createNotification } from '../notifications'
@@ -111,6 +111,116 @@ async function currentUserCanManageBudget() {
   const userDoc = usersSnap.docs.map(d => d.data()).find(u => sameEmail(u.email, user.email))
   const effectiveRole = member?.staffRole || userDoc?.staffRole || ''
   return canManageBudgetRole(effectiveRole)
+}
+
+function statLabel(statut) {
+  const map = {
+    disponible: 'disponible', emprunte: 'emprunté', sorti: 'sorti',
+    reserve: 'réservé', reserve_emprunt: 'réservé emprunt', reserve_evenement: 'réservé événement',
+    en_reparation: 'en réparation', perdu: 'perdu', stock_faible: 'stock faible',
+    kit_incomplet: 'kit incomplet', archive: 'archivé',
+  }
+  return map[statut] || statut
+}
+
+async function resolveDataQuery(text) {
+  const t = text.toLowerCase()
+
+  const isMateriel = /mat[eé]riel|équipement|kit|sono|stock/.test(t)
+  const isMembre = /membre|personne|liste.*membre/.test(t)
+  const isBudget = /budget|dépense|dépenses|entrée|solde|transaction/.test(t)
+  const isEvenement = /[eé]v[eé]nement|agenda|calendrier/.test(t)
+
+  // ── Matériels ─────────────────────────────────────────────
+  if (isMateriel) {
+    const snap = await getDocs(collection(db, 'materiels'))
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const active = all.filter(m => m.statut !== 'archive')
+
+    // Par section
+    if (/section/.test(t)) {
+      const grouped = {}
+      active.forEach(m => {
+        const s = m.section?.trim() || 'Sans section'
+        if (!grouped[s]) grouped[s] = []
+        grouped[s].push(m)
+      })
+      const sorted = Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, 'fr'))
+      if (sorted.length === 0) return 'Aucun matériel enregistré.'
+      const lines = sorted.map(([section, mats]) => {
+        const items = mats.map(m => `  • ${m.nom}${m.statut !== 'disponible' ? ` (${statLabel(m.statut)})` : ''}`).join('\n')
+        return `${section} — ${mats.length} matériel${mats.length > 1 ? 's' : ''}\n${items}`
+      })
+      return `Matériels par section :\n\n${lines.join('\n\n')}`
+    }
+
+    // Kits uniquement
+    if (/kit/.test(t)) {
+      const kits = active.filter(m => m.typeMatériel === 'kit')
+      if (kits.length === 0) return 'Aucun kit enregistré.'
+      return `${kits.length} kit${kits.length > 1 ? 's' : ''} :\n${kits.map(m => `• ${m.nom} — ${statLabel(m.statut)}${m.section ? ` (${m.section})` : ''}`).join('\n')}`
+    }
+
+    // Disponibles
+    if (/disponible/.test(t)) {
+      const dispo = active.filter(m => m.statut === 'disponible')
+      if (dispo.length === 0) return 'Aucun matériel disponible en ce moment.'
+      return `${dispo.length} matériel${dispo.length > 1 ? 's' : ''} disponible${dispo.length > 1 ? 's' : ''} :\n${dispo.map(m => `• ${m.nom}${m.section ? ` — ${m.section}` : ''}`).join('\n')}`
+    }
+
+    // Empruntés / sortis
+    if (/emprunt[eé]|sorti/.test(t)) {
+      const out = active.filter(m => m.statut === 'emprunte' || m.statut === 'sorti')
+      if (out.length === 0) return 'Aucun matériel emprunté ou sorti en ce moment.'
+      return `${out.length} matériel${out.length > 1 ? 's' : ''} sorti${out.length > 1 ? 's' : ''} :\n${out.map(m => `• ${m.nom} — ${statLabel(m.statut)}${m.currentBorrower ? ` (${m.currentBorrower})` : ''}`).join('\n')}`
+    }
+
+    // Alertes
+    if (/alerte|r[eé]paration|stock faible|incomplet/.test(t)) {
+      const alerts = active.filter(m => ['en_reparation', 'stock_faible', 'kit_incomplet', 'perdu'].includes(m.statut))
+      if (alerts.length === 0) return 'Aucune alerte matériel en ce moment.'
+      return `${alerts.length} alerte${alerts.length > 1 ? 's' : ''} :\n${alerts.map(m => `• ${m.nom} — ${statLabel(m.statut)}`).join('\n')}`
+    }
+
+    // Liste générale
+    if (active.length === 0) return 'Aucun matériel enregistré.'
+    return `${active.length} matériel${active.length > 1 ? 's' : ''} enregistré${active.length > 1 ? 's' : ''} :\n${active.map(m => `• ${m.nom} — ${statLabel(m.statut)}${m.section ? ` (${m.section})` : ''}`).join('\n')}`
+  }
+
+  // ── Membres ───────────────────────────────────────────────
+  if (isMembre) {
+    const snap = await getDocs(collection(db, 'membres'))
+    const membres = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    if (membres.length === 0) return 'Aucun membre enregistré.'
+    const staff = membres.filter(m => m.staff)
+    const lines = membres.map(m => `• ${m.nomPrefere || m.prenoms || m.nom}${m.staff ? ' (staff)' : ''}`)
+    return `${membres.length} membre${membres.length > 1 ? 's' : ''} (dont ${staff.length} staff) :\n${lines.join('\n')}`
+  }
+
+  // ── Budget ────────────────────────────────────────────────
+  if (isBudget) {
+    const snap = await getDocs(collection(db, 'transactions'))
+    const txs = snap.docs.map(d => d.data())
+    const entrees = txs.filter(t => t.type === 'entree').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const depenses = txs.filter(t => t.type === 'depense').reduce((s, t) => s + Number(t.montant || 0), 0)
+    const solde = entrees - depenses
+    return `Résumé budget :\n• Entrées : ${entrees.toLocaleString('fr-FR')} Ar\n• Dépenses : ${depenses.toLocaleString('fr-FR')} Ar\n• Solde : ${solde.toLocaleString('fr-FR')} Ar`
+  }
+
+  // ── Événements ────────────────────────────────────────────
+  if (isEvenement) {
+    const today = new Date().toISOString().slice(0, 10)
+    const snap = await getDocs(collection(db, 'evenements_agenda'))
+    const upcoming = snap.docs
+      .map(d => d.data())
+      .filter(e => (e.dateFin || e.dateDebut) >= today)
+      .sort((a, b) => a.dateDebut < b.dateDebut ? -1 : 1)
+      .slice(0, 10)
+    if (upcoming.length === 0) return 'Aucun événement à venir.'
+    return `Prochains événements :\n${upcoming.map(e => `• ${e.nom} — ${e.dateDebut}${e.lieu ? ` à ${e.lieu}` : ''}`).join('\n')}`
+  }
+
+  return null
 }
 
 async function executeAssistantAction(action) {
@@ -322,6 +432,13 @@ export default function Fampaherezana({ user }) {
     setInput('')
     setLoading(true)
     setMessages(prev => [...prev, { role: 'user', text }])
+
+    const localAnswer = await resolveDataQuery(text).catch(() => null)
+    if (localAnswer) {
+      setMessages(prev => [...prev, { role: 'assistant', text: localAnswer }])
+      setLoading(false)
+      return
+    }
 
     const result = await generateAppAssistant(text)
     setMessages(prev => [...prev, {
