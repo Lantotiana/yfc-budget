@@ -138,8 +138,8 @@ export default function PresenceDetail({ user, userData }) {
   }
 
   function presenceSymbol(value) {
-    if (value === true) return '✓'
-    return '×'
+    if (value === true) return '✅'
+    return '❌'
   }
 
   function renderHistoryDot(item) {
