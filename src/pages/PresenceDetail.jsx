@@ -148,9 +148,9 @@ export default function PresenceDetail({ user, userData }) {
       <span
         key={item.eventId}
         title={`${item.title || 'Evenement'}${item.date ? ` - ${toDisplayDate(item.date)}` : ''}`}
-        style={{ width: 18, height: 18, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+        style={{ width: 15, height: 15, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
       >
-        {item.present === true ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+        {item.present === true ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
       </span>
     )
   }
@@ -502,7 +502,7 @@ export default function PresenceDetail({ user, userData }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName(m)}</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                 {history.last5.map(renderHistoryDot)}
               </div>
               <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s', transform: present ? 'scale(1)' : 'scale(0.9)', opacity: presenceLocked ? 0.58 : 1 }}>

@@ -891,9 +891,9 @@ export default function MessagesStaff({ user, userData }) {
         <span
           key={item?.eventId || index}
           title={`${item?.title || 'Evenement'}${item?.date ? ` - ${formatAnnouncementDate(item.date)}` : ''}`}
-          style={{ width: 18, height: 18, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          style={{ width: 15, height: 15, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
-          {item?.present === true ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+          {item?.present === true ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
         </span>
       )
     }
