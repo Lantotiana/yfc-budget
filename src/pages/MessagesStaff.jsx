@@ -883,6 +883,20 @@ export default function MessagesStaff({ user, userData }) {
           .slice(0, 3)
       : []
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
+    const memberStreaks = Array.isArray(message.memberStreaks) ? message.memberStreaks : []
+
+    function renderPresenceDot(item, index) {
+      const bg = item?.present === true ? '#22c55e' : '#ef4444'
+      return (
+        <span
+          key={item?.eventId || index}
+          title={`${item?.title || 'Evenement'}${item?.date ? ` - ${formatAnnouncementDate(item.date)}` : ''}`}
+          style={{ width: 18, height: 18, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+        >
+          {item?.present === true ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+        </span>
+      )
+    }
 
     return (
       <article key={message.id} className={`staff-announcement-row${compact ? ' pinned' : ''}${readAvatars.length > 0 ? ' has-read-avatars' : ''}${existingReactions.length > 0 ? ' has-reactions-row' : ''}`}>
@@ -943,6 +957,26 @@ export default function MessagesStaff({ user, userData }) {
                 </div>
               )}
             </div>
+
+            {memberStreaks.length > 0 && (
+              <div className="staff-presence-report-box" style={{ background: 'rgba(99,102,241,.08)', borderColor: 'rgba(99,102,241,.18)' }}>
+                <div className="staff-presence-report-box-header" style={{ color: '#6366f1' }}>
+                  5 derniers / streak
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {memberStreaks.map(member => (
+                    <div key={member.id || member.displayName} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {member.displayName}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                        {(member.last5 || []).map(renderPresenceDot)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="staff-presence-report-rate">
               Taux de présence : <strong>{message.presencePercent ?? 0} %</strong>

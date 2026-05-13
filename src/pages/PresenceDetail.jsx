@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { ArrowLeft, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
@@ -18,8 +18,10 @@ export default function PresenceDetail({ user, userData }) {
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
   const [event, setEvent] = useState(null)
+  const [allEvents, setAllEvents] = useState([])
   const [membres, setMembres] = useState([])
   const [presences, setPresences] = useState({})
+  const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(null)
@@ -40,18 +42,26 @@ export default function PresenceDetail({ user, userData }) {
   }, [id])
 
   useEffect(() => {
+    const q = query(collection(db, 'evenements'), orderBy('date', 'desc'))
+    return onSnapshot(q, snap => setAllEvents(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+  }, [])
+
+  useEffect(() => {
     const q = query(collection(db, 'membres'), orderBy('nom'))
     return onSnapshot(q, snap => setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
   }, [])
 
   useEffect(() => {
     return onSnapshot(collection(db, 'presences'), snap => {
-      const map = {}
+      const currentMap = {}
+      const fullMap = {}
       snap.docs.forEach(d => {
         const data = d.data()
-        if (data.eventId === id) map[data.membreId] = data.present
+        fullMap[`${data.eventId}_${data.membreId}`] = data.present
+        if (data.eventId === id) currentMap[data.membreId] = data.present
       })
-      setPresences(map)
+      setPresences(currentMap)
+      setAllPresences(fullMap)
     })
   }, [id])
 
@@ -82,6 +92,68 @@ export default function PresenceDetail({ user, userData }) {
   const presentCount = tagFilteredMembres.filter(m => presences[m.id] === true).length
   const presencePercent = tagFilteredMembres.length ? Math.round((presentCount / tagFilteredMembres.length) * 100) : 0
   const progressColor = presencePercent < 40 ? C.coral : presencePercent < 75 ? C.amber : C.teal
+
+  function normalizeTag(tag) {
+    return String(tag || '').trim().toLowerCase()
+  }
+
+  function tagsMatchCurrent(candidate) {
+    if (!eventTags.length) return true
+    const candidateTags = Array.isArray(candidate?.tags) ? candidate.tags.map(normalizeTag) : []
+    const currentTags = eventTags.map(normalizeTag)
+    return candidateTags.some(tag => currentTags.includes(tag))
+  }
+
+  const lastSameTagEvents = useMemo(() => {
+    if (!event) return []
+    const byId = new Map()
+    ;[event, ...allEvents].forEach(ev => {
+      if (ev?.id && tagsMatchCurrent(ev)) byId.set(ev.id, ev)
+    })
+    return Array.from(byId.values())
+      .sort((a, b) => {
+        const dateDiff = String(b.date || '').localeCompare(String(a.date || ''))
+        if (dateDiff !== 0) return dateDiff
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
+      })
+      .slice(0, 5)
+  }, [allEvents, event, eventTags.join('|')])
+
+  function getMemberHistory(membreId) {
+    const last5 = lastSameTagEvents.map(ev => {
+      const value = allPresences[`${ev.id}_${membreId}`]
+      return {
+        eventId: ev.id,
+        title: ev.titre || '',
+        date: ev.date || '',
+        present: value === true,
+      }
+    })
+    let streak = 0
+    for (const item of last5) {
+      if (item.present !== true) break
+      streak += 1
+    }
+    return { last5, streak }
+  }
+
+  function presenceSymbol(value) {
+    if (value === true) return '✓'
+    return '×'
+  }
+
+  function renderHistoryDot(item) {
+    const bg = item.present === true ? '#22c55e' : '#ef4444'
+    return (
+      <span
+        key={item.eventId}
+        title={`${item.title || 'Evenement'}${item.date ? ` - ${toDisplayDate(item.date)}` : ''}`}
+        style={{ width: 18, height: 18, borderRadius: '50%', background: bg, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+      >
+        {item.present === true ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+      </span>
+    )
+  }
 
   useEffect(() => {
     setPresenceLocked(true)
@@ -121,6 +193,7 @@ export default function PresenceDetail({ user, userData }) {
         metadata: { presenceId: id, membreId: membre.id },
       })
       setPresences(prev => ({ ...prev, [membre.id]: nowPresent }))
+      setAllPresences(prev => ({ ...prev, [`${id}_${membre.id}`]: nowPresent }))
     } catch (e) { console.error(e) }
     setSaving(null)
   }
@@ -228,6 +301,11 @@ export default function PresenceDetail({ user, userData }) {
     let t = `Présence ${event.titre}${tagLabel} — ${formatDateFR(event.date)}\n\n`
     t += `✅ Présents (${presents.length})\n${presents.length ? presents.map(displayName).join('\n') : 'Aucun'}`
     t += `\n\n❌ Absents (${absents.length})\n${absents.length ? absents.map(displayName).join('\n') : 'Aucun'}`
+    t += `\n\n5 derniers / streak\n${tagFilteredMembres.map(m => {
+      const history = getMemberHistory(m.id)
+      const icons = history.last5.map(item => presenceSymbol(item.present)).join(' ')
+      return `${displayName(m)} : ${icons || '-'}`
+    }).join('\n')}`
     t += `\n\n👥 Total : ${tagFilteredMembres.length} — Taux : ${presencePercent} %`
     return t
   }
@@ -266,8 +344,9 @@ export default function PresenceDetail({ user, userData }) {
       eventDate: event.date,
       eventTags,
       groupLabel,
-      presents: presents.map(m => ({ id: m.id, displayName: displayName(m) })),
-      absents:  absents.map(m => ({ id: m.id, displayName: displayName(m) })),
+      presents: presents.map(m => ({ id: m.id, displayName: displayName(m), ...getMemberHistory(m.id) })),
+      absents:  absents.map(m => ({ id: m.id, displayName: displayName(m), ...getMemberHistory(m.id) })),
+      memberStreaks: tagFilteredMembres.map(m => ({ id: m.id, displayName: displayName(m), ...getMemberHistory(m.id) })),
       totalCount: tagFilteredMembres.length,
       presentCount: presents.length,
       presencePercent,
@@ -402,6 +481,7 @@ export default function PresenceDetail({ user, userData }) {
         ) : filteredMembres.map(m => {
           const present = presences[m.id] === true
           const isSaving = saving === m.id
+          const history = getMemberHistory(m.id)
           return (
             <div
               key={m.id}
@@ -421,6 +501,9 @@ export default function PresenceDetail({ user, userData }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName(m)}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                {history.last5.map(renderHistoryDot)}
               </div>
               <div style={{ width: 28, height: 28, borderRadius: 9, flexShrink: 0, background: present ? C.teal : C.surf3, border: present ? 'none' : `1px solid ${C.bord2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .2s, border-color .2s, transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s', transform: present ? 'scale(1)' : 'scale(0.9)', opacity: presenceLocked ? 0.58 : 1 }}>
                 {present && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7L5.5 10L11.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
