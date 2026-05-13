@@ -299,14 +299,14 @@ export default function PresenceDetail({ user, userData }) {
   function buildReportText(presents, absents) {
     const tagLabel = eventTags.length ? ` [${eventTags.join(', ')}]` : ''
     const separator = '\n────────────\n'
-    let t = `Présence ${event.titre}${tagLabel} — ${formatDateFR(event.date)}`
-    t += `${separator}✅ Présents (${presents.length})\n${presents.length ? presents.map(displayName).join('\n') : 'Aucun'}`
-    t += `${separator}❌ Absents (${absents.length})\n${absents.length ? absents.map(displayName).join('\n') : 'Aucun'}`
-    t += `${separator}5 derniers\n${tagFilteredMembres.map(m => {
+    const withHistory = m => {
       const history = getMemberHistory(m.id)
       const icons = history.last5.map(item => presenceSymbol(item.present)).join(' ')
-      return `${displayName(m)} : ${icons || '-'}`
-    }).join('\n')}`
+      return `${displayName(m)} ${icons}`.trim()
+    }
+    let t = `Présence ${event.titre}${tagLabel} — ${formatDateFR(event.date)}`
+    t += `${separator}✅ Présents (${presents.length})\n${presents.length ? presents.map(withHistory).join('\n') : 'Aucun'}`
+    t += `${separator}❌ Absents (${absents.length})\n${absents.length ? absents.map(withHistory).join('\n') : 'Aucun'}`
     t += `${separator}👥 Total : ${tagFilteredMembres.length} — Taux : ${presencePercent} %`
     return t
   }

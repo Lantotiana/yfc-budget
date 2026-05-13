@@ -883,7 +883,6 @@ export default function MessagesStaff({ user, userData }) {
           .slice(0, 3)
       : []
     const existingReactions = REACTIONS.filter(e => (message.reactions?.[e] || []).length > 0)
-    const memberStreaks = Array.isArray(message.memberStreaks) ? message.memberStreaks : []
 
     function renderPresenceDot(item, index) {
       const bg = item?.present === true ? '#22c55e' : '#ef4444'
@@ -896,6 +895,19 @@ export default function MessagesStaff({ user, userData }) {
           {item?.present === true ? <Check size={10} strokeWidth={3} /> : <X size={10} strokeWidth={3} />}
         </span>
       )
+    }
+
+    function renderPresencePeople(people) {
+      return people.map(person => (
+        <span key={person.id || person.displayName} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginRight: 10, marginBottom: 4 }}>
+          <span>{person.displayName}</span>
+          {(person.last5 || []).length > 0 && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {(person.last5 || []).map(renderPresenceDot)}
+            </span>
+          )}
+        </span>
+      ))
     }
 
     return (
@@ -942,7 +954,7 @@ export default function MessagesStaff({ user, userData }) {
               </div>
               {message.presents?.length > 0 && (
                 <div className="staff-presence-report-names">
-                  {message.presents.map(p => p.displayName).join(', ')}
+                  {renderPresencePeople(message.presents)}
                 </div>
               )}
             </div>
@@ -953,30 +965,10 @@ export default function MessagesStaff({ user, userData }) {
               </div>
               {message.absents?.length > 0 && (
                 <div className="staff-presence-report-names">
-                  {message.absents.map(p => p.displayName).join(', ')}
+                  {renderPresencePeople(message.absents)}
                 </div>
               )}
             </div>
-
-            {memberStreaks.length > 0 && (
-              <div className="staff-presence-report-box" style={{ background: 'rgba(99,102,241,.08)', borderColor: 'rgba(99,102,241,.18)' }}>
-                <div className="staff-presence-report-box-header" style={{ color: '#6366f1' }}>
-                  5 derniers / streak
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {memberStreaks.map(member => (
-                    <div key={member.id || member.displayName} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 'var(--font-xs)', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {member.displayName}
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        {(member.last5 || []).map(renderPresenceDot)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="staff-presence-report-rate">
               Taux de présence : <strong>{message.presencePercent ?? 0} %</strong>
