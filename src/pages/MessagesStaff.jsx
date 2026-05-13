@@ -529,11 +529,7 @@ export default function MessagesStaff({ user, userData }) {
     const location = cleanField(announcementForm.location, 120)
 
     if (!title) {
-      setAnnouncementError('Le titre de l’annonce est obligatoire.')
-      return
-    }
-    if (!details) {
-      setAnnouncementError('Les détails de l’annonce sont obligatoires.')
+      setAnnouncementError("Le titre de l’annonce est obligatoire.")
       return
     }
 
@@ -1408,7 +1404,7 @@ export default function MessagesStaff({ user, userData }) {
 
             <div className="staff-announcement-form-actions">
               <button type="button" onClick={() => !publishingAnnouncement && setShowAnnouncementForm(false)}>Annuler</button>
-              <button type="submit" disabled={publishingAnnouncement || !cleanField(announcementForm.title, MAX_ANNOUNCEMENT_TITLE) || !cleanMessage(announcementForm.details)}>
+              <button type="submit" disabled={publishingAnnouncement || !cleanField(announcementForm.title, MAX_ANNOUNCEMENT_TITLE)}>
                 {publishingAnnouncement ? <MoreHorizontal size={18} /> : <><Megaphone size={16} /> Publier l’annonce</>}
               </button>
             </div>
