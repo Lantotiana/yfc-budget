@@ -182,7 +182,7 @@ export default function Notifications({ user }) {
   }
 
   return (
-    <div className="page-container-locked sin" style={{ background: C.bg }}>
+    <div className="page-container-locked sin notifications-page" style={{ background: C.bg }}>
       <div
         className="textured-page-header desktop-hide-page-header"
         style={{

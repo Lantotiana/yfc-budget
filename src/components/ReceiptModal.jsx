@@ -62,7 +62,8 @@ function toWords(n) {
 function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/logo_yfc.png') {
   const fmtAr = n => Number(n||0).toLocaleString('fr-FR')+' Ar'
   const montant = receipt.montant
-  const motif   = receipt.motif
+  const objetDon = receipt.note || receipt.objetDon || tx?.note || '—'
+  const receiptTitle = receipt.title || receipt.receiptTitle || 'Reçu de Don'
   const donDate = fmtDate(receipt.txDate || tx?.date)
   const genDate = fmtDate(new Date().toISOString().slice(0,10))
   const w = toWords(montant)
@@ -71,7 +72,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/log
 
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reçu de don YFC</title></head>
+<title>${receiptTitle} YFC</title></head>
 <body style="margin:0;padding:24px 16px 40px;background:#F4F5FB;font-family:Arial,Helvetica,sans-serif">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:500px;margin:0 auto">
 <tr><td>
@@ -87,7 +88,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/log
       style="display:block;margin:0 auto 10px;object-fit:contain;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,0.10)" alt="YFC">
     <p style="margin:0 0 4px;font-size:9px;font-weight:700;color:#A0A4BE;
       letter-spacing:2.5px;text-transform:uppercase">YOUNG FOR CHRIST ITAOSY</p>
-    <p style="margin:0;font-size:21px;font-weight:800;color:#1A1C2E">Reçu de Don</p>
+    <p style="margin:0;font-size:21px;font-weight:800;color:#1A1C2E">${receiptTitle}</p>
     <div style="margin-top:8px">
       <span style="display:inline-block;padding:4px 14px;border-radius:20px;
         background:#FFBD59;font-size:11px;font-weight:700;color:#fff">
@@ -141,7 +142,7 @@ function buildEmailHtml(receipt, tx, logoUrl = 'https://young-for-christ.com/log
   <tr><td style="padding:14px 16px;border-bottom:1px solid rgba(0,0,0,0.07)">
     <p style="margin:0 0 5px;font-size:9px;font-weight:700;color:#A0A4BE;
       text-transform:uppercase;letter-spacing:1.5px">Objet du don</p>
-    <p style="margin:0;font-size:12px;color:#1A1C2E">${motif}</p>
+    <p style="margin:0;font-size:12px;color:#1A1C2E">${objetDon}</p>
   </td></tr>
 
   <!-- attestation -->
@@ -193,6 +194,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   const previewRef = useRef(null)
   const [step, setStep] = useState('loading')
   const [receipt, setReceipt] = useState(null)
+  const [receiptTitle, setReceiptTitle] = useState('Reçu de Don')
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
   const [donorPhone, setDonorPhone] = useState('')
@@ -274,6 +276,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
   }
 
   function openEditForm() {
+    setReceiptTitle(receipt?.title || receipt?.receiptTitle || 'Reçu de Don')
     setDonorName(receipt?.donorName || '')
     setDonorEmail(receipt?.donorEmail || '')
     setDonorPhone(receipt?.donorPhone || '')
@@ -288,6 +291,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
     setSaving(true)
     try {
       const base = {
+        title: receiptTitle.trim() || 'Reçu de Don',
         donorName: donorName.trim(),
         donorEmail: donorEmail.trim(),
         donorPhone: donorPhone.trim(),
@@ -306,6 +310,8 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
           ...base,
           montant: tx.montant,
           motif: tx.motif,
+          note: tx.note || '',
+          objetDon: tx.note || '',
           txDate: tx.date,
           createdBy: { uid: user?.uid||null, nom: userData?.nom||user?.displayName||'', email: user?.email||'' },
         })
@@ -370,7 +376,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
         canvas.toBlob(async blob => {
           try {
             const file = new File([blob],`recu-${receipt.receiptNumber}.png`,{type:'image/png'})
-            const sd = { files:[file], title:`Reçu de don ${receipt.receiptNumber}` }
+            const sd = { files:[file], title:`${receipt.title || receipt.receiptTitle || 'Reçu de Don'} ${receipt.receiptNumber}` }
             if (navigator.canShare?.(sd)) await navigator.share(sd)
             else await navigator.share({ title:'Reçu YFC', text: buildText() })
             await markReceiptSent(receipt.id,'share')
@@ -383,14 +389,15 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
 
   function buildText() {
     const fmtAr = n => Number(n||0).toLocaleString('fr-FR')+' Ar'
+    const textTitle = receipt.title || receipt.receiptTitle || 'Reçu de Don'
     return [
-      `📄 *Reçu de Don — Young For Christ Itaosy*`,
+      `📄 *${textTitle} — Young For Christ Itaosy*`,
       `N° ${receipt.receiptNumber}`,``,
       `👤 Donateur : ${receipt.donorName}`,
       `📅 Date : ${fmtLocalDate(receipt.txDate||tx.date)}`,
       `💚 Montant : *${fmtAr(receipt.montant)}*`,
       `💳 Paiement : ${receipt.paymentMethod}`,
-      `📝 Motif : ${receipt.motif}`,``,
+      `📝 Objet du don : ${receipt.note || receipt.objetDon || tx?.note || '—'}`,``,
       `✍️ Reçu par : ${receipt.responsible}${receipt.role?` (${receipt.role})`:''}`,
     ].filter(Boolean).join('\n')
   }
@@ -410,7 +417,7 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
         : logoYfcAsset
       await sendBrevoEmail({
         to: target,
-        subject: `Reçu de don YFC ${receipt.receiptNumber} — ${receipt.donorName}`,
+        subject: `${receipt.title || receipt.receiptTitle || 'Reçu de Don'} YFC ${receipt.receiptNumber} — ${receipt.donorName}`,
         htmlContent: buildEmailHtml(receipt, tx, logoUrl),
       })
       setFeedback('Email envoyé !')
@@ -512,6 +519,17 @@ export default function ReceiptModal({ tx, onClose, user, userData, currentMembe
                   Aucun reçu pour cette entrée. Remplissez les informations pour en générer un.
                 </div>
               )}
+
+              <div>
+                <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Titre du reçu</label>
+                <input
+                  value={receiptTitle}
+                  onChange={e => setReceiptTitle(e.target.value)}
+                  placeholder="Reçu de Don"
+                  className="form-input"
+                  style={{width:'100%'}}
+                />
+              </div>
 
               <div style={{position:'relative'}}>
                 <label style={{fontSize:12,fontWeight:600,color:C.t2,display:'block',marginBottom:6}}>Nom du donateur *</label>

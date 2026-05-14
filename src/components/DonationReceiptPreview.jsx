@@ -89,7 +89,8 @@ const DonationReceiptPreview = forwardRef(function DonationReceiptPreview({ rece
   const donDate = fmtDate(tx?.date || receipt?.txDate)
   const genDate = fmtDate(new Date().toISOString().slice(0, 10))
   const montant = tx?.montant ?? receipt?.montant
-  const motif = tx?.motif ?? receipt?.motif
+  const objetDon = tx?.note || receipt?.note || receipt?.objetDon || '—'
+  const receiptTitle = receipt?.title || receipt?.receiptTitle || 'Reçu de Don'
 
   const words = toFrenchWords(montant)
   const wordsCapital = words.charAt(0).toUpperCase() + words.slice(1)
@@ -140,7 +141,7 @@ const DonationReceiptPreview = forwardRef(function DonationReceiptPreview({ rece
         <div style={{ fontSize: 9, fontWeight: 700, color: light, letterSpacing: '2.5px', textTransform: 'uppercase', marginBottom: 5 }}>
           YOUNG FOR CHRIST ITAOSY
         </div>
-        <div style={{ fontSize: 21, fontWeight: 800, color: dark, letterSpacing: '-0.3px' }}>Reçu de Don</div>
+        <div style={{ fontSize: 21, fontWeight: 800, color: dark, letterSpacing: '-0.3px' }}>{receiptTitle}</div>
         <div style={{
           display: 'inline-block', marginTop: 8, padding: '4px 14px',
           borderRadius: 20, background: orange,
@@ -208,7 +209,7 @@ const DonationReceiptPreview = forwardRef(function DonationReceiptPreview({ rece
       {/* Motif */}
       <div style={{ padding: '14px 16px', borderBottom: `1px solid ${border}` }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: light, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 5 }}>Objet du don</div>
-        <div style={{ fontSize: 12, color: dark }}>{motif || '—'}</div>
+        <div style={{ fontSize: 12, color: dark }}>{objetDon}</div>
       </div>
 
       {/* Attestation */}

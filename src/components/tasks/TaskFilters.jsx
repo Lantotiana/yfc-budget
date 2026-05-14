@@ -38,7 +38,7 @@ export default function TaskFilters({ filters, setFilters, membersWithTasks = []
     <div className="task-filter-bar">
 
       {/* Search bar */}
-      <div className="tx-search-wrapper">
+      <div className="tx-search-wrapper desktop-local-search">
         <div className="tx-search-icon"><Search size={14} /></div>
         <input
           className="tx-search-input"

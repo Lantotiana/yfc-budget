@@ -406,7 +406,7 @@ function ActionCard({ action, status, onConfirm, onCancel }) {
   )
 }
 
-export default function Fampaherezana({ user }) {
+export default function Fampaherezana({ user, embedded = false }) {
   const navigate = useNavigate()
   const { C } = useTheme()
   const [messages, setMessages] = useState(() => loadSavedChat(user?.uid)?.messages || [{ role: 'assistant', text: WELCOME }])
@@ -473,11 +473,13 @@ export default function Fampaherezana({ user }) {
   }
 
   return (
-    <div className="famp-page" style={{ background: C.bg }}>
+    <div className={`famp-page${embedded ? ' embedded' : ''}`} style={{ background: C.bg }}>
       <header className="famp-header">
-        <button className="famp-back" onClick={() => navigate('/')} aria-label="Retour">
-          <ArrowLeft size={20} />
-        </button>
+        {!embedded && (
+          <button className="famp-back" onClick={() => navigate('/')} aria-label="Retour">
+            <ArrowLeft size={20} />
+          </button>
+        )}
         <div className="famp-title-wrap">
           <div className="famp-kicker">YFC App</div>
           <h1>Assistant virtuel</h1>

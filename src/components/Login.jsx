@@ -7,6 +7,7 @@ import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
 import { createNotification } from '../notifications'
 import { ADMIN_EMAIL } from '../constants'
 import { useTranslation } from 'react-i18next'
+import logoYfc from '../assets/logo_yfc.png'
 
 const hero = '/hero.webp'
 
@@ -310,9 +311,12 @@ export default function Login() {
         </div>
 
         <div className="login-container" style={{ maxWidth: '360px' }}>
+          <div className="login-form-logo">
+            <img src={logoYfc} alt="YFC" />
+          </div>
           <div className="rounded-20 p-12 login-form-card">
 
-          <div className="login-tab-row">
+          <div className="login-tab-row" data-active={mode}>
             <button onClick={() => { setMode('login'); setMessage('') }} className={`login-tab ${mode === 'login' ? 'login-tab-active' : ''}`}>
               {t('login.tabLogin')}
             </button>

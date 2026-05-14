@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { Search, X } from 'lucide-react'
 import TransactionForm from '../components/TransactionForm'
 import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import { canManageBudgetRole, sameEmail } from '../utils/access'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -18,6 +20,7 @@ export default function Budget({ user, userData }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const { detailType } = useParams()
   const [transactions, setTransactions] = useState([])
   const [membres, setMembres] = useState([])
@@ -25,6 +28,61 @@ export default function Budget({ user, userData }) {
   const [filterMonth, setFilterMonth] = useState('')
   const [filterType, setFilterType] = useState('')
   const [editTx, setEditTx] = useState(null)
+  const [search, setSearch] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchExiting, setSearchExiting] = useState(false)
+  const searchExitTimer = useRef(null)
+
+  function activateSearch() {
+    clearTimeout(searchExitTimer.current)
+    setSearchExiting(false)
+    setIsSearching(true)
+  }
+
+  function deactivateSearch() {
+    if (search) return
+    setIsSearching(false)
+    setSearchExiting(true)
+    searchExitTimer.current = setTimeout(() => setSearchExiting(false), 420)
+  }
+
+  function clearSearch() {
+    setSearch('')
+    setIsSearching(false)
+    setSearchExiting(true)
+    searchExitTimer.current = setTimeout(() => setSearchExiting(false), 420)
+  }
+
+  const searchInputProps = {
+    onFocus: activateSearch,
+    onBlur: deactivateSearch,
+  }
+
+  const desktopSearch = useMemo(() => (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        onFocus={activateSearch}
+        onBlur={deactivateSearch}
+        placeholder="Rechercher une transaction..."
+        style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+      />
+      {search && (
+        <button type="button" className="tx-search-clear" onClick={clearSearch}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search, isSearching])
+
+  useEffect(() => {
+    setToolbar(prev => ({ ...prev, search: desktopSearch }))
+    return () => setToolbar(prev => ({ ...prev, search: null }))
+  }, [desktopSearch, setToolbar])
   const showDetail = detailType === 'entrees' ? 'entree' : detailType === 'depenses' ? 'depense' : null
 
 
@@ -135,28 +193,50 @@ export default function Budget({ user, userData }) {
     />
   )
 
+  const searchClass = isSearching ? ' budget-searching' : searchExiting ? ' budget-search-exiting' : ''
+
   return (
-    <div className="sin budget-page" style={{ minHeight: '100vh', background: C.bg }}>
+    <div className={`sin budget-page scroll-bottom-safe${searchClass}`} style={{ minHeight: '100vh', background: C.bg }}>
       {/* Header */}
       <div className="f1 textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
         <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('budget.title')}</div>
         <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Young For Christ</div>
       </div>
 
-      {/* Entrées / Dépenses */}
-      <div className="f2" style={{ padding: '0 20px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div onClick={() => navigate('/budget/entrees')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.entrees')}</div>
-          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
-        </div>
-        <div onClick={() => navigate('/budget/depenses')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.depenses')}</div>
-          <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.coral }}>{fmt(allDepenses)}</div>
+      {/* Barre de recherche mobile */}
+      <div className="desktop-local-search" style={{ padding: '0 20px' }}>
+        <div className="tx-search-wrapper" style={{ marginBottom: 0 }}>
+          <div className="tx-search-icon"><Search size={14} /></div>
+          <input
+            className="tx-search-input"
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onFocus={activateSearch}
+            onBlur={deactivateSearch}
+            placeholder="Rechercher une transaction..."
+            style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+          />
+          {search && (
+            <button type="button" className="tx-search-clear" onClick={clearSearch}>
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Solde */}
-      <div className="f3" style={{ padding: '0 20px 12px' }}>
+      {/* Entrées / Dépenses + Solde */}
+      <div className="budget-stats-block" style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div onClick={() => navigate('/budget/entrees')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.entrees')}</div>
+            <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.teal }}>{fmt(allEntrees)}</div>
+          </div>
+          <div onClick={() => navigate('/budget/depenses')} style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', cursor: 'pointer' }}>
+            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6 }}>{t('budget.depenses')}</div>
+            <div style={{ fontSize: 'var(--font-md)', fontWeight: 700, color: C.coral }}>{fmt(allDepenses)}</div>
+          </div>
+        </div>
         <div style={{ background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 'var(--font-xs)', color: C.t3, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>{t('budget.soldeActuel')}</div>
@@ -170,10 +250,14 @@ export default function Budget({ user, userData }) {
         </div>
       </div>
 
-
-      <div className="scroll-bottom-safe" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Formulaire */}
+      <div className="budget-form-block">
         {loading && <div className="loading">{t('common.loading')}</div>}
         <TransactionForm onAdd={addTransaction} canManageBudget={canManageBudget} />
+      </div>
+
+      {/* Historique */}
+      <div className="budget-list-block">
         <TransactionList
           transactions={filtered}
           months={months}
@@ -190,6 +274,8 @@ export default function Budget({ user, userData }) {
           user={user}
           userData={userData}
           currentMember={currentMember}
+          search={search}
+          onSearchChange={setSearch}
         />
       </div>
     </div>

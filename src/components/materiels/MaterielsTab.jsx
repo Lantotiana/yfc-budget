@@ -8,6 +8,7 @@ import MaterielCard from './MaterielCard'
 import MaterielFormModal from './MaterielFormModal'
 import MaterielDetailModal from './MaterielDetailModal'
 import { computeStockStatus } from './materielHelpers'
+import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
 
 function getDisplayName(member) {
   return member?.nomPrefere || member?.prenoms || member?.nom || ''
@@ -27,6 +28,7 @@ function buildSearchValue(item) {
 }
 
 export default function MaterielsTab({ user, userData, C, onAddReady }) {
+  const { setToolbar } = useDesktopToolbar()
   const [materiels, setMateriels] = useState([])
   const [members, setMembers] = useState([])
   const [search, setSearch] = useState('')
@@ -85,6 +87,30 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
   useEffect(() => {
     onAddReady?.(canManage ? () => { setEditing(null); setShowForm(true) } : null)
   }, [canManage, onAddReady])
+
+  const desktopSearch = useMemo(() => (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        placeholder="Rechercher un matériel..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+      />
+      {search && (
+        <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search])
+
+  useEffect(() => {
+    setToolbar(prev => ({ ...prev, search: desktopSearch }))
+    return () => setToolbar(prev => ({ ...prev, search: null }))
+  }, [desktopSearch, setToolbar])
 
   const sections = useMemo(() => {
     return [...new Set(materiels.map(m => m.section).filter(Boolean))].sort()
@@ -255,7 +281,7 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-      <div className="tx-search-wrapper" style={{ marginBottom: 8, flexShrink: 0 }}>
+      <div className="tx-search-wrapper desktop-local-search" style={{ marginBottom: 8, flexShrink: 0 }}>
         <div className="tx-search-icon"><Search size={14} /></div>
         <input
           className="tx-search-input"

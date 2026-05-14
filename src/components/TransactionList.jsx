@@ -8,6 +8,7 @@ import { Search, X, Download, Share2, FileText } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import ReceiptModal from './ReceiptModal'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
 const DEFAULT_MOTIFS = {
   entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
@@ -41,10 +42,11 @@ function fuzzyMatch(text, query) {
 export default function TransactionList({
   transactions, months, filterMonth, filterType,
   onFilterMonth, onFilterType, onDelete, allTransactions = [], canManageBudget = true, onShared,
-  user, userData, currentMember
+  user, userData, currentMember, search: searchProp, onSearchChange
 }) {
   const { t } = useTranslation()
   const { C } = useTheme()
+  const { setToolbar } = useDesktopToolbar()
   const [selected, setSelected] = useState(null)
   const [receiptTx, setReceiptTx] = useState(null)
   const [editType, setEditType] = useState('entree')
@@ -54,7 +56,9 @@ export default function TransactionList({
   const [editMotifCustom, setEditMotifCustom] = useState('')
   const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
-  const [search, setSearch] = useState('')
+  const [searchInternal, setSearchInternal] = useState('')
+  const search = searchProp !== undefined ? searchProp : searchInternal
+  const setSearch = onSearchChange ?? setSearchInternal
   const [page, setPage] = useState(1)
   const [shareFeedback, setShareFeedback] = useState('')
 
@@ -73,6 +77,31 @@ export default function TransactionList({
   useEffect(() => {
     setPage(1)
   }, [filterMonth, filterType, search])
+
+
+  const desktopSearch = useMemo(() => searchProp !== undefined ? null : (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        type="text"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Rechercher une transaction..."
+        className="tx-search-input"
+        style={{ paddingLeft: '38px', paddingRight: search ? '38px' : '12px' }}
+      />
+      {search && (
+        <button type="button" onClick={() => setSearch('')} className="tx-search-clear">
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search, searchProp])
+
+  useEffect(() => {
+    setToolbar(prev => ({ ...prev, search: desktopSearch }))
+    return () => setToolbar(prev => ({ ...prev, search: null }))
+  }, [desktopSearch, setToolbar])
 
   const searched = useMemo(() => {
     if (!search.trim()) return transactions
@@ -396,25 +425,6 @@ export default function TransactionList({
       <div className="card">
         <div className="card-title">{t('budget.historique')}</div>
 
-        <div className="tx-search-wrapper">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={t('membres.rechercher')}
-            className="tx-search-input"
-            style={{paddingLeft: '38px', paddingRight: search ? '38px' : '12px'}}
-          />
-          <div className="tx-search-icon"><Search size={14} /></div>
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="tx-search-clear"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
 
         <div className="filter-row">
           <select value={filterMonth} onChange={e => onFilterMonth(e.target.value)}>
@@ -466,10 +476,10 @@ export default function TransactionList({
             <div className={`tx-amount ${tx.type}`}>
               {tx.type === 'depense' ? '−' : '+'}{fmt(tx.montant)}
             </div>
-            {tx.type === 'entree' && normalize(tx.motif || '').includes('don') && (
+            {tx.type === 'entree' && (
               <button
                 className="tx-receipt-btn"
-                title="Reçu de don"
+                title="Générer un reçu"
                 onClick={e => { e.stopPropagation(); setReceiptTx(tx) }}
               >
                 <FileText size={13} />

@@ -101,10 +101,29 @@ export default function DocumentsPanel({
     </div>
   ), [uploading, t])
 
+  const desktopSearch = useMemo(() => (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        placeholder="Rechercher un document..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+      />
+      {search && (
+        <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search])
+
   useEffect(() => {
-    setToolbar({ actions: desktopActions })
-    return () => setToolbar({ actions: null })
-  }, [desktopActions, setToolbar])
+    setToolbar({ actions: desktopActions, search: desktopSearch })
+    return () => setToolbar({ actions: null, search: null })
+  }, [desktopActions, desktopSearch, setToolbar])
 
   useEffect(() => {
     if (embedded && onAddReady) onAddReady(() => fileRef.current?.click())
@@ -321,7 +340,7 @@ export default function DocumentsPanel({
   return (
     <>
       <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleUpload} />
-      <div className="tx-search-wrapper" style={{ marginBottom: 12 }}>
+      <div className="tx-search-wrapper desktop-local-search" style={{ marginBottom: 12 }}>
         <div className="tx-search-icon"><Search size={14} /></div>
         <input
           className="tx-search-input"

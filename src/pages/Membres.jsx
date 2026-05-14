@@ -242,10 +242,29 @@ export default function Membres({ user, userData }) {
     </>
   ), [membres])
 
+  const desktopSearch = useMemo(() => (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder={t('membres.rechercher')}
+        style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+      />
+      {search && (
+        <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search, t])
+
   useEffect(() => {
-    setToolbar({ actions: desktopActions })
-    return () => setToolbar({ actions: null })
-  }, [desktopActions, setToolbar])
+    setToolbar({ actions: desktopActions, search: desktopSearch })
+    return () => setToolbar({ actions: null, search: null })
+  }, [desktopActions, desktopSearch, setToolbar])
 
   async function addNewTag() {
     const tag = newTagInput.trim()
@@ -292,7 +311,7 @@ export default function Membres({ user, userData }) {
 
       {/* Header */}
       <div className="textured-page-header" style={{ '--header-color': '#f43f5e', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
-        <div className="desktop-page-header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="desktop-page-header-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('membres.title')}</div>
             <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{membres.length} membre{membres.length !== 1 ? 's' : ''}</div>
@@ -311,8 +330,8 @@ export default function Membres({ user, userData }) {
       </div>
 
       {/* Filtres + Liste */}
-      <div className="page-content" style={{ paddingBottom: '5rem' }}>
-        <div className="tx-search-wrapper">
+      <div className="page-content" style={{ paddingBottom: '5rem', paddingTop: '10px' }}>
+        <div className="tx-search-wrapper desktop-local-search">
           <div className="tx-search-icon"><Search size={14} /></div>
           <input
             className="tx-search-input"

@@ -118,7 +118,7 @@ export default function VerifyReceipt() {
               <Row label="Date du don"     value={fmtDate(receipt.txDate)} />
               <Row label="Montant"         value={fmtAmount(receipt.montant)} />
               <Row label="Mode paiement"   value={receipt.paymentMethod} />
-              <Row label="Objet"           value={receipt.motif} />
+              <Row label="Objet"           value={receipt.note || receipt.objetDon || '—'} />
               <Row label="Responsable"     value={`${receipt.responsible}${receipt.role ? ` — ${receipt.role}` : ''}`} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingTop: 11 }}>
                 <span style={{ fontSize: 12, color: '#6B6F8A', fontWeight: 500 }}>Émis le</span>

@@ -158,9 +158,35 @@ export default function Dashboard({ user }) {
     }, { upcomingCount: 0, finishedCount: 0 })
   }, [evenements])
 
+  const budgetBars = useMemo(() => {
+    const now = new Date()
+    const months = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (6 - index), 1)
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      return { key, label: date.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''), entree: 0, depense: 0 }
+    })
+    const byKey = new Map(months.map(item => [item.key, item]))
+    transactions.forEach(tx => {
+      const bucket = byKey.get(String(tx.date || '').slice(0, 7))
+      if (!bucket) return
+      if (tx.type === 'entree') bucket.entree += Number(tx.montant || 0)
+      if (tx.type === 'depense') bucket.depense += Number(tx.montant || 0)
+    })
+    const max = Math.max(1, ...months.map(item => Math.max(item.entree, item.depense)))
+    return months.map(item => ({
+      ...item,
+      entreeHeight: Math.max(8, Math.round((item.entree / max) * 100)),
+      depenseHeight: Math.max(8, Math.round((item.depense / max) * 100)),
+    }))
+  }, [transactions])
+
+  const taskCompletion = tasks.length ? Math.round((taskStats.done / tasks.length) * 100) : 0
+  const activeTasks = tasks.filter(task => task.status !== 'done').slice(0, 5)
+  const staffPreview = membres.filter(m => m.staff === true || m.staffRole).slice(0, 5)
+
   if (isDesktop) {
     return (
-      <div className="desktop-dashboard-page">
+      <div className="desktop-dashboard-page dashboard-analytics">
         <div className="desktop-page-intro desktop-hide-page-header">
           <div>
             <span>Vue générale</span>
@@ -168,6 +194,146 @@ export default function Dashboard({ user }) {
             <p>Suivi centralisé des membres, finances, événements et activités staff.</p>
           </div>
           <button type="button" onClick={() => navigate('/budget')}>Voir le budget</button>
+        </div>
+
+        <div className="dashboard-hero-row">
+          <div>
+            <h1>Dashboard</h1>
+            <p>Vue claire des finances, membres, événements et tâches YFC.</p>
+          </div>
+          <button type="button" onClick={() => navigate('/budget')}>Voir le budget</button>
+        </div>
+
+        <div className="dashboard-kpi-grid">
+          <button type="button" className="dashboard-kpi-card primary" onClick={() => navigate('/budget')}>
+            <span>Solde actuel</span>
+            <strong>{fmt(solde)}</strong>
+            <small>{transactions.length} opérations enregistrées</small>
+          </button>
+          <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/membres')}>
+            <span>Membres</span>
+            <strong>{membres.length}</strong>
+            <small>{staffCount} staffs actifs</small>
+          </button>
+          <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/evenements')}>
+            <span>Événements</span>
+            <strong>{upcomingCount}</strong>
+            <small>{finishedCount} terminés</small>
+          </button>
+          <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/tasks')}>
+            <span>Tâches actives</span>
+            <strong>{taskStats.todo + taskStats.inProgress}</strong>
+            <small>{taskStats.overdue} en retard</small>
+          </button>
+        </div>
+
+        <div className="dashboard-analytics-grid">
+          <section className="dashboard-panel budget-chart-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Analyse budget</h2><p>Entrées et dépenses sur 7 mois</p></div>
+            </div>
+            <div className="dashboard-bars">
+              {budgetBars.map(item => (
+                <div className="dashboard-bar-item" key={item.key}>
+                  <div className="dashboard-bar-track">
+                    <span className="income" style={{ height: `${item.entreeHeight}%` }} />
+                    <span className="expense" style={{ height: `${item.depenseHeight}%` }} />
+                  </div>
+                  <small>{item.label}</small>
+                </div>
+              ))}
+            </div>
+            <div className="dashboard-chart-legend">
+              <span><i className="income" /> Entrées {fmt(totalEntrees)}</span>
+              <span><i className="expense" /> Dépenses {fmt(totalDepenses)}</span>
+            </div>
+          </section>
+
+          <section className="dashboard-panel event-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Prochain événement</h2><p>Planning YFC</p></div>
+            </div>
+            <div className="dashboard-event-card">
+              <CalendarDays size={22} />
+              <strong>{nextEvent?.nom || 'Aucun événement à venir'}</strong>
+              <span>{nextEvent ? `${toDisplayDate(nextEvent.dateDebut)}${nextEvent.lieu ? ` - ${nextEvent.lieu}` : ''}` : 'Ajoutez un événement pour alimenter le planning.'}</span>
+            </div>
+          </section>
+
+          <section className="dashboard-panel task-progress-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Progression tâches</h2><p>{tasks.length} tâches suivies</p></div>
+            </div>
+            <div className="dashboard-donut" style={{ '--progress': `${taskCompletion * 3.6}deg` }}>
+              <div><strong>{taskCompletion}%</strong><span>terminé</span></div>
+            </div>
+            <div className="dashboard-chart-legend">
+              <span><i className="income" /> Terminé</span>
+              <span><i className="pending" /> En cours</span>
+            </div>
+          </section>
+
+          <section className="dashboard-panel recent-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Transactions récentes</h2><p>Derniers mouvements budget</p></div>
+              <button type="button" onClick={() => navigate('/budget')}>Voir tout</button>
+            </div>
+            <div className="dashboard-list">
+              {loading ? (
+                <div className="desktop-empty">{t('common.loading')}</div>
+              ) : recentTransactions.length === 0 ? (
+                <div className="desktop-empty">{t('budget.aucuneTransaction')}</div>
+              ) : recentTransactions.slice(0, 3).map(tx => {
+                const isEntree = tx.type === 'entree'
+                return (
+                  <button key={tx.id} type="button" onClick={() => navigate('/budget')} className="dashboard-list-row">
+                    <span className={isEntree ? 'income' : 'expense'}>{isEntree ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}</span>
+                    <div>
+                      <strong>{tx.motif || 'Transaction'}</strong>
+                      <small>{toDisplayDate(tx.date)}</small>
+                    </div>
+                    <em className={isEntree ? 'positive' : 'negative'}>{isEntree ? '+' : '-'}{fmt(tx.montant)}</em>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          <section className="dashboard-panel staff-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Staff</h2><p>Collaboration</p></div>
+              <button type="button" onClick={() => navigate('/membres')}>Gérer</button>
+            </div>
+            <div className="dashboard-list">
+              {(staffPreview.length ? staffPreview : membres.slice(0, 5)).map(m => (
+                <button key={m.id} type="button" onClick={() => navigate('/membres')} className="dashboard-list-row member">
+                  <span>{(m.nom || '?')[0].toUpperCase()}</span>
+                  <div>
+                    <strong>{m.nom} {m.prenoms}</strong>
+                    <small>{m.staffRole || (m.staff ? 'Staff' : 'Membre')}</small>
+                  </div>
+                </button>
+              ))}
+              {membres.length === 0 && <div className="desktop-empty">{t('membres.aucunMembre')}</div>}
+            </div>
+          </section>
+
+          <section className="dashboard-panel active-tasks-panel">
+            <div className="dashboard-panel-head">
+              <div><h2>Tâches en cours</h2><p>Priorités opérationnelles</p></div>
+            </div>
+            <div className="dashboard-list">
+              {activeTasks.length ? activeTasks.map(task => (
+                <button key={task.id} type="button" onClick={() => navigate('/tasks')} className="dashboard-list-row task">
+                  <span><ClipboardList size={15} /></span>
+                  <div>
+                    <strong>{task.title}</strong>
+                    <small>{task.status === 'in_progress' ? 'En cours' : 'À faire'}</small>
+                  </div>
+                </button>
+              )) : <div className="desktop-empty">Aucune tâche active</div>}
+            </div>
+          </section>
         </div>
 
         <div className="desktop-stats-grid">

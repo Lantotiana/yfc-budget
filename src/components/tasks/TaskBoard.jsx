@@ -9,6 +9,8 @@ import TaskForm from './TaskForm'
 import Confetti from './Confetti'
 import Portal from '../Portal'
 import useMediaQuery from '../../hooks/useMediaQuery'
+import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
+import { Search, X } from 'lucide-react'
 import {
   TASK_COLUMNS,
   canCreateTasks,
@@ -37,6 +39,7 @@ export default function TaskBoard({
   deleteTask,
 }) {
   const { t } = useTranslation()
+  const { setToolbar } = useDesktopToolbar()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ search: '', assignee: [], priority: 'all', mine: false, overdue: false })
@@ -110,6 +113,34 @@ export default function TaskBoard({
   }, {}), [filteredTasks])
 
   const isFiltered = filters.search.trim() !== '' || filters.assignee.length > 0 || filters.priority !== 'all' || filters.overdue
+
+  const desktopSearch = useMemo(() => (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        placeholder={t('tasks.searchPlaceholder')}
+        value={filters.search}
+        onChange={e => setFilters(prev => ({ ...prev, search: e.target.value }))}
+        style={{ paddingLeft: 38, paddingRight: filters.search ? 38 : 12 }}
+      />
+      {filters.search && (
+        <button
+          type="button"
+          className="tx-search-clear"
+          onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
+        >
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [filters.search, t])
+
+  useEffect(() => {
+    setToolbar(prev => ({ ...prev, search: desktopSearch }))
+    return () => setToolbar(prev => ({ ...prev, search: null }))
+  }, [desktopSearch, setToolbar])
 
   async function handleCreate(payload) {
     await createTask(payload)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Bell,
+  Bot,
   CalendarCheck,
   CalendarDays,
   ClipboardList,
@@ -8,18 +9,21 @@ import {
   FileText,
   LayoutDashboard,
   MessageCircle,
-  Search,
   Settings,
   ShieldCheck,
   Users,
   Wallet,
+  X,
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { ADMIN_EMAIL } from '../../constants'
 import { countUnseenNotifications, getNotificationSeenAt } from '../../utils/notificationUtils'
 import { normalizeAccessText } from '../../utils/access'
+import MessagesStaff from '../../pages/MessagesStaff'
+import Fampaherezana from '../../pages/Fampaherezana'
 
 const adminRoles = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
@@ -30,7 +34,6 @@ const searchableItems = [
   { label: 'Présences', path: '/presences', Icon: CalendarCheck, keywords: 'presence réunion absent présent événement présence' },
   { label: 'Événements', path: '/evenements', Icon: CalendarDays, keywords: 'agenda calendrier date lieu planning' },
   { label: 'Tâches', path: '/tasks', Icon: ClipboardList, keywords: 'kanban tache todo deadline priorite assigne' },
-  { label: 'Messages staff', path: '/messages', Icon: MessageCircle, keywords: 'message annonce discussion mention' },
   { label: 'Documents et matériels', path: '/documents', Icon: FileText, keywords: 'fichier document upload pdf image materiel stock emprunt retour inventaire' },
   { label: 'Paramètres', path: '/parametres', Icon: Settings, keywords: 'profil thème mot de passe réglages' },
   { label: 'Administration', path: '/admin', Icon: ShieldCheck, keywords: 'admin approbation utilisateurs roles' },
@@ -59,6 +62,8 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
   const location = useLocation()
   const [search, setSearch] = useState('')
   const [notifCount, setNotifCount] = useState(0)
+  const [showMessages, setShowMessages] = useState(false)
+  const [showAssistant, setShowAssistant] = useState(false)
 
   const displayName = userData?.nom || user?.displayName || user?.email || 'Staff'
   const initials = displayName.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
@@ -174,39 +179,21 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
           <strong>{toolbar?.title || pageTitle}</strong>
         </div>
 
-        <div className="desktop-search-wrap">
-          <div className="desktop-search">
-            <Search size={17} />
-            <input
-              type="search"
-              placeholder="Rechercher membre, budget, présence, document..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={onSearchKeyDown}
-            />
-          </div>
-          {search.trim() && (
-            <div className="desktop-search-results">
-              {results.length === 0 ? (
-                <div className="desktop-search-empty">Aucun résultat</div>
-              ) : results.map(item => (
-                <button key={`${item.label}-${item.path}`} type="button" onClick={() => openResult(item)}>
-                  <item.Icon size={16} />
-                  <span>
-                    {item.label}
-                    <em>{item.type}</em>
-                  </span>
-                  <small>{item.detail}</small>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {toolbar?.search && <div className="desktop-page-search">{toolbar.search}</div>}
 
         {toolbar?.actions && <div className="desktop-page-actions">{toolbar.actions}</div>}
       </div>
 
       <div className="desktop-top-actions">
+        <button type="button" className={`desktop-icon-btn${showAssistant ? ' active' : ''}`} onClick={() => { setShowAssistant(v => !v); setShowMessages(false) }} aria-label="Assistant IA">
+          <Bot size={18} />
+        </button>
+        <button type="button" className="desktop-icon-btn" onClick={() => navigate('/parametres')} aria-label="Paramètres">
+          <Settings size={18} />
+        </button>
+        <button type="button" className={`desktop-icon-btn${showMessages ? ' active' : ''}`} onClick={() => { setShowMessages(v => !v); setShowAssistant(false) }} aria-label="Messages">
+          <MessageCircle size={18} />
+        </button>
         <button type="button" className="desktop-icon-btn" onClick={() => navigate('/notifications')} aria-label="Notifications" style={{ position: 'relative' }}>
           <Bell size={18} />
           {notifCount > 0 && (
@@ -215,23 +202,32 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
             </span>
           )}
         </button>
-        <button type="button" className="desktop-icon-btn" onClick={() => navigate('/messages')} aria-label="Messages">
-          <MessageCircle size={18} />
+        <button type="button" onClick={() => navigate('/parametres')} aria-label="Mon profil" style={{ padding: 0, width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid var(--bord)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {userData?.photoURL || user?.photoURL ? (
+            <img src={userData?.photoURL || user?.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+          ) : (
+            <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--accent)', color: '#fff', fontWeight: 700, fontSize: 13, borderRadius: '50%' }}>
+              {initials || 'YF'}
+            </span>
+          )}
         </button>
-        <div className="desktop-user-chip">
-          <span>
-            {userData?.photoURL || user?.photoURL ? (
-              <img src={userData?.photoURL || user?.photoURL} alt="" />
-            ) : (
-              initials || 'YF'
-            )}
-          </span>
-          <div>
-            <strong>{displayName}</strong>
-            <small>{currentMember?.staffRole || userData?.role || 'Staff'}</small>
-          </div>
-        </div>
       </div>
+      {showMessages && createPortal((
+        <div className="desktop-message-modal" role="dialog" aria-label="Messages">
+          <button type="button" className="desktop-message-close" onClick={() => setShowMessages(false)} aria-label="Fermer les messages">
+            <X size={16} />
+          </button>
+          <MessagesStaff user={user} userData={userData} embedded />
+        </div>
+      ), document.body)}
+      {showAssistant && createPortal((
+        <div className="desktop-message-modal desktop-assistant-modal" role="dialog" aria-label="Assistant IA">
+          <button type="button" className="desktop-message-close" onClick={() => setShowAssistant(false)} aria-label="Fermer l'assistant">
+            <X size={16} />
+          </button>
+          <Fampaherezana user={user} embedded />
+        </div>
+      ), document.body)}
     </header>
   )
 }

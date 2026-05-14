@@ -105,7 +105,7 @@ function formatAnnouncementDate(value) {
 }
 
 
-export default function MessagesStaff({ user, userData }) {
+export default function MessagesStaff({ user, userData, embedded = false }) {
   const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
@@ -178,9 +178,10 @@ export default function MessagesStaff({ user, userData }) {
   ), [])
 
   useEffect(() => {
+    if (embedded) return undefined
     setToolbar({ actions: desktopActions })
     return () => setToolbar({ actions: null })
-  }, [desktopActions, setToolbar])
+  }, [desktopActions, embedded, setToolbar])
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => {
@@ -1211,70 +1212,78 @@ export default function MessagesStaff({ user, userData }) {
   }
 
   return (
-    <div className="staff-messages-page sin" style={{ background: C.bg }}>
-      <header className="staff-messages-header textured-page-header desktop-hide-page-header" style={{ '--header-color': '#10b981', padding: '20px 20px 14px', paddingTop: 'max(20px, env(safe-area-inset-top))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button
-              type="button"
-              className="staff-header-avatar"
-              onClick={() => groupPhotoInputRef.current?.click()}
-              aria-label="Changer la photo du groupe"
-              title="Changer la photo du groupe"
-            >
-              {uploadingGroupPhoto ? (
-                <MoreHorizontal size={18} />
-              ) : groupPhotoURL ? (
-                <img src={groupPhotoURL} alt="" />
-              ) : (
-                <StaffHeaderIcon size={18} />
-              )}
-            </button>
+    <div className={`staff-messages-page sin${embedded ? ' embedded' : ''}${showSearch ? ' searching' : ''}`} style={{ background: C.bg }}>
+      <header className={`staff-messages-header textured-page-header${embedded ? '' : ' desktop-hide-page-header'}`} style={{ '--header-color': '#10b981', padding: '14px 16px', paddingTop: embedded ? 14 : 'max(20px, env(safe-area-inset-top))' }}>
+        {showSearch ? (
+          <div className="staff-message-search-inline" onClick={e => e.stopPropagation()}>
+            <Search size={15} style={{ flexShrink: 0, color: 'var(--text-muted)' }} />
             <input
-              ref={groupPhotoInputRef}
-              type="file"
-              accept="image/*"
-              onChange={updateGroupPhoto}
-              style={{ display: 'none' }}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher un message..."
+              autoFocus
             />
-            <div>
-              <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('messages.title')}</div>
-              <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{staffUsers.length} membre{staffUsers.length !== 1 ? 's' : ''}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
               type="button"
-              className="staff-header-icon"
-              onClick={() => setShowAnnouncementForm(true)}
-              aria-label="Créer une annonce"
-              style={{ color: '#10b981' }}
+              onClick={() => { setShowSearch(false); setSearch('') }}
+              aria-label="Fermer la recherche"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-muted)', padding: 4 }}
             >
-              <Megaphone size={19} />
-            </button>
-            <button
-              type="button"
-              className={`staff-header-icon${showSearch ? ' active' : ''}`}
-              onClick={() => setShowSearch(v => !v)}
-              aria-label="Rechercher un message"
-            >
-              <Search size={19} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {(showSearch || search) && (
-        <div className="staff-message-search" onClick={e => e.stopPropagation()}>
-          <Search size={15} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('common.search') + '...'} autoFocus />
-          {search && (
-            <button type="button" onClick={() => setSearch('')} aria-label="Effacer la recherche">
               <X size={15} />
             </button>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                type="button"
+                className="staff-header-avatar"
+                onClick={() => groupPhotoInputRef.current?.click()}
+                aria-label="Changer la photo du groupe"
+                title="Changer la photo du groupe"
+              >
+                {uploadingGroupPhoto ? (
+                  <MoreHorizontal size={18} />
+                ) : groupPhotoURL ? (
+                  <img src={groupPhotoURL} alt="" />
+                ) : (
+                  <StaffHeaderIcon size={18} />
+                )}
+              </button>
+              <input
+                ref={groupPhotoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={updateGroupPhoto}
+                style={{ display: 'none' }}
+              />
+              <div>
+                <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>{t('messages.title')}</div>
+                <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{staffUsers.length} membre{staffUsers.length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                type="button"
+                className="staff-header-icon"
+                onClick={() => setShowAnnouncementForm(true)}
+                aria-label="Créer une annonce"
+                style={{ color: '#10b981' }}
+              >
+                <Megaphone size={19} />
+              </button>
+              <button
+                type="button"
+                className="staff-header-icon"
+                onClick={() => setShowSearch(true)}
+                aria-label="Rechercher un message"
+              >
+                <Search size={19} />
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
 
       {pinnedMessage && (
         <section className="staff-pinned-card">

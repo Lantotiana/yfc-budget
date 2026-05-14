@@ -1,14 +1,12 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import {
-  Bot,
   CalendarCheck,
   CalendarDays,
   ClipboardList,
   FileText,
   LayoutDashboard,
   LogOut,
-  MessageCircle,
   Settings,
   ShieldCheck,
   Users,
@@ -17,6 +15,7 @@ import {
 import { auth } from '../../auth'
 import { ADMIN_EMAIL } from '../../constants'
 import { normalizeAccessText } from '../../utils/access'
+import logoYfc from '../../assets/logo_yfc.png'
 
 const adminRoles = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
@@ -27,17 +26,17 @@ const baseItems = [
   { path: '/presences', label: 'Présences', Icon: CalendarCheck },
   { path: '/evenements', label: 'Événements', Icon: CalendarDays },
   { path: '/tasks', label: 'Tâches', Icon: ClipboardList },
-  { path: '/messages', label: 'Messages', Icon: MessageCircle },
   { path: '/documents', label: 'Documents et matériels', Icon: FileText },
-  { path: '/assistant', label: 'Assistant IA', Icon: Bot },
   { path: '/parametres', label: 'Paramètres', Icon: Settings },
 ]
 
 export default function DesktopSidebar({ user, currentMember }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const role = normalizeAccessText(currentMember?.staffRole)
   const canAdmin = user?.email === ADMIN_EMAIL || adminRoles.includes(role)
   const items = canAdmin ? [...baseItems, { path: '/admin', label: 'Administration', Icon: ShieldCheck }] : baseItems
+  const activeIndex = Math.max(0, items.findIndex(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)))
 
   async function logout() {
     await signOut(auth)
@@ -47,14 +46,16 @@ export default function DesktopSidebar({ user, currentMember }) {
   return (
     <aside className="desktop-sidebar">
       <div className="desktop-brand">
-        <div className="desktop-brand-mark">YFC</div>
+        <div className="desktop-brand-mark">
+          <img src={logoYfc} alt="YFC" />
+        </div>
         <div>
           <strong>Young For Christ</strong>
           <span>Back-office Staff</span>
         </div>
       </div>
 
-      <nav className="desktop-nav" aria-label="Navigation desktop">
+      <nav className="desktop-nav" aria-label="Navigation desktop" style={{ '--active-index': activeIndex }}>
         {items.map(item => (
           <NavLink
             key={item.path}

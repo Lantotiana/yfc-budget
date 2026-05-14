@@ -222,6 +222,23 @@ function AppPage({ user, userData, children }) {
   )
 }
 
+function HomeRoute({ user, userData }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  if (isDesktop) return <Navigate to="/dashboard" replace />
+
+  return (
+    <AppPage user={user} userData={userData}>
+      <Home user={user} userData={userData} />
+    </AppPage>
+  )
+}
+
+function FallbackRoute() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  return <Navigate to={isDesktop ? '/dashboard' : '/'} replace />
+}
+
 const LOADER_MESSAGES = [
   'On aligne les chaises imaginaires...',
   'On recompte les ariary avec sérieux...',
@@ -313,12 +330,8 @@ export default function App() {
       <BottomNav user={user} />
       <Routes>
           <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
-          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/" element={
-            <AppPage user={user} userData={userData}>
-              <Home user={user} userData={userData} />
-            </AppPage>
-          } />
+          <Route path="/login" element={user ? <FallbackRoute /> : <Login />} />
+          <Route path="/" element={<HomeRoute user={user} userData={userData} />} />
           <Route path="/budget" element={
             <AppPage user={user} userData={userData}>
               <Budget user={user} userData={userData} />
@@ -398,7 +411,7 @@ export default function App() {
               <Fampaherezana user={user} userData={userData} />
             </AppPage>
           } />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<FallbackRoute />} />
       </Routes>
       <SpeedInsights />
     </BrowserRouter>
