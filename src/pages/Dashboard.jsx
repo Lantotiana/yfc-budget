@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, ClipboardList, TrendingUp, Users, Wallet } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, CircleCheckBig, ClipboardList, Clock, LoaderCircle, TrendingUp, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
@@ -58,6 +58,27 @@ function MiniIllustration({ color, type }) {
     <svg viewBox="0 0 150 54" aria-hidden="true" style={{ width: '100%', height: 54, display: 'block', marginTop: 12 }}>
       <path d={area} fill={color} opacity="0.08" />
       <path d={line} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function SoldeSparkline({ bars }) {
+  const W = 300, H = 52
+  const soldes = bars.map(b => b.entree - b.depense)
+  const min = Math.min(...soldes)
+  const max = Math.max(...soldes, 1)
+  const range = max - min || 1
+  const pad = 6
+  const xs = soldes.map((_, i) => pad + (i / (soldes.length - 1)) * (W - pad * 2))
+  const ys = soldes.map(v => H - pad - ((v - min) / range) * (H - pad * 2))
+  const line = xs.map((x, i) => `${i === 0 ? 'M' : 'L'} ${x} ${ys[i]}`).join(' ')
+  const area = `${line} L ${xs[xs.length - 1]} ${H} L ${xs[0]} ${H} Z`
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true" preserveAspectRatio="none"
+      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: 52, display: 'block' }}>
+      <path d={area} fill="#fff" opacity="0.12" />
+      <path d={line} fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
     </svg>
   )
 }
@@ -427,99 +448,128 @@ export default function Dashboard({ user }) {
   }
 
   return (
-    <div className="sin" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: C.bg }}>
-      {/* Hero solde */}
+    <div className="sin scroll-bottom-safe" style={{ background: C.bg, minHeight: '100dvh' }}>
+      {/* Header */}
       <div className="f1 textured-page-header" style={{
-        '--header-color': '#2563eb',
-        padding: '28px 20px 28px',
-        paddingTop: 'max(28px, env(safe-area-inset-top))',
-        textAlign: 'center',
-        borderBottom: `1px solid ${C.bord}`,
-        flexShrink: 0,
+        '--header-color': '#16B5A3',
+        padding: '20px 20px 14px',
+        paddingTop: 'max(20px, env(safe-area-inset-top))',
       }}>
-        <div style={{ fontSize: 'var(--font-xs)', color: C.t2, fontWeight: 500, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: 10 }}>Solde Total</div>
-        <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-1.4px', lineHeight: 1 }}>
-          {solde < 0 ? '-' : ''}<AnimatedMoney value={solde} suffix={false} />
-          <span style={{ fontSize: 'var(--font-md)', fontWeight: 500, color: C.t2, marginLeft: 6 }}>Ar</span>
-        </div>
+        <div className="header-title" style={{ fontSize: 'var(--font-lg)', fontWeight: 700, color: C.t1, letterSpacing: '-.4px' }}>Dashboard</div>
+        <div className="header-subtitle" style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>Vue générale YFC</div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '12px 20px 0', gap: 12 }}>
-        {/* Entrées / Dépenses */}
-        <div className="f2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
-          <StatCard label={t('dashboard.totalEntrees')}  value={<AnimatedMoney value={totalEntrees} />}  col={C.teal}  colD={C.tealD}  Icon={ArrowDownLeft} type="income"  onClick={() => navigate('/budget')} />
-          <StatCard label={t('dashboard.totalDepenses')} value={<AnimatedMoney value={totalDepenses} />} col={C.coral} colD={C.coralD} Icon={ArrowUpRight} type="expense" onClick={() => navigate('/budget')} />
-        </div>
-
-        {/* Membres / Événements */}
-        <div className="f3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, flexShrink: 0 }}>
-          <button onClick={() => navigate('/membres')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
-            <div style={{ width: 30, height: 30, borderRadius: 10, background: C.violetD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-              <Users size={14} color={C.violet} />
-            </div>
-            <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={membres.length} /></div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{t('dashboard.membres')}</div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>total inscrits</div>
-          </button>
-          <button onClick={() => navigate('/evenements')} className="border-none text-left cursor-pointer" style={{ borderRadius: 18, padding: '16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow }}>
-            <div style={{ width: 30, height: 30, borderRadius: 10, background: C.amberD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-              <CalendarDays size={14} color={C.amber} />
-            </div>
-            <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: C.t1, letterSpacing: '-.8px' }}><AnimatedNumber value={upcomingCount} /></div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{t('dashboard.evenements')}</div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{finishedCount} terminé{finishedCount !== 1 ? 's' : ''}</div>
-          </button>
-        </div>
-
-        <button onClick={() => navigate('/tasks')} className="border-none text-left cursor-pointer f4" style={{ borderRadius: 18, padding: '15px 16px', background: C.surf, border: `1px solid ${C.bord}`, boxShadow: C.shadow, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 12, background: 'rgba(12,192,223,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ClipboardList size={16} color="#0cc0df" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 800, color: C.t1 }}>Tâches</div>
-            <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 2 }}>{taskStats.todo} à faire - {taskStats.inProgress} en cours - {taskStats.mine} à moi</div>
-          </div>
-          {taskStats.overdue > 0 && <div style={{ padding: '5px 8px', borderRadius: 999, background: 'rgba(239,68,68,0.12)', color: '#ef4444', fontSize: 'var(--font-xs)', fontWeight: 900 }}>{taskStats.overdue} retard</div>}
+      <div style={{ padding: '1px 16px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Solde — carte primaire */}
+        <button className="dashboard-kpi-card primary" onClick={() => navigate('/budget')} style={{ width: '100%', fontFamily: 'inherit', padding: '18px 18px 52px', minHeight: 130, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <span>Solde actuel</span>
+          <strong style={{ fontSize: 'var(--font-xl)', marginTop: 6 }}>{solde < 0 ? '−' : ''}<AnimatedMoney value={solde} /></strong>
+          <small style={{ marginTop: 4 }}>{transactions.length} opérations enregistrées</small>
+          <SoldeSparkline bars={budgetBars} />
         </button>
 
-        {/* Transactions récentes */}
-        <div className="f5" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexShrink: 0 }}>
-            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1 }}>{t('dashboard.transactions')} récentes</div>
-            <button onClick={() => navigate('/budget')} className="border-none bg-transparent cursor-pointer" style={{ fontSize: 'var(--font-xs)', color: C.amber, fontWeight: 500 }}>
-              Voir tout
-            </button>
+        {/* Grille 2×2 — Entrées / Dépenses / Événement / Tâches donut */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <button className="dashboard-kpi-card" onClick={() => navigate('/budget')} style={{ fontFamily: 'inherit' }}>
+            <span>{t('dashboard.totalEntrees')}</span>
+            <strong style={{ color: C.teal }}><AnimatedMoney value={totalEntrees} /></strong>
+            <small>Total reçu</small>
+          </button>
+          <button className="dashboard-kpi-card" onClick={() => navigate('/budget')} style={{ fontFamily: 'inherit' }}>
+            <span>{t('dashboard.totalDepenses')}</span>
+            <strong style={{ color: C.coral }}><AnimatedMoney value={totalDepenses} /></strong>
+            <small>Total dépensé</small>
+          </button>
+          <div className="dashboard-panel" onClick={() => navigate('/evenements')} style={{ cursor: 'pointer' }}>
+            <div className="dashboard-panel-head" style={{ marginBottom: 8 }}>
+              <div><h2>Prochain</h2><p>Événement</p></div>
+            </div>
+            <div className="dashboard-event-card">
+              <CalendarDays size={15} />
+              <strong>{nextEvent?.nom || 'Aucun à venir'}</strong>
+              <span>{nextEvent ? toDisplayDate(nextEvent.dateDebut) : 'Ajoutez un événement.'}</span>
+            </div>
           </div>
+          <div className="dashboard-panel">
+            <div className="dashboard-panel-head" style={{ marginBottom: 8 }}>
+              <div><h2>Tâches</h2><p>{tasks.length} suivies</p></div>
+            </div>
+            <div className="dashboard-donut" style={{ '--progress': `${taskCompletion * 3.6}deg`, width: 80, height: 80, margin: '2px auto' }}>
+              <div style={{ width: 52, height: 52 }}>
+                <strong style={{ fontSize: '16px' }}>{taskCompletion}%</strong>
+                <span>fait</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 'calc(86px + env(safe-area-inset-bottom))' }}>
+        {/* Graphique budget 7 mois */}
+        <div className="dashboard-panel">
+          <div className="dashboard-panel-head">
+            <div><h2>Analyse budget</h2><p>Entrées et dépenses sur 7 mois</p></div>
+          </div>
+          <div className="dashboard-bars">
+            {budgetBars.map(item => (
+              <div className="dashboard-bar-item" key={item.key}>
+                <div className="dashboard-bar-track">
+                  <span className="income" style={{ height: `${item.entreeHeight}%` }} />
+                  <span className="expense" style={{ height: `${item.depenseHeight}%` }} />
+                </div>
+                <small>{item.label}</small>
+              </div>
+            ))}
+          </div>
+          <div className="dashboard-chart-legend">
+            <span><i className="income" /> Entrées</span>
+            <span><i className="expense" /> Dépenses</span>
+          </div>
+        </div>
+
+        {/* Membres + Tâches actives */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <button className="dashboard-kpi-card" onClick={() => navigate('/membres')} style={{ fontFamily: 'inherit' }}>
+            <span>Membres</span>
+            <strong><AnimatedNumber value={membres.length} /></strong>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+              <span className="tasks-badge status-todo"><Users size={11} />{staffCount} staffs</span>
+              <span className="tasks-badge due-neutral"><Users size={11} />{membres.length - staffCount} autres</span>
+            </div>
+          </button>
+          <button className="dashboard-kpi-card" onClick={() => navigate('/tasks')} style={{ fontFamily: 'inherit' }}>
+            <span>Tâches actives</span>
+            <strong>{taskStats.todo + taskStats.inProgress}</strong>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+              {taskStats.inProgress > 0 && <span className="tasks-badge status-in_progress"><LoaderCircle size={11} />{taskStats.inProgress} en cours</span>}
+              {taskStats.todo > 0 && <span className="tasks-badge status-todo"><CircleCheckBig size={11} />{taskStats.todo} à faire</span>}
+              {taskStats.overdue > 0 && <span className="tasks-badge due-red"><Clock size={11} />{taskStats.overdue} retard</span>}
+            </div>
+          </button>
+        </div>
+
+        {/* Transactions récentes */}
+        <div className="dashboard-panel">
+          <div className="dashboard-panel-head">
+            <div><h2>{t('dashboard.transactions')} récentes</h2><p>Derniers mouvements budget</p></div>
+            <button type="button" onClick={() => navigate('/budget')}>Voir tout</button>
+          </div>
+          <div className="dashboard-list">
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+              <div style={{ textAlign: 'center', padding: '16px 0', color: C.t3, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
             ) : recentTransactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 24, color: C.t3, fontSize: 'var(--font-sm)' }}>{t('budget.aucuneTransaction')}</div>
-            ) : (
-              recentTransactions.map(tx => {
-                const isEntree = tx.type === 'entree'
-                return (
-                  <button
-                    key={tx.id}
-                    onClick={() => navigate('/budget')}
-                    className="border-none text-left cursor-pointer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, marginBottom: 8, width: '100%' }}
-                  >
-                    <div style={{ width: 38, height: 38, borderRadius: 13, flexShrink: 0, background: isEntree ? C.tealD : C.coralD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {isEntree ? <ArrowDownLeft size={16} color={C.teal} /> : <ArrowUpRight size={16} color={C.coral} />}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.motif || 'Transaction'}</div>
-                      <div style={{ fontSize: 'var(--font-xs)', color: C.t3, marginTop: 2 }}>{toDisplayDate(tx.date)}</div>
-                    </div>
-                    <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: isEntree ? C.teal : C.coral }}>
-                      {isEntree ? '+' : '-'}{fmt(tx.montant)}
-                    </div>
-                  </button>
-                )
-              })
-            )}
+              <div style={{ textAlign: 'center', padding: '16px 0', color: C.t3, fontSize: 'var(--font-sm)' }}>{t('budget.aucuneTransaction')}</div>
+            ) : recentTransactions.slice(0, 6).map(tx => {
+              const isEntree = tx.type === 'entree'
+              return (
+                <button key={tx.id} type="button" onClick={() => navigate('/budget')} className="dashboard-list-row">
+                  <span className={isEntree ? 'income' : 'expense'}>{isEntree ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}</span>
+                  <div>
+                    <strong>{tx.motif || 'Transaction'}</strong>
+                    <small>{toDisplayDate(tx.date)}</small>
+                  </div>
+                  <em className={isEntree ? 'positive' : 'negative'}>{isEntree ? '+' : '−'}{fmt(tx.montant)}</em>
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
