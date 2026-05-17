@@ -6,7 +6,7 @@ import { generateNewVerse, getVerseOfDay } from '../../services/verseOfDay'
 
 function isOnline(user) {
   if (!user?.lastSeen?.toDate) return false
-  return Date.now() - user.lastSeen.toDate().getTime() < 5 * 60 * 1000
+  return Date.now() - user.lastSeen.toDate().getTime() < 2 * 60_000
 }
 
 function getInitials(nameOrEmail = '') {
@@ -32,7 +32,7 @@ export default function DesktopRightPanel({ user }) {
   }, [])
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
+    const timer = setInterval(() => setNow(new Date()), 15000)
     return () => clearInterval(timer)
   }, [])
 

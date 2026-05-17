@@ -5,7 +5,7 @@ import Admin from '../components/Admin'
 import ProfilePhotoCropper from '../components/ProfilePhotoCropper'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { SETTINGS_SECTIONS } from '../components/desktop/SettingsSubPanel'
-import { Eye, EyeOff, Trash2, Share2, Check, QrCode } from 'lucide-react'
+import { Eye, EyeOff, Trash2, Share2, Check, QrCode, Bell, BellOff, MessageCircle, CalendarDays, ClipboardList, Users, RefreshCw } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { auth } from '../auth'
 import { db } from '../firebase'
@@ -493,54 +493,97 @@ export default function Parametres({ user, userData, setUserData }) {
           )}
         </div>
         <div style={sectionStyle('notifications')}>
+          <div style={sectionLabel}>Notifications</div>
+
           {msg.text && (
             <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontSize: 'var(--font-sm)', fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
               {msg.text}
             </div>
           )}
-          <div style={sectionLabel}>Notifications téléphone</div>
-          <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 4 }}>
-            Recevoir les notifications même quand l’app est fermée
-          </div>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginBottom: 14, lineHeight: 1.5 }}>
-            {!pushStatus.configured
-              ? 'La clé Web Push Firebase n’est pas encore configurée.'
-              : !pushStatus.supported
-                ? 'Ce téléphone ou ce navigateur ne supporte pas les notifications push web.'
-                : pushStatus.enabled
-                  ? 'Autorisation accordee sur cet appareil. Appuie sur Synchroniser pour finaliser le push.'
-                  : pushStatus.permission === 'denied'
-                    ? 'Les notifications sont bloquées dans le navigateur.'
-                    : 'Les notifications push ne sont pas encore activées sur cet appareil.'}
+
+          {/* Carte statut push */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, background: pushStatus.enabled ? C.tealD : C.surf2, border: `1px solid ${pushStatus.enabled ? 'rgba(12,192,223,0.22)' : C.bord}`, marginBottom: 12 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 13, background: pushStatus.enabled ? C.teal : C.surf3, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {pushStatus.enabled
+                ? <Bell size={20} color="#fff" />
+                : <BellOff size={20} color={C.t3} />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, color: C.t1, fontSize: 'var(--font-sm)' }}>Notifications push</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 999, background: pushStatus.enabled ? C.teal : pushStatus.permission === 'denied' ? C.coralD : C.surf3, color: pushStatus.enabled ? '#fff' : pushStatus.permission === 'denied' ? C.coral : C.t3 }}>
+                  {pushStatus.enabled ? 'Activé' : pushStatus.permission === 'denied' ? 'Bloqué' : 'Désactivé'}
+                </span>
+              </div>
+              <div style={{ fontSize: 'var(--font-xs)', color: C.t2, lineHeight: 1.4 }}>
+                {!pushStatus.configured
+                  ? 'Clé Web Push non configurée côté serveur.'
+                  : !pushStatus.supported
+                    ? 'Navigateur ou appareil non compatible.'
+                    : pushStatus.enabled
+                      ? 'Cet appareil recevra les notifications en arrière-plan.'
+                      : pushStatus.permission === 'denied'
+                        ? 'Autorisation refusée dans le navigateur. Modifiez les paramètres du site.'
+                        : 'Activez pour recevoir les alertes même quand l\'app est fermée.'}
+              </div>
+            </div>
           </div>
 
-          <button
-            className="params-action-btn"
-            type="button"
-            onClick={handleEnablePush}
-            disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled}
-            style={{ padding: '12px 14px', borderRadius: 12, border: 'none', background: pushStatus.enabled ? C.tealD : C.teal, color: pushStatus.enabled ? C.teal : '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10, opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.72 : 1 }}
-          >
-            {pushLoading ? 'Activation...' : pushStatus.enabled ? 'Autorise' : 'Activer'}
-          </button>
+          {/* Actions */}
+          {!pushStatus.enabled ? (
+            <button
+              className="params-action-btn"
+              type="button"
+              onClick={handleEnablePush}
+              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied'}
+              style={{ padding: '12px 14px', borderRadius: 12, border: 'none', background: C.teal, color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 20, opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied') ? 0.6 : 1 }}
+            >
+              {pushLoading ? 'Activation...' : 'Activer les notifications'}
+            </button>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+              <button
+                type="button"
+                onClick={handleRefreshPush}
+                disabled={pushLoading}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-sm)', opacity: pushLoading ? 0.6 : 1 }}
+              >
+                <RefreshCw size={14} />
+                Synchroniser
+              </button>
+              <button
+                type="button"
+                onClick={handleDisablePush}
+                disabled={pushLoading}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.coralD}`, background: C.coralD, color: C.coral, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-sm)', opacity: pushLoading ? 0.6 : 1 }}
+              >
+                <BellOff size={14} />
+                Désactiver
+              </button>
+            </div>
+          )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <button
-              type="button"
-              onClick={handleRefreshPush}
-              disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.bord2}`, background: C.surf2, color: C.t1, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
-            >
-              Synchroniser
-            </button>
-            <button
-              type="button"
-              onClick={handleDisablePush}
-              disabled={pushLoading || !pushStatus.supported || !pushStatus.enabled}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: `1px solid ${C.coralD}`, background: C.coralD, color: C.coral, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: (pushLoading || !pushStatus.supported || !pushStatus.enabled) ? 0.6 : 1 }}
-            >
-              Désactiver
-            </button>
+          {/* Ce que vous recevez */}
+          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
+            Alertes envoyées
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[
+              { Icon: MessageCircle, label: 'Messages & annonces',   desc: 'Nouveaux messages de l\'équipe' },
+              { Icon: CalendarDays,  label: 'Événements',            desc: 'Rappels d\'événements à venir' },
+              { Icon: ClipboardList, label: 'Tâches',                desc: 'Assignation et échéances de tâches' },
+              { Icon: Users,         label: 'Membres',               desc: 'Nouvelles inscriptions à valider' },
+            ].map(({ Icon, label, desc }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 11, background: C.surf2, border: `1px solid ${C.bord}` }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: C.tealD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={15} color={C.teal} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1 }}>{label}</div>
+                  <div style={{ fontSize: 'var(--font-xs)', color: C.t2, marginTop: 1 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

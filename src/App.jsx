@@ -379,7 +379,7 @@ export default function App() {
     if (!user) return
     const write = () => updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(() => {})
     write()
-    const id = setInterval(write, 60_000)
+    const id = setInterval(write, 30_000)
     return () => clearInterval(id)
   }, [user])
 

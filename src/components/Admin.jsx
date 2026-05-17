@@ -102,7 +102,7 @@ function buildApprovalHtml(nom) {
 
 function isOnline(u) {
   if (!u.lastSeen?.toDate) return false
-  return Date.now() - u.lastSeen.toDate().getTime() < 5 * 60 * 1000
+  return Date.now() - u.lastSeen.toDate().getTime() < 2 * 60_000
 }
 
 function Avatar({ u, size = 38, online = false }) {
