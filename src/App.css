@@ -3117,6 +3117,13 @@ input:focus, select:focus {
   box-shadow: 0 24px 60px rgba(0,0,0,0.28);
 }
 
+.qr-modal-overlay {
+  z-index: 9000 !important;
+  background: rgba(18,18,31,0.58) !important;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
 .ai-summary-modal {
   width: min(92vw, 460px);
   max-width: 460px;
@@ -8252,7 +8259,7 @@ body[data-bottom-nav="true"] .page-fab {
   body[data-desktop-layout="true"] .staff-context-overlay {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 5200 !important;
+    z-index: 7000 !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 24px !important;
@@ -9967,6 +9974,7 @@ body[data-desktop-layout="true"] .materiel-cards-grid,
   body[data-desktop-layout="true"] .modal-overlay {
     background: rgba(18,18,31,0.55) !important;
     backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
 
   .desktop-shell .bottom-sheet,

@@ -377,10 +377,19 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return
-    const write = () => updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(() => {})
+    const userRef = doc(db, 'users', user.uid)
+    const write = () => updateDoc(userRef, { lastSeen: serverTimestamp(), online: true }).catch(() => {})
+    const markOffline = () => updateDoc(userRef, { online: false, lastSeen: serverTimestamp() }).catch(() => {})
     write()
-    const id = setInterval(write, 30_000)
-    return () => clearInterval(id)
+    const id = setInterval(write, 20_000)
+    window.addEventListener('pagehide', markOffline)
+    window.addEventListener('beforeunload', markOffline)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('pagehide', markOffline)
+      window.removeEventListener('beforeunload', markOffline)
+      markOffline()
+    }
   }, [user])
 
   useEffect(() => {

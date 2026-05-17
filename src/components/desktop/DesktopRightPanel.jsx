@@ -6,7 +6,8 @@ import { generateNewVerse, getVerseOfDay } from '../../services/verseOfDay'
 
 function isOnline(user) {
   if (!user?.lastSeen?.toDate) return false
-  return Date.now() - user.lastSeen.toDate().getTime() < 2 * 60_000
+  if (user.online === false) return false
+  return Date.now() - user.lastSeen.toDate().getTime() < 75_000
 }
 
 function getInitials(nameOrEmail = '') {

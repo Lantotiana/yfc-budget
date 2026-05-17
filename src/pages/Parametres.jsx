@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import useMediaQuery from '../hooks/useMediaQuery'
 import Admin from '../components/Admin'
 import ProfilePhotoCropper from '../components/ProfilePhotoCropper'
+import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { SETTINGS_SECTIONS } from '../components/desktop/SettingsSubPanel'
 import { Eye, EyeOff, Trash2, Share2, Check, QrCode, Bell, BellOff, MessageCircle, CalendarDays, ClipboardList, Users, RefreshCw } from 'lucide-react'
@@ -480,16 +481,28 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
 
           {showQR && (
-            <div className="modal-overlay" onClick={() => setShowQR(false)}>
+            <Portal>
+            <div className="modal-overlay qr-modal-overlay" onClick={() => setShowQR(false)}>
               <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 280, textAlign: 'center' }}>
                 <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, marginBottom: 16 }}>{t('parametres.scanner')}</div>
                 <div style={{ display: 'inline-block', padding: 12, borderRadius: 16, background: '#fff' }}>
-                  <QRCodeSVG value={appUrl} size={180} fgColor="#0f172a" bgColor="#ffffff" />
+                  <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+                    <defs>
+                      <linearGradient id="qr-theme-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={C.teal} />
+                        <stop offset="38%" stopColor={C.violet} />
+                        <stop offset="68%" stopColor={C.amber} />
+                        <stop offset="100%" stopColor={C.coral} />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <QRCodeSVG value={appUrl} size={180} fgColor="url(#qr-theme-gradient)" bgColor="#ffffff" />
                 </div>
                 <div style={{ marginTop: 12, fontSize: 'var(--font-xs)', color: C.t3 }}>{appUrl}</div>
                 <button onClick={() => setShowQR(false)} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.close')}</button>
               </div>
             </div>
+            </Portal>
           )}
         </div>
         <div style={sectionStyle('notifications')}>
@@ -728,7 +741,4 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
-
-
-
 
