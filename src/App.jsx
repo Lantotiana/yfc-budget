@@ -74,20 +74,6 @@ const mobilePreloadQueue = [
   loadVerifyReceipt,
 ]
 
-function scheduleIdleTask(task, timeout = 1200) {
-  if (typeof window === 'undefined') return null
-  if ('requestIdleCallback' in window) {
-    return window.requestIdleCallback(task, { timeout })
-  }
-  return window.setTimeout(task, timeout)
-}
-
-function cancelIdleTask(id) {
-  if (id == null || typeof window === 'undefined') return
-  if ('cancelIdleCallback' in window) window.cancelIdleCallback(id)
-  else window.clearTimeout(id)
-}
-
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
@@ -382,18 +368,18 @@ export default function App() {
     const isDesktop = window.matchMedia?.('(min-width: 1024px)').matches
     const queue = isDesktop ? desktopPreloadQueue : mobilePreloadQueue
 
-    const idleId = scheduleIdleTask(() => {
+    const startTimer = window.setTimeout(() => {
       queue.forEach((loadPage, index) => {
         const timer = window.setTimeout(() => {
           if (!cancelled) loadPage().catch(() => {})
-        }, index * 300)
+        }, index * 150)
         timers.push(timer)
       })
-    })
+    }, 800)
 
     return () => {
       cancelled = true
-      cancelIdleTask(idleId)
+      window.clearTimeout(startTimer)
       timers.forEach(timer => window.clearTimeout(timer))
     }
   }, [authLoading, user?.uid])
