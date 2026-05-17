@@ -3195,6 +3195,51 @@ input:focus, select:focus {
   font-size: var(--font-sm);
 }
 
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--teal) 22%, transparent);
+  border-top-color: var(--teal);
+  animation: appLoaderSpin .75s linear infinite;
+  flex-shrink: 0;
+}
+
+.loading-state {
+  min-height: min(360px, 60dvh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: 650;
+}
+
+.loading-state.compact {
+  min-height: 112px;
+  padding: 18px;
+}
+
+.loading-state-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--teal) 22%, transparent);
+  border-top-color: var(--teal);
+  animation: appLoaderSpin .75s linear infinite;
+  flex-shrink: 0;
+}
+
 /* ====== TYPE TOGGLE ====== */
 .type-toggle {
   display: grid;
@@ -6917,6 +6962,10 @@ body[data-bottom-nav="true"] .presence-list-scroll {
     align-items: start !important;
     gap: 12px !important;
     padding-bottom: 24px !important;
+  }
+
+  .desktop-shell .presence-events-grid .loading-state {
+    grid-column: 1 / -1;
   }
 
   .desktop-shell .presence-event-card {

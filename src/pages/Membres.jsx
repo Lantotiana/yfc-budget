@@ -7,6 +7,7 @@ import { Plus, Search, Trash2, Download, Settings, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import LoadingState from '../components/LoadingState'
 import { ADMIN_EMAIL, STAFF_ROLES, DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
@@ -385,7 +386,7 @@ export default function Membres({ user, userData }) {
           })}
         </div>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+          <LoadingState label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 24, color: C.t2, fontSize: 'var(--font-sm)' }}>{search || roleFilter !== 'all' ? t('common.noData') : t('membres.aucunMembre')}</div>
         ) : filtered.map(m => {

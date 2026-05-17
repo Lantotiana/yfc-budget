@@ -8,6 +8,7 @@ import { CalendarPlus, ChevronRight, Tag } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
+import LoadingState from '../components/LoadingState'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
@@ -23,6 +24,9 @@ export default function Presences({ user, userData }) {
   const [membres, setMembres] = useState([])
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
+  const [loadingEvents, setLoadingEvents] = useState(true)
+  const [loadingMembers, setLoadingMembers] = useState(true)
+  const [loadingPresences, setLoadingPresences] = useState(true)
   const [showNewEvent, setShowNewEvent] = useState(false)
   const [newEventForm, setNewEventForm] = useState({ titre: '', date: new Date().toISOString().slice(0, 10), tags: ['Membre'] })
   const [savingEvent, setSavingEvent] = useState(false)
@@ -40,12 +44,18 @@ export default function Presences({ user, userData }) {
 
   useEffect(() => {
     const q = query(collection(db, 'evenements'), orderBy('date', 'desc'))
-    return onSnapshot(q, snap => setEvenements(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+    return onSnapshot(q, snap => {
+      setEvenements(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setLoadingEvents(false)
+    }, () => setLoadingEvents(false))
   }, [])
 
   useEffect(() => {
     const q = query(collection(db, 'membres'), orderBy('nom'))
-    return onSnapshot(q, snap => setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+    return onSnapshot(q, snap => {
+      setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      setLoadingMembers(false)
+    }, () => setLoadingMembers(false))
   }, [])
 
   useEffect(() => {
@@ -56,7 +66,8 @@ export default function Presences({ user, userData }) {
         map[`${data.eventId}_${data.membreId}`] = data.present
       })
       setAllPresences(map)
-    })
+      setLoadingPresences(false)
+    }, () => setLoadingPresences(false))
   }, [])
 
   useEffect(() => {
@@ -147,7 +158,9 @@ export default function Presences({ user, userData }) {
       </div>
 
       <div className="page-content presence-events-grid" style={{ paddingBottom: '5rem' }}>
-        {evenements.length === 0 ? (
+        {loadingEvents || loadingMembers || loadingPresences ? (
+          <LoadingState label={t('common.loading')} compact />
+        ) : evenements.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             {t('presences.aucunEvenement')}
           </div>

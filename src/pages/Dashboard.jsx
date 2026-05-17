@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext'
 import useMediaQuery from '../hooks/useMediaQuery'
 import DesktopStatCard from '../components/desktop/DesktopStatCard'
 import DesktopSectionCard from '../components/desktop/DesktopSectionCard'
+import LoadingState from '../components/LoadingState'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { getDueDateStatus } from '../utils/taskUtils'
 
@@ -305,7 +306,7 @@ export default function Dashboard({ user }) {
             </div>
             <div className="dashboard-list">
               {loading ? (
-                <div className="desktop-empty">{t('common.loading')}</div>
+                <LoadingState label={t('common.loading')} compact className="desktop-empty" />
               ) : recentTransactions.length === 0 ? (
                 <div className="desktop-empty">{t('budget.aucuneTransaction')}</div>
               ) : recentTransactions.slice(0, 3).map(tx => {
@@ -407,7 +408,7 @@ export default function Dashboard({ user }) {
           <DesktopSectionCard title={`${t('dashboard.transactions')} récentes`} className="desktop-wide-card" action={<button type="button" onClick={() => navigate('/budget')}>Voir tout</button>}>
             <div className="desktop-activity-list">
               {loading ? (
-                <div className="desktop-empty">{t('common.loading')}</div>
+                <LoadingState label={t('common.loading')} compact className="desktop-empty" />
               ) : recentTransactions.length === 0 ? (
                 <div className="desktop-empty">{t('budget.aucuneTransaction')}</div>
               ) : recentTransactions.map(tx => {
@@ -558,7 +559,7 @@ export default function Dashboard({ user }) {
           </div>
           <div className="dashboard-list">
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '16px 0', color: C.t3, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+              <LoadingState label={t('common.loading')} compact />
             ) : recentTransactions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '16px 0', color: C.t3, fontSize: 'var(--font-sm)' }}>{t('budget.aucuneTransaction')}</div>
             ) : recentTransactions.slice(0, 6).map(tx => {

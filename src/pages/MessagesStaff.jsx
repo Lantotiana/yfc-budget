@@ -23,6 +23,7 @@ import { canModerateStaffMessagesRole, normalizeAccessText, sameEmail } from '..
 import { trackUserActivity } from '../utils/userActivity'
 import { useTheme } from '../context/ThemeContext'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import LoadingState from '../components/LoadingState'
 
 const INITIAL_LIMIT = 30
 const PAGE_SIZE = 30
@@ -1323,7 +1324,7 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
           </button>
         )}
         {loading ? (
-          <div className="staff-empty-state">{t('common.loading')}</div>
+          <LoadingState label={t('common.loading')} compact className="staff-empty-state" />
         ) : filteredMessages.length === 0 ? (
           <div className="staff-empty-state">{search ? t('common.noData') : t('messages.aucunMessage')}</div>
         ) : (

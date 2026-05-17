@@ -8,6 +8,7 @@ import TaskModal from './TaskModal'
 import TaskForm from './TaskForm'
 import Confetti from './Confetti'
 import Portal from '../Portal'
+import LoadingState from '../LoadingState'
 import useMediaQuery from '../../hooks/useMediaQuery'
 import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
 import { Download, Plus, Search, X } from 'lucide-react'
@@ -206,7 +207,7 @@ export default function TaskBoard({
       {membersLoading && <div className="task-load-note">{t('tasks.loadingMembers')}</div>}
 
       {loading ? (
-        <div className="task-board-loading">{t('tasks.loadingTasks')}</div>
+        <LoadingState label={t('tasks.loadingTasks')} compact className="task-board-loading" />
       ) : isDesktop ? (
         <div className="task-board">
           {TASK_COLUMNS.map(column => (

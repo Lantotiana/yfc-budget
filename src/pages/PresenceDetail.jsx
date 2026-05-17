@@ -6,6 +6,7 @@ import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc,
 import { ArrowLeft, Check, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
+import LoadingState from '../components/LoadingState'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
@@ -501,7 +502,7 @@ export default function PresenceDetail({ user, userData }) {
   if (!event) {
     return (
       <div className="page-container-locked sin" style={{ background: C.bg }}>
-        <div style={{ textAlign: 'center', padding: '3rem', color: C.t2, fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+        <LoadingState label={t('common.loading')} />
       </div>
     )
   }

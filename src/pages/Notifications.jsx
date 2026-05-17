@@ -5,6 +5,7 @@ import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, MessageCi
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
+import LoadingState from '../components/LoadingState'
 import { isNotificationVisibleForUser, setNotificationSeenAt } from '../utils/notificationUtils'
 
 const typeIcon = {
@@ -223,9 +224,7 @@ export default function Notifications({ user }) {
 
       <div className="page-content" style={{ paddingBottom: '5rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
-            {t('common.loading')}
-          </div>
+          <LoadingState label={t('common.loading')} compact />
         ) : visibleNotifications.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>
             {t('notifications.aucune')}

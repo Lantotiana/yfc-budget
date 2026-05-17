@@ -8,6 +8,7 @@ import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import Login from './components/Login'
+import LoadingState from './components/LoadingState'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Presences from './pages/Presences'
@@ -280,24 +281,7 @@ function AppPage({ user, userData, children }) {
 }
 
 function RouteFallback() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setVisible(true), 450)
-    return () => window.clearTimeout(id)
-  }, [])
-
-  if (!visible) return null
-
-  return (
-    <div className="route-loader" aria-label="Chargement de la page">
-      <div className="route-loader-dots" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-    </div>
-  )
+  return <LoadingState label="Chargement de la page..." />
 }
 
 function HomeRoute({ user, userData }) {

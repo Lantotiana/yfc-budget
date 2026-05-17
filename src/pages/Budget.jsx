@@ -9,6 +9,7 @@ import TransactionList from '../components/TransactionList'
 import DetailTransactions from '../components/DetailTransactions'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import LoadingState from '../components/LoadingState'
 import { canManageBudgetRole, sameEmail } from '../utils/access'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { trackUserActivity } from '../utils/userActivity'
@@ -256,7 +257,7 @@ export default function Budget({ user, userData }) {
 
       {/* Formulaire */}
       <div className="budget-form-block">
-        {loading && <div className="loading">{t('common.loading')}</div>}
+        {loading && <LoadingState label={t('common.loading')} compact />}
         <TransactionForm onAdd={addTransaction} canManageBudget={canManageBudget} />
       </div>
 

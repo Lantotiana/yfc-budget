@@ -7,6 +7,7 @@ import { Pin, Plus, Trash2, MapPin, Clock, Calendar, Search, X, Package2, Tag } 
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
+import LoadingState from '../components/LoadingState'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
@@ -288,7 +289,7 @@ export default function Evenements({ user }) {
       {/* Liste */}
       <div className="f2 scroll-bottom-safe" style={{ padding: '0 20px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('common.loading')}</div>
+          <LoadingState label={t('common.loading')} compact />
         ) : sorted.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '2rem', fontSize: 'var(--font-sm)' }}>{t('evenements.aucunEvenement')}</div>
         ) : sorted.map(e => {
