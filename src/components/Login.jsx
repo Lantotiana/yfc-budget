@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { auth } from '../auth'
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth'
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+} from 'firebase/auth'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
@@ -33,20 +38,28 @@ export default function Login() {
     setMessageType(type)
   }
 
+  async function verifyApprovedUser(currentUser) {
+    const snap = await getDoc(doc(db, 'users', currentUser.uid))
+    if (!snap.exists()) {
+      await signOut(auth)
+      showMsg(t('login.errorAccountNotFound'))
+      return false
+    }
+    if (snap.data().approuve !== true) {
+      await signOut(auth)
+      showMsg(t('login.errorPendingApproval'))
+      return false
+    }
+    return true
+  }
+
   async function handleLogin() {
     setLoading(true)
     setMessage('')
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password)
-      const snap = await getDoc(doc(db, 'users', cred.user.uid))
-      if (!snap.exists()) {
-        await signOut(auth)
-        showMsg(t('login.errorAccountNotFound'))
-      } else if (snap.data().approuve !== true) {
-        await signOut(auth)
-        showMsg(t('login.errorPendingApproval'))
-      }
-    } catch(e) {
+      await verifyApprovedUser(cred.user)
+    } catch {
       showMsg(t('login.errorInvalidCredentials'))
     }
     setLoading(false)

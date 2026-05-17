@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import Portal from '../Portal'
-import { storage } from '../../firebase'
+import { storage } from '../../firebaseStorage'
 import { MATERIEL_CATEGORIES, MATERIEL_UNITES, TYPE_MATERIEL_OPTIONS } from './materielHelpers'
 
 const EMPTY_FORM = {

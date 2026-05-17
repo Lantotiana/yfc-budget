@@ -380,12 +380,17 @@ export default function App() {
     const userRef = doc(db, 'users', user.uid)
     const write = () => updateDoc(userRef, { lastSeen: serverTimestamp(), online: true }).catch(() => {})
     const markOffline = () => updateDoc(userRef, { online: false, lastSeen: serverTimestamp() }).catch(() => {})
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') write()
+    }
     write()
-    const id = setInterval(write, 20_000)
+    const id = setInterval(write, 15_000)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('pagehide', markOffline)
     window.addEventListener('beforeunload', markOffline)
     return () => {
       clearInterval(id)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pagehide', markOffline)
       window.removeEventListener('beforeunload', markOffline)
       markOffline()

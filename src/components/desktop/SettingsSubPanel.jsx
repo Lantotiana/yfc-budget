@@ -9,7 +9,7 @@ const adminRoles = ['president', 'vice president', 'vice-president', 'responsabl
 export const SETTINGS_SECTIONS = [
   { key: 'profil',          label: 'Profil',          Icon: User },
   { key: 'apparence',       label: 'Apparence',        Icon: Moon },
-  { key: 'securite',        label: 'Mot de passe',     Icon: KeyRound },
+  { key: 'securite',        label: 'Sécurité',         Icon: KeyRound },
   { key: 'notifications',   label: 'Notifications',    Icon: Bell },
   { key: 'application',     label: 'Application',      Icon: Link2 },
   { key: 'administration',  label: 'Administration',   Icon: ShieldCheck, adminOnly: true },

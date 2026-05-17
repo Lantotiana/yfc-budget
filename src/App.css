@@ -6910,6 +6910,20 @@ body[data-bottom-nav="true"] .presence-list-scroll {
 }
 
 @media (min-width: 1024px) {
+  .desktop-shell .presence-events-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-content: start !important;
+    align-items: start !important;
+    gap: 12px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .desktop-shell .presence-event-card {
+    margin-bottom: 0 !important;
+    min-width: 0 !important;
+  }
+
   .desktop-content:has(.presence-detail-page) {
     overflow: hidden !important;
     border-radius: 0 !important;
@@ -9643,10 +9657,15 @@ body[data-desktop-layout="true"] .materiel-cards-grid,
   .desktop-stat-card:hover,
   .tasks-summary button:hover,
   .task-card:hover,
-  .list-item:hover,
-  .tx-item:hover {
+  .list-item:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(26,28,46,0.08) !important;
+  }
+
+  .tx-item:hover {
+    transform: none;
+    box-shadow: none !important;
+    background: color-mix(in srgb, var(--teal) 5%, transparent);
   }
 
   .desktop-table-wrap table {

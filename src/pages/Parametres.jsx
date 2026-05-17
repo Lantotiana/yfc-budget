@@ -10,7 +10,11 @@ import { Eye, EyeOff, Trash2, Share2, Check, QrCode, Bell, BellOff, MessageCircl
 import { QRCodeSVG } from 'qrcode.react'
 import { auth } from '../auth'
 import { db } from '../firebase'
-import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
+import {
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from 'firebase/auth'
 import { collection, doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
@@ -105,7 +109,6 @@ export default function Parametres({ user, userData, setUserData }) {
 
   const isAdmin = user?.email === ADMIN_EMAIL
   const canOpenAdminTools = isAdmin || SHEET_SYNC_ROLES.includes(normalizeAccessText(memberRole.staffRole))
-
   function flash(text, ok = true) {
     setMsg({ text, ok })
     setTimeout(() => setMsg({ text: '', ok: true }), 3000)
@@ -678,9 +681,13 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
         )}
 
-        {/* Mot de passe */}
+        {/* Sécurité */}
         <div style={sectionStyle('securite')}>
-          <div style={sectionLabel}>{t('parametres.changerMdp')}</div>
+          <div style={sectionLabel}>{t('parametres.securite')}</div>
+
+          <div style={{ fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
+            {t('parametres.changerMdp')}
+          </div>
 
           {[
             { label: t('parametres.mdpActuel'),   val: oldPwd,     set: setOldPwd,     show: showOld, toggleShow: () => setShowOld(p => !p) },
@@ -717,6 +724,7 @@ export default function Parametres({ user, userData, setUserData }) {
           >
             {savingPwd ? t('parametres.modification') : t('parametres.modifierMdp')}
           </button>
+
         </div>
 
         {/* Déconnexion — hidden on desktop (button lives in SettingsSubPanel) */}
@@ -741,4 +749,3 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
-

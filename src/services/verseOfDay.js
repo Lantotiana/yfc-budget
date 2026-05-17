@@ -1,6 +1,3 @@
-import { httpsCallable } from 'firebase/functions'
-import { cloudFunctions } from '../firebase'
-
 const CACHE_PREFIX = 'yfc_verse_'
 
 function todayKey() {
@@ -28,6 +25,10 @@ function setCached(verse) {
 }
 
 async function fetchVerse(force = false) {
+  const [{ httpsCallable }, { cloudFunctions }] = await Promise.all([
+    import('firebase/functions'),
+    import('../firebaseFunctions'),
+  ])
   const generateVerse = httpsCallable(cloudFunctions, 'generateVerse')
   const result = await generateVerse({ force })
   return result.data

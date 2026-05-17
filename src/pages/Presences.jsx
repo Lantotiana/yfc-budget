@@ -146,7 +146,7 @@ export default function Presences({ user, userData }) {
         </div>
       </div>
 
-      <div className="page-content" style={{ paddingBottom: '5rem' }}>
+      <div className="page-content presence-events-grid" style={{ paddingBottom: '5rem' }}>
         {evenements.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             {t('presences.aucunEvenement')}
@@ -160,7 +160,7 @@ export default function Presences({ user, userData }) {
             <button
               key={ev.id}
               data-item-id={ev.id}
-              className={highlightedId === ev.id ? 'item-highlighted' : ''}
+              className={`presence-event-card${highlightedId === ev.id ? ' item-highlighted' : ''}`}
               type="button"
               onClick={() => navigate(`/presences/${ev.id}`)}
               style={{ width: '100%', display: 'block', textAlign: 'left', background: C.surf, border: `1px solid ${C.bord}`, borderRadius: 16, padding: '14px 16px', marginBottom: 10, cursor: 'pointer' }}
