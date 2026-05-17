@@ -271,6 +271,15 @@ function AppPage({ user, userData, children }) {
 }
 
 function RouteFallback() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setVisible(true), 450)
+    return () => window.clearTimeout(id)
+  }, [])
+
+  if (!visible) return null
+
   return (
     <div className="route-loader" aria-label="Chargement de la page">
       <div className="route-loader-dots" aria-hidden="true">
@@ -369,12 +378,7 @@ export default function App() {
     const queue = isDesktop ? desktopPreloadQueue : mobilePreloadQueue
 
     const startTimer = window.setTimeout(() => {
-      queue.forEach((loadPage, index) => {
-        const timer = window.setTimeout(() => {
-          if (!cancelled) loadPage().catch(() => {})
-        }, index * 150)
-        timers.push(timer)
-      })
+      if (!cancelled) Promise.allSettled(queue.map(loadPage => loadPage()))
     }, 800)
 
     return () => {
