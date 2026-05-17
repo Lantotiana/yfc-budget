@@ -11,6 +11,7 @@ import { createNotification } from '../notifications'
 import { useTheme } from '../context/ThemeContext'
 import { canManageBudgetRole, sameEmail } from '../utils/access'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { trackUserActivity } from '../utils/userActivity'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -115,6 +116,7 @@ export default function Budget({ user, userData }) {
   const canManageBudget = canManageBudgetRole(effectiveRole)
 
   async function publishBudgetToMessages({ totalEntrees, totalDepenses, solde: soldeFiltré, filterMonth: mois, entrees = [], depenses = [], soldePrecedent = null, soldeActuel = null } = {}) {
+    trackUserActivity(user, 'Publie un rapport budget', '/budget')
     const senderName = userData?.nom || user?.displayName || user?.email || 'Staff'
     const senderPhoto = userData?.photoURL || user?.photoURL || null
     const payload = {
@@ -149,6 +151,7 @@ export default function Budget({ user, userData }) {
 
   async function addTransaction(tx) {
     if (!canManageBudget) return
+    trackUserActivity(user, tx.type === 'entree' ? 'Ajoute une entrée budget' : 'Ajoute une dépense budget', '/budget')
     await addDoc(collection(db, 'transactions'), tx)
     await createNotification({
       type: 'budget',
@@ -161,6 +164,7 @@ export default function Budget({ user, userData }) {
 
   async function deleteTransaction(tx) {
     if (!canManageBudget) return
+    trackUserActivity(user, 'Supprime une transaction budget', '/budget')
     await deleteDoc(doc(db, 'transactions', tx.id))
     await createNotification({
       type: 'budget',

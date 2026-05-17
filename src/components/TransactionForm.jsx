@@ -5,6 +5,7 @@ import { db } from '../firebase'
 import { auth } from '../auth'
 import { X } from 'lucide-react'
 import { createNotification } from '../notifications'
+import { trackUserActivity } from '../utils/userActivity'
 
 export default function TransactionForm({ onAdd, canManageBudget = true }) {
   const { t } = useTranslation()
@@ -73,6 +74,7 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
       createdBy,
       createdAt: new Date().toISOString()
     })
+    trackUserActivity(user, type === 'entree' ? 'Ajoute une entrée budget' : 'Ajoute une dépense budget', '/budget')
     setMontant('')
     setMotif('')
     setMotifCustom('')
@@ -132,7 +134,7 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
             </div>
             <div className="form-group">
               <label>{t('budget.montant')}</label>
-              <input type="number" value={montant} onChange={e => setMontant(e.target.value)} placeholder="0" disabled={!canManageBudget} />
+              <input type="number" value={montant} onChange={e => { setMontant(e.target.value); trackUserActivity(auth.currentUser, 'Modifie le budget', '/budget') }} placeholder="0" disabled={!canManageBudget} />
             </div>
           </div>
 
@@ -168,7 +170,7 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
 
           <div className="form-group">
             <label>{t('budget.note')}</label>
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder={t('budget.noteDetail')} disabled={!canManageBudget} />
+              <input value={note} onChange={e => { setNote(e.target.value); trackUserActivity(auth.currentUser, 'Modifie le budget', '/budget') }} placeholder={t('budget.noteDetail')} disabled={!canManageBudget} />
           </div>
 
           <button className="btn-primary" disabled={!canManageBudget}>{t('budget.enregistrer')}</button>

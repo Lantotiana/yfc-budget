@@ -19,6 +19,7 @@ import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
 import { disablePushNotifications, enablePushNotifications, getPushAvailability, syncPushNotifications } from '../services/pushNotifications'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
+import { trackUserActivity } from '../utils/userActivity'
 
 const CLOUDINARY_CLOUD = 'dtthz84ie'
 const CLOUDINARY_PRESET = 'yfc_profiles'
@@ -204,6 +205,7 @@ export default function Parametres({ user, userData, setUserData }) {
 
   async function saveProfile() {
     if (!nom.trim()) return
+    trackUserActivity(user, 'Modifie son profil', '/parametres')
     setSaving(true)
     try {
       await updateDoc(doc(db, 'users', user.uid), { nom: nom.trim(), photoURL })
@@ -237,6 +239,7 @@ export default function Parametres({ user, userData, setUserData }) {
     if (cropSrc) URL.revokeObjectURL(cropSrc)
     setCropSrc(null)
     setUploadingPhoto(true)
+    trackUserActivity(user, 'Modifie sa photo de profil', '/parametres')
     try {
       const file = new File([blob], 'avatar.webp', { type: 'image/webp' })
       const fd = new FormData()
@@ -279,6 +282,7 @@ export default function Parametres({ user, userData, setUserData }) {
   async function savePassword() {
     if (newPwd.length < 6) { flash(t('parametres.mdpTropCourt'), false); return }
     if (newPwd !== confirmPwd) { flash(t('parametres.mdpNonCorrespondant'), false); return }
+    trackUserActivity(user, 'Modifie son mot de passe', '/parametres')
     setSavingPwd(true)
     try {
       const cred = EmailAuthProvider.credential(user.email, oldPwd)
@@ -681,7 +685,6 @@ export default function Parametres({ user, userData, setUserData }) {
     </div>
   )
 }
-
 
 
 

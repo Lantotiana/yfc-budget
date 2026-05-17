@@ -20,6 +20,7 @@ import { db } from '../firebase'
 import { ADMIN_EMAIL } from '../constants'
 import { createNotification } from '../notifications'
 import { canModerateStaffMessagesRole, normalizeAccessText, sameEmail } from '../utils/access'
+import { trackUserActivity } from '../utils/userActivity'
 import { useTheme } from '../context/ThemeContext'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 
@@ -328,7 +329,7 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
     if (!composer) return
 
     const updateComposerSpace = () => {
-      document.documentElement.style.setProperty('--staff-composer-space', `${composer.offsetHeight + 68 + 24}px`)
+      document.documentElement.style.setProperty('--staff-composer-space', `${composer.offsetHeight + 68}px`)
     }
 
     updateComposerSpace()
@@ -415,6 +416,7 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
   function handleInputChange(value) {
     const next = value.slice(0, MAX_MESSAGE_LENGTH)
     setInput(next)
+    if (next.trim()) trackUserActivity(user, 'Écrit un message', '/messages')
     const match = next.match(/(^|\s)@([A-Za-zÀ-ÖØ-öø-ÿ0-9_-]*)$/)
     setMentionQuery(match ? match[2] : null)
   }
@@ -450,6 +452,7 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
       : individualMentions.map(m => m.uid)
 
     setSending(true)
+    trackUserActivity(user, 'Envoie un message', '/messages')
     try {
       const senderName = userData?.nom || currentStaff?.name || user?.displayName || user?.email || 'Staff'
       const senderRole = currentMember?.staffRole || currentStaff?.role || 'Staff'
@@ -898,13 +901,23 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
       )
     }
 
+    function getPresenceHistoryForDisplay(history = []) {
+      const items = Array.isArray(history) ? [...history] : []
+      if (!items.some(item => item?.date)) return items
+      return items.sort((a, b) => {
+        const dateDiff = String(a?.date || '').localeCompare(String(b?.date || ''))
+        if (dateDiff !== 0) return dateDiff
+        return String(a?.eventId || '').localeCompare(String(b?.eventId || ''))
+      })
+    }
+
     function renderPresencePeople(people) {
       return people.map(person => (
         <span key={person.id || person.displayName} className="staff-presence-report-person">
           <span>{person.displayName}</span>
           {(person.last5 || []).length > 0 && (
             <span className="staff-presence-report-history">
-              {(person.last5 || []).map(renderPresenceDot)}
+              {getPresenceHistoryForDisplay(person.last5).map(renderPresenceDot)}
             </span>
           )}
         </span>

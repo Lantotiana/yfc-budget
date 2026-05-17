@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext'
 import { ADMIN_EMAIL, STAFF_ROLES, DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { trackUserActivity } from '../utils/userActivity'
 
 const EMPTY = { nom: '', prenoms: '', nomPrefere: '', adresse: '', telephone: '', email: '', tailleTshirt: '', staff: false, staffRole: '', tags: ['Membre'] }
 const TAILLES_TSHIRT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
@@ -122,6 +123,7 @@ export default function Membres({ user, userData }) {
 
   async function save() {
     if (!form.nom.trim()) return
+    trackUserActivity(user, sheet === 'add' ? 'Ajoute un membre' : 'Modifie un membre', '/membres')
     setSaving(true)
     try {
       const isStaff = form.staff === true || isApprovedUserEmail(form.email)
@@ -173,6 +175,7 @@ export default function Membres({ user, userData }) {
 
   async function confirmDelete() {
     if (!confirmDel) return
+    trackUserActivity(user, 'Supprime un membre', '/membres')
     await deleteDoc(doc(db, 'membres', confirmDel.id))
     await createNotification({
       type: 'membre',
@@ -186,6 +189,7 @@ export default function Membres({ user, userData }) {
   }
 
   async function exportExcel() {
+    trackUserActivity(user, 'Exporte la liste des membres', '/membres')
     const XLSX = await import('xlsx')
     const rows = membres.map(m => ({
       'Nom': m.nom || '',

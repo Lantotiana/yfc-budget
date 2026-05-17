@@ -9,6 +9,7 @@ import MaterielFormModal from './MaterielFormModal'
 import MaterielDetailModal from './MaterielDetailModal'
 import { computeStockStatus } from './materielHelpers'
 import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
+import { trackUserActivity } from '../../utils/userActivity'
 
 function getDisplayName(member) {
   return member?.nomPrefere || member?.prenoms || member?.nom || ''
@@ -187,6 +188,7 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
 
   async function handleDeleteMateriel() {
     if (!editing) return
+    trackUserActivity(user, 'Supprime un matériel', '/documents')
     await deleteDoc(doc(db, 'materiels', editing.id))
     setShowForm(false)
     setEditing(null)
@@ -211,6 +213,7 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
       }
 
       if (editing) {
+        trackUserActivity(user, 'Modifie un matériel', '/documents')
         const next = {
           ...normalized,
           statut: computeStockStatus(normalized),
@@ -219,6 +222,7 @@ export default function MaterielsTab({ user, userData, C, onAddReady }) {
         await updateDoc(doc(db, 'materiels', editing.id), next)
         await createMovement('modification', editing, { commentaire: 'Fiche matériel modifiée' })
       } else {
+        trackUserActivity(user, 'Ajoute un matériel', '/documents')
         const docRef = await addDoc(collection(db, 'materiels'), {
           ...normalized,
           statut: computeStockStatus(normalized),

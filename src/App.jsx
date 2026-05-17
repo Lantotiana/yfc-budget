@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard'
 import Presences from './pages/Presences'
 import AppLayout from './layouts/AppLayout'
 import useMediaQuery from './hooks/useMediaQuery'
+import { getActivityFromPath, trackUserActivity } from './utils/userActivity'
 import './App.css'
 
 const loadBudget = () => import('./pages/Budget')
@@ -80,6 +81,17 @@ function ScrollToTop() {
 function ProtectedRoute({ user, children }) {
   if (!user) return <Navigate to="/login" replace />
   return children
+}
+
+function UserActivityTracker({ user }) {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!user?.uid || location.pathname === '/login' || location.pathname.startsWith('/verify')) return
+    trackUserActivity(user, getActivityFromPath(location.pathname), location.pathname)
+  }, [location.pathname, user?.uid])
+
+  return null
 }
 
 function BackNavigationGuard({ user }) {
@@ -305,6 +317,24 @@ function FallbackRoute() {
   return <Navigate to={isDesktop ? '/dashboard' : '/'} replace />
 }
 
+function ResponsiveModuleRoute({ user, userData, module, children }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  if (isDesktop) {
+    return (
+      <ProtectedRoute user={user}>
+        <Navigate to="/dashboard" replace state={{ desktopModule: module }} />
+      </ProtectedRoute>
+    )
+  }
+
+  return (
+    <AppPage user={user} userData={userData}>
+      {children}
+    </AppPage>
+  )
+}
+
 const LOADER_MESSAGES = [
   'On aligne les chaises imaginaires...',
   'On recompte les ariary avec sérieux...',
@@ -418,6 +448,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <UserActivityTracker user={user} />
       <BackNavigationGuard user={user} />
       <BottomNav user={user} />
       <Routes>
@@ -484,9 +515,9 @@ export default function App() {
             </AppPage>
           } />
           <Route path="/messages" element={
-            <AppPage user={user} userData={userData}>
+            <ResponsiveModuleRoute user={user} userData={userData} module="messages">
               <MessagesStaff user={user} userData={userData} />
-            </AppPage>
+            </ResponsiveModuleRoute>
           } />
           <Route path="/admin" element={
             <AppPage user={user} userData={userData}>
@@ -494,14 +525,14 @@ export default function App() {
             </AppPage>
           } />
           <Route path="/assistant" element={
-            <AppPage user={user} userData={userData}>
+            <ResponsiveModuleRoute user={user} userData={userData} module="assistant">
               <Fampaherezana user={user} userData={userData} />
-            </AppPage>
+            </ResponsiveModuleRoute>
           } />
           <Route path="/fampaherezana" element={
-            <AppPage user={user} userData={userData}>
+            <ResponsiveModuleRoute user={user} userData={userData} module="assistant">
               <Fampaherezana user={user} userData={userData} />
-            </AppPage>
+            </ResponsiveModuleRoute>
           } />
           <Route path="*" element={<FallbackRoute />} />
       </Routes>

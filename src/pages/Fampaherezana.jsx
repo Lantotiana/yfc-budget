@@ -10,6 +10,7 @@ import { generateAppAssistant } from '../services/fampaherezana'
 import { useTheme } from '../context/ThemeContext'
 import { ADMIN_EMAIL } from '../constants'
 import { canManageBudgetRole, sameEmail } from '../utils/access'
+import { trackUserActivity } from '../utils/userActivity'
 
 const WELCOME = 'Bonjour 😊 Que souhaitez-vous faire dans l’application ? (voir les données, ajouter un événement, enregistrer une dépense, etc.)\n\nSalama 😊 Inona no tianao hatao ato amin’ny application ? (hijery données, hanampy événement, hanoratra dépense, sns.)'
 const STORAGE_PREFIX = 'yfc_app_assistant_chat_'
@@ -428,6 +429,7 @@ export default function Fampaherezana({ user, embedded = false }) {
     e.preventDefault()
     const text = input.trim()
     if (!text || loading) return
+    trackUserActivity(user, 'Écrit à l’assistant', '/assistant')
 
     setInput('')
     setLoading(true)

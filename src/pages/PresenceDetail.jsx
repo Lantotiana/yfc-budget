@@ -10,6 +10,7 @@ import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
+import { trackUserActivity } from '../utils/userActivity'
 
 export default function PresenceDetail({ user, userData }) {
   const { t } = useTranslation()
@@ -121,7 +122,7 @@ export default function PresenceDetail({ user, userData }) {
   }, [allEvents, event, eventTags.join('|')])
 
   function getMemberHistory(membreId) {
-    const last5 = lastSameTagEvents.map(ev => {
+    const recentFirst = lastSameTagEvents.map(ev => {
       const value = allPresences[`${ev.id}_${membreId}`]
       return {
         eventId: ev.id,
@@ -131,10 +132,11 @@ export default function PresenceDetail({ user, userData }) {
       }
     })
     let streak = 0
-    for (const item of last5) {
+    for (const item of recentFirst) {
       if (item.present !== true) break
       streak += 1
     }
+    const last5 = [...recentFirst].reverse()
     return { last5, streak }
   }
 
@@ -195,6 +197,7 @@ export default function PresenceDetail({ user, userData }) {
   function togglePresenceLock() {
     if (presenceLocked) {
       if (!window.confirm('Voulez-vous vraiment modifier la présence ?')) return
+      trackUserActivity(user, 'Modifie les présences', `/presences/${id}`)
       setPresenceLocked(false)
       return
     }
@@ -205,6 +208,7 @@ export default function PresenceDetail({ user, userData }) {
     if (presenceLocked) return
     const docId = `${id}_${membre.id}`
     const nowPresent = !presences[membre.id]
+    trackUserActivity(user, nowPresent ? 'Ajoute une présence' : 'Retire une présence', `/presences/${id}`)
     setSaving(membre.id)
     try {
       await setDoc(doc(db, 'presences', docId), {
@@ -244,6 +248,7 @@ export default function PresenceDetail({ user, userData }) {
 
   async function saveEdit() {
     if (!editForm.titre.trim()) return
+    trackUserActivity(user, 'Modifie un événement de présence', `/presences/${id}`)
     setSavingEdit(true)
     try {
       await updateDoc(doc(db, 'evenements', id), {
@@ -266,6 +271,7 @@ export default function PresenceDetail({ user, userData }) {
 
   async function deleteEvent() {
     if (!window.confirm(`Supprimer "${event.titre}" ? Les données de présence seront conservées.`)) return
+    trackUserActivity(user, 'Supprime un événement de présence', `/presences/${id}`)
     await deleteDoc(doc(db, 'evenements', id))
     await createNotification({
       type: 'presence',

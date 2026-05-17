@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { DEFAULT_MEMBRE_TAGS } from '../constants'
+import { trackUserActivity } from '../utils/userActivity'
 const EMPTY = { nom: '', dateDebut: '', dateFin: '', heureDebut: '', heureFin: '', lieu: '', materielsReserves: [], tags: ['Membre'] }
 
 function useNow() {
@@ -56,7 +57,7 @@ function formatTimeRange(heureDebut, heureFin) {
   return `${heureDebut} → ${heureFin}`
 }
 
-export default function Evenements() {
+export default function Evenements({ user }) {
   const { t } = useTranslation()
   const { C } = useTheme()
   const { setToolbar } = useDesktopToolbar()
@@ -157,6 +158,7 @@ export default function Evenements() {
 
   async function save() {
     if (!form.nom.trim() || !form.dateDebut) return
+    trackUserActivity(user, sheet === 'add' ? 'Crée un événement' : 'Modifie un événement', '/evenements')
     setSaving(true)
     try {
       const data = {
@@ -223,6 +225,7 @@ export default function Evenements() {
 
   async function confirmDelete() {
     if (!confirmDel) return
+    trackUserActivity(user, 'Supprime un événement', '/evenements')
     await deleteDoc(doc(db, 'evenements_agenda', confirmDel.id))
     await createNotification({
       type: 'evenement',
@@ -235,6 +238,7 @@ export default function Evenements() {
   }
 
   async function togglePin(e) {
+    trackUserActivity(user, e.pinned ? 'Désépingle un événement' : 'Épingle un événement', '/evenements')
     await updateDoc(doc(db, 'evenements_agenda', e.id), { pinned: !e.pinned })
   }
 

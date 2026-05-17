@@ -10,6 +10,7 @@ import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
+import { trackUserActivity } from '../utils/userActivity'
 
 export default function Presences({ user, userData }) {
   const { t } = useTranslation()
@@ -98,6 +99,7 @@ export default function Presences({ user, userData }) {
 
   async function createEvent() {
     if (!newEventForm.titre.trim()) return
+    trackUserActivity(user, 'Crée un événement de présence', '/presences')
     setSavingEvent(true)
     try {
       const ref = await addDoc(collection(db, 'evenements'), {

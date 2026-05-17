@@ -7,6 +7,7 @@ import { db, storage } from '../../firebase'
 import { createNotification } from '../../notifications'
 import { useTheme } from '../../context/ThemeContext'
 import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
+import { trackUserActivity } from '../../utils/userActivity'
 
 const MAX_SIZE_MB = 20
 
@@ -156,6 +157,7 @@ export default function DocumentsPanel({
     }
 
     setUploading(true)
+    trackUserActivity(user, 'Ajoute un document', '/documents')
     setUploadProgress('Envoi en cours...')
     try {
       const storageRef = ref(storage, `documents/${Date.now()}_${file.name}`)
@@ -190,6 +192,7 @@ export default function DocumentsPanel({
 
   async function handleDelete() {
     if (!confirmDel) return
+    trackUserActivity(user, 'Supprime un document', '/documents')
     setDeleting(true)
     try {
       if (confirmDel.storagePath) {
@@ -215,6 +218,7 @@ export default function DocumentsPanel({
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url
     }
+    trackUserActivity(user, 'Ajoute un lien document', '/documents')
     setAddingLink(true)
     const lienRef = await addDoc(collection(db, 'liens'), {
       nom,
@@ -237,6 +241,7 @@ export default function DocumentsPanel({
 
   async function handleDeleteLink() {
     if (!confirmDelLink) return
+    trackUserActivity(user, 'Supprime un lien document', '/documents')
     setDeletingLink(true)
     await deleteDoc(doc(db, 'liens', confirmDelLink.id))
     setDeletingLink(false)

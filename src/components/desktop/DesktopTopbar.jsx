@@ -22,6 +22,8 @@ import { db } from '../../firebase'
 import { ADMIN_EMAIL } from '../../constants'
 import { countUnseenNotifications, getNotificationSeenAt } from '../../utils/notificationUtils'
 import { normalizeAccessText } from '../../utils/access'
+import useMediaQuery from '../../hooks/useMediaQuery'
+import { getActivityFromPath, trackUserActivity } from '../../utils/userActivity'
 
 const MessagesStaff = lazy(() => import('../../pages/MessagesStaff'))
 const Fampaherezana = lazy(() => import('../../pages/Fampaherezana'))
@@ -65,6 +67,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
   const [notifCount, setNotifCount] = useState(0)
   const [showMessages, setShowMessages] = useState(false)
   const [showAssistant, setShowAssistant] = useState(false)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const displayName = userData?.nom || user?.displayName || user?.email || 'Staff'
   const initials = displayName.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
@@ -99,6 +102,36 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
       setNotifCount(0)
     }
   }, [location.pathname])
+
+  useEffect(() => {
+    const module = location.state?.desktopModule
+    if (module === 'messages') {
+      setShowMessages(true)
+      setShowAssistant(false)
+      navigate(location.pathname, { replace: true, state: null })
+    } else if (module === 'assistant') {
+      setShowAssistant(true)
+      setShowMessages(false)
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
+
+  useEffect(() => {
+    if (isDesktop) return
+    if (showMessages) navigate('/messages', { replace: true })
+    if (showAssistant) navigate('/assistant', { replace: true })
+  }, [isDesktop, navigate, showAssistant, showMessages])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    const currentActivity = showMessages
+      ? 'Consulte les messages'
+      : showAssistant
+        ? 'Utilise l’assistant'
+        : getActivityFromPath(location.pathname)
+
+    trackUserActivity(user, currentActivity, showMessages ? '/messages' : showAssistant ? '/assistant' : location.pathname)
+  }, [location.pathname, showAssistant, showMessages, user?.uid])
 
   const results = useMemo(() => {
     const term = norm(search)

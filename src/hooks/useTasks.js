@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { createNotification } from '../notifications'
+import { trackUserActivity } from '../utils/userActivity'
 import {
   getDisplayMemberName,
   getDueDateStatus,
@@ -189,6 +190,7 @@ export default function useTasks({ user, userData } = {}) {
     const normalized = normalizeTaskPayload(payload)
     const errors = validateTaskPayload(normalized)
     if (Object.keys(errors).length) throw Object.assign(new Error('Validation task'), { errors })
+    trackUserActivity(user, 'Crée une tâche', '/tasks')
 
     const ref = await addDoc(collection(db, 'tasks'), {
       ...normalized,
@@ -215,6 +217,7 @@ export default function useTasks({ user, userData } = {}) {
     const normalized = normalizeTaskPayload(payload)
     const errors = validateTaskPayload(normalized)
     if (Object.keys(errors).length) throw Object.assign(new Error('Validation task'), { errors })
+    trackUserActivity(user, 'Modifie une tâche', '/tasks')
 
     const next = {
       ...normalized,
@@ -251,9 +254,10 @@ export default function useTasks({ user, userData } = {}) {
         })
       }))
     }
-  }, [assignableMembers])
+  }, [assignableMembers, user])
 
   const updateTaskStatus = useCallback(async (task, status) => {
+    trackUserActivity(user, status === 'done' ? 'Termine une tâche' : 'Déplace une tâche', '/tasks')
     await updateDoc(doc(db, 'tasks', task.id), {
       status,
       updatedAt: serverTimestamp(),
@@ -270,18 +274,20 @@ export default function useTasks({ user, userData } = {}) {
         metadata: { taskId: task.id },
       })
     }
-  }, [])
+  }, [user])
 
   const archiveTask = useCallback(async task => {
+    trackUserActivity(user, 'Archive une tâche', '/tasks')
     await updateDoc(doc(db, 'tasks', task.id), {
       archived: true,
       updatedAt: serverTimestamp(),
     })
-  }, [])
+  }, [user])
 
   const deleteTask = useCallback(async task => {
+    trackUserActivity(user, 'Supprime une tâche', '/tasks')
     await deleteDoc(doc(db, 'tasks', task.id))
-  }, [])
+  }, [user])
 
   return {
     tasks,

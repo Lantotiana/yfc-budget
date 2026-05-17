@@ -100,7 +100,7 @@ export default function DesktopLayout({ user, userData, children }) {
             <main className="desktop-content">
               {children}
             </main>
-            <DesktopRightPanel />
+            <DesktopRightPanel user={user} />
           </div>
         </div>
       </div>
