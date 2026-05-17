@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { collection, onSnapshot } from 'firebase/firestore'
-import { Plus } from 'lucide-react'
+import { Download, Plus } from 'lucide-react'
 import { db } from '../firebase'
 import TaskBoard from '../components/tasks/TaskBoard'
 import useTasks from '../hooks/useTasks'
@@ -22,11 +22,24 @@ export default function Tasks({ user, userData }) {
     return () => unsub()
   }, [])
 
-  const desktopActions = useMemo(() => canCreate ? (
-    <button className="desktop-toolbar-btn" type="button" onClick={() => window.dispatchEvent(new CustomEvent('yfc-open-task-create'))}>
-      <Plus size={16} /> Nouvelle tâche
-    </button>
-  ) : null, [canCreate])
+  async function handleExport() {
+    const { exportTasks } = await import('../utils/exportTasks')
+    await exportTasks(taskState.tasks)
+  }
+
+  const desktopActions = useMemo(() => (
+    <>
+      <button className="desktop-toolbar-btn secondary" type="button" aria-label="Exporter en Excel" title="Exporter en Excel" onClick={handleExport}>
+        <Download size={16} />
+      </button>
+      {canCreate && (
+        <button className="desktop-toolbar-btn" type="button" onClick={() => window.dispatchEvent(new CustomEvent('yfc-open-task-create'))}>
+          <Plus size={16} /> Nouvelle tâche
+        </button>
+      )}
+    </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [canCreate, taskState.tasks])
 
   useEffect(() => {
     setToolbar({ title: 'Tâches', actions: desktopActions })
@@ -38,6 +51,7 @@ export default function Tasks({ user, userData }) {
       user={user}
       userData={userData}
       currentMember={currentMember}
+      onExport={handleExport}
       {...taskState}
     />
   )

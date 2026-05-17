@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import {
@@ -30,7 +31,7 @@ const baseItems = [
   { path: '/parametres', label: 'Paramètres', Icon: Settings },
 ]
 
-export default function DesktopSidebar({ user, currentMember }) {
+export default function DesktopSidebar({ user, currentMember, compact = false }) {
   const navigate = useNavigate()
   const location = useLocation()
   const role = normalizeAccessText(currentMember?.staffRole)
@@ -38,13 +39,41 @@ export default function DesktopSidebar({ user, currentMember }) {
   const items = canAdmin ? [...baseItems, { path: '/admin', label: 'Administration', Icon: ShieldCheck }] : baseItems
   const activeIndex = Math.max(0, items.findIndex(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)))
 
+  const [visualCompact, setVisualCompact] = useState(compact)
+  const [textHidden, setTextHidden] = useState(compact)
+  const [expanding, setExpanding] = useState(false)
+  const t1 = useRef(null), t2 = useRef(null), t3 = useRef(null)
+
+  useEffect(() => {
+    clearTimeout(t1.current)
+    clearTimeout(t2.current)
+    clearTimeout(t3.current)
+    if (compact) {
+      setVisualCompact(true)
+      setTextHidden(true)
+      setExpanding(false)
+    } else {
+      // Étape 1 : laisser le ::before glisser vers la nouvelle icône
+      t1.current = setTimeout(() => {
+        setVisualCompact(false)
+        setExpanding(true)
+        // Étape 2 : textes apparaissent en cours d'élargissement
+        t2.current = setTimeout(() => {
+          setTextHidden(false)
+          t3.current = setTimeout(() => setExpanding(false), 200)
+        }, 100)
+      }, 50)
+    }
+    return () => { clearTimeout(t1.current); clearTimeout(t2.current); clearTimeout(t3.current) }
+  }, [compact])
+
   async function logout() {
     await signOut(auth)
     navigate('/login', { replace: true })
   }
 
   return (
-    <aside className="desktop-sidebar">
+    <aside className={`desktop-sidebar${visualCompact ? ' compact' : ''}${textHidden ? ' text-hidden' : ''}${expanding ? ' is-expanding' : ''}`}>
       <div className="desktop-brand">
         <div className="desktop-brand-mark">
           <img src={logoYfc} alt="YFC" />
@@ -71,7 +100,7 @@ export default function DesktopSidebar({ user, currentMember }) {
 
       <button type="button" className="desktop-logout" onClick={logout}>
         <LogOut size={18} />
-        Déconnexion
+        <span>Déconnexion</span>
       </button>
     </aside>
   )

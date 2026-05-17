@@ -6,7 +6,7 @@ import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, updateDoc,
 import { ArrowLeft, Check, Lock, LockOpen, Pencil, Share2, Search, Tag, Trash2, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { useTheme } from '../context/ThemeContext'
-import { DEFAULT_MEMBRE_TAGS, ADMIN_EMAIL } from '../constants'
+import { DEFAULT_MEMBRE_TAGS } from '../constants'
 import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
@@ -29,8 +29,9 @@ export default function PresenceDetail({ user, userData }) {
   const [editForm, setEditForm] = useState(null)
   const [savingEdit, setSavingEdit] = useState(false)
   const [isSharingReport, setIsSharingReport] = useState(false)
+  const [desktopShareReport, setDesktopShareReport] = useState(null)
+  const [publishPromptReport, setPublishPromptReport] = useState(null)
   const [presenceLocked, setPresenceLocked] = useState(true)
-  const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
     return onSnapshot(doc(db, 'evenements', id), snap => {
@@ -140,6 +141,37 @@ export default function PresenceDetail({ user, userData }) {
   function presenceSymbol(value) {
     if (value === true) return '✅'
     return '❌'
+  }
+
+  function BrandIcon({ type }) {
+    if (type === 'whatsapp') {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#25D366" d="M12.04 2a9.84 9.84 0 0 0-8.53 14.75L2.4 21.8l5.17-1.08A9.84 9.84 0 1 0 12.04 2Z" />
+          <path fill="#fff" d="M17.69 14.56c-.31-.15-1.82-.9-2.1-1-.28-.1-.49-.15-.69.15-.2.31-.79 1-.97 1.17-.18.2-.36.22-.67.07-.31-.15-1.31-.48-2.49-1.53-.92-.82-1.54-1.84-1.72-2.15-.18-.31-.02-.48.14-.63.14-.14.31-.36.46-.54.15-.18.2-.31.31-.51.1-.2.05-.38-.03-.54-.08-.15-.69-1.66-.95-2.28-.25-.6-.5-.51-.69-.52h-.59c-.2 0-.54.08-.82.38-.28.31-1.08 1.05-1.08 2.56s1.1 2.97 1.25 3.18c.15.2 2.17 3.31 5.26 4.64.73.32 1.3.51 1.75.65.74.23 1.41.2 1.94.12.59-.09 1.82-.74 2.08-1.46.26-.72.26-1.33.18-1.46-.08-.13-.28-.2-.59-.35Z" />
+        </svg>
+      )
+    }
+    if (type === 'facebook') {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#1877F2" d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.88 3.77-3.88 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z" />
+        </svg>
+      )
+    }
+    if (type === 'email') {
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#EA4335" d="M3.5 6.5A2.5 2.5 0 0 1 6 4h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5v-11Z" />
+          <path fill="#fff" d="M5.2 7.1 12 12.2l6.8-5.1v2.1L12 14.3 5.2 9.2V7.1Z" />
+        </svg>
+      )
+    }
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#6B6F8A" d="M8 7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-1v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3h1V7Zm2 1h3a3 3 0 0 1 3 3v3h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v1Zm-3 2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H7Z" />
+      </svg>
+    )
   }
 
   function renderHistoryDot(item) {
@@ -256,6 +288,9 @@ export default function PresenceDetail({ user, userData }) {
     return m.nomPrefere?.trim() || m.prenoms?.trim() || m.nom
   }
 
+  const reportMemberIdsKey = tagFilteredMembres.map(m => m.id).join('|')
+  const reportPresenceKey = tagFilteredMembres.map(m => `${m.id}:${presences[m.id] === true ? '1' : '0'}`).join('|')
+
   const desktopActions = useMemo(() => (
     <>
       <button
@@ -289,12 +324,39 @@ export default function PresenceDetail({ user, userData }) {
         </button>
       )}
     </>
-  ), [event, isSharingReport, presenceLocked, tagFilteredMembres.length])
+  ), [event, isSharingReport, presenceLocked, reportMemberIdsKey, reportPresenceKey, allPresences])
+
+  const presenceCountLabel = useMemo(() => (
+    <div className="presence-stats-row">
+      <div className="presence-stats-count" style={{ color: C.t2 }}>
+        <span style={{ fontWeight: 700, color: C.t1 }}>{presentCount}</span> / {tagFilteredMembres.length} {t('presences.presents')}
+      </div>
+    </div>
+  ), [C.t1, C.t2, presentCount, tagFilteredMembres.length, t])
+
+  const presenceSearchInput = useMemo(() => tagFilteredMembres.length > 0 && (
+    <div className="tx-search-wrapper">
+      <div className="tx-search-icon"><Search size={14} /></div>
+      <input
+        className="tx-search-input"
+        type="search"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder={t('membres.rechercher')}
+        style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
+      />
+      {search && (
+        <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  ), [search, tagFilteredMembres.length, t])
 
   useEffect(() => {
-    setToolbar({ actions: desktopActions })
-    return () => setToolbar({ actions: null })
-  }, [desktopActions, setToolbar])
+    setToolbar({ actions: desktopActions, search: presenceSearchInput, subtitle: presenceCountLabel })
+    return () => setToolbar({ actions: null, search: null, subtitle: null })
+  }, [desktopActions, presenceCountLabel, presenceSearchInput, setToolbar])
 
   function buildReportText(presents, absents) {
     const tagLabel = eventTags.length ? ` [${eventTags.join(', ')}]` : ''
@@ -316,18 +378,65 @@ export default function PresenceDetail({ user, userData }) {
     const presents = tagFilteredMembres.filter(m => presences[m.id] === true)
     const absents  = tagFilteredMembres.filter(m => presences[m.id] !== true)
     const text = buildReportText(presents, absents)
+    const report = { text, presents, absents, title: `Présence – ${event.titre}` }
+    const isDesktop = window.matchMedia?.('(min-width: 1024px)').matches
+
+    if (isDesktop) {
+      setDesktopShareReport(report)
+      return
+    }
 
     setIsSharingReport(true)
     try {
       if (navigator.share) {
-        await navigator.share({ title: `Présence – ${event.titre}`, text })
+        await navigator.share({ title: report.title, text })
       } else {
         await navigator.clipboard.writeText(text)
       }
-      // Share succeeded — publish directly to Messages
+      // Mobile keeps the existing native-share behavior.
       await publishReportToMessages(presents, absents)
     } catch (err) {
       if (err?.name !== 'AbortError') console.error('Share error:', err)
+    } finally {
+      setIsSharingReport(false)
+    }
+  }
+
+  async function copyReportText(text) {
+    await navigator.clipboard.writeText(text)
+  }
+
+  function finishDesktopShare(report) {
+    setDesktopShareReport(null)
+    setPublishPromptReport(report)
+  }
+
+  async function shareDesktopReport(channel) {
+    if (!desktopShareReport) return
+    const report = desktopShareReport
+    try {
+      if (channel === 'whatsapp') {
+        window.open(`https://web.whatsapp.com/send?text=${encodeURIComponent(report.text)}`, '_blank', 'noopener,noreferrer')
+      } else if (channel === 'messenger') {
+        await copyReportText(report.text)
+        window.open('https://www.facebook.com/messages/', '_blank', 'noopener,noreferrer')
+      } else if (channel === 'email') {
+        window.location.href = `mailto:?subject=${encodeURIComponent(report.title)}&body=${encodeURIComponent(report.text)}`
+      } else if (channel === 'copy') {
+        await copyReportText(report.text)
+      }
+      finishDesktopShare(report)
+    } catch (err) {
+      console.error('Desktop share error:', err)
+    }
+  }
+
+  async function publishPendingDesktopReport() {
+    if (!publishPromptReport || isSharingReport) return
+    setIsSharingReport(true)
+    try {
+      await publishReportToMessages(publishPromptReport.presents, publishPromptReport.absents)
+      setPublishPromptReport(null)
     } finally {
       setIsSharingReport(false)
     }
@@ -392,7 +501,7 @@ export default function PresenceDetail({ user, userData }) {
   }
 
   return (
-    <div className="page-container-locked sin" style={{ background: C.bg }}>
+    <div className="page-container-locked sin presence-detail-page" style={{ background: C.bg }}>
 
       {/* Header */}
       <div className="textured-page-header desktop-hide-page-header" style={{ '--header-color': '#7c3aed', padding: '20px 20px 16px', paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: `1px solid ${C.bord}`, flexShrink: 0 }}>
@@ -409,6 +518,7 @@ export default function PresenceDetail({ user, userData }) {
               {toDisplayDate(event.date)}
               {eventTags.length > 0 && <span style={{ color: '#7c3aed', marginLeft: 6 }}>· {eventTags.join(', ')}</span>}
             </div>
+            {presenceCountLabel}
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <button
@@ -437,40 +547,28 @@ export default function PresenceDetail({ user, userData }) {
           </div>
         </div>
 
+        <div className="presence-header-tools">
+          {presenceSearchInput}
+        </div>
       </div>
+
+      {tagFilteredMembres.length > 0 && (
+        <div className="presence-progress-area">
+          <div
+            className="presence-progress"
+            style={{
+              '--presence-progress-bg': C.surf3,
+              '--presence-progress-fill': progressColor,
+              '--presence-progress-width': `${presencePercent}%`,
+            }}
+          >
+            <div />
+          </div>
+        </div>
+      )}
 
       {/* Member list */}
       <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
-        {/* Stats + search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: tagFilteredMembres.length > 0 ? 10 : 0 }}>
-          <div style={{ fontSize: 'var(--font-xs)', color: C.t2 }}>
-            <span style={{ fontWeight: 700, color: C.t1 }}>{presentCount}</span> / {tagFilteredMembres.length} {t('presences.presents')}
-          </div>
-        </div>
-
-        {tagFilteredMembres.length > 0 && (
-          <>
-            <div className="tx-search-wrapper">
-              <div className="tx-search-icon"><Search size={14} /></div>
-              <input
-                className="tx-search-input"
-                type="search"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={t('membres.rechercher')}
-                style={{ paddingLeft: 38, paddingRight: search ? 38 : 12 }}
-              />
-              {search && (
-                <button type="button" className="tx-search-clear" onClick={() => setSearch('')}>
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <div style={{ height: 5, borderRadius: 5, background: C.surf3, overflow: 'hidden', marginBottom: 14 }}>
-              <div style={{ height: '100%', borderRadius: 5, background: progressColor, width: `${presencePercent}%`, transition: 'width .4s cubic-bezier(.25,.8,.25,1), background .3s' }} />
-            </div>
-          </>
-        )}
         {membres.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             {t('membres.aucunMembre')}
@@ -485,6 +583,7 @@ export default function PresenceDetail({ user, userData }) {
           const history = getMemberHistory(m.id)
           return (
             <div
+              className="presence-member-row"
               key={m.id}
               onClick={() => !isSaving && togglePresence(m)}
               style={{
@@ -513,6 +612,64 @@ export default function PresenceDetail({ user, userData }) {
           )
         })}
       </div>
+
+      {desktopShareReport && (
+        <Portal>
+          <div className="modal-overlay presence-share-overlay" onClick={() => setDesktopShareReport(null)}>
+            <div className="presence-share-modal" onClick={e => e.stopPropagation()}>
+              <div className="presence-share-head">
+                <div>
+                  <h2>Partager le rapport</h2>
+                  <p>{event.titre}</p>
+                </div>
+                <button type="button" onClick={() => setDesktopShareReport(null)} aria-label="Annuler">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="presence-share-actions">
+                <button type="button" onClick={() => shareDesktopReport('whatsapp')}>
+                  <BrandIcon type="whatsapp" /> WhatsApp
+                </button>
+                <button type="button" onClick={() => shareDesktopReport('messenger')}>
+                  <BrandIcon type="facebook" /> Facebook message
+                </button>
+                <button type="button" onClick={() => shareDesktopReport('email')}>
+                  <BrandIcon type="email" /> Email
+                </button>
+                <button type="button" onClick={() => shareDesktopReport('copy')}>
+                  <BrandIcon type="copy" /> Copier le texte
+                </button>
+              </div>
+              <button type="button" className="presence-share-cancel" onClick={() => setDesktopShareReport(null)}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {publishPromptReport && (
+        <Portal>
+          <div className="modal-overlay presence-share-overlay" onClick={() => setPublishPromptReport(null)}>
+            <div className="presence-share-modal presence-publish-modal" onClick={e => e.stopPropagation()}>
+              <div className="presence-share-head">
+                <div>
+                  <h2>Publier aussi dans l'app ?</h2>
+                  <p>Le rapport sera ajouté dans Messages Staff.</p>
+                </div>
+              </div>
+              <div className="presence-publish-actions">
+                <button type="button" className="presence-share-cancel" onClick={() => setPublishPromptReport(null)}>
+                  Annuler
+                </button>
+                <button type="button" className="presence-publish-confirm" onClick={publishPendingDesktopReport} disabled={isSharingReport}>
+                  Publier
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
 
       {/* Edit sheet */}
       {showEdit && editForm && (

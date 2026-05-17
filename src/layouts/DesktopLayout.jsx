@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../firebase'
 import { sameEmail } from '../utils/access'
 import DesktopSidebar from '../components/desktop/DesktopSidebar'
 import DesktopTopbar from '../components/desktop/DesktopTopbar'
 import DesktopRightPanel from '../components/desktop/DesktopRightPanel'
+import SettingsSubPanel from '../components/desktop/SettingsSubPanel'
 import { DesktopToolbarContext } from '../context/DesktopToolbarContext'
 
 export default function DesktopLayout({ user, userData, children }) {
+  const location = useLocation()
+  const isSettingsPage = location.pathname.startsWith('/parametres')
   const [membres, setMembres] = useState([])
   const [toolbar, setToolbar] = useState({ actions: null })
   const [searchData, setSearchData] = useState({
@@ -87,8 +91,9 @@ export default function DesktopLayout({ user, userData, children }) {
 
   return (
     <DesktopToolbarContext.Provider value={{ toolbar, setToolbar }}>
-      <div className="desktop-shell">
-        <DesktopSidebar user={user} currentMember={currentMember} />
+      <div className={`desktop-shell${isSettingsPage ? ' settings-mode' : ''}`}>
+        <DesktopSidebar user={user} currentMember={currentMember} compact={isSettingsPage} />
+        {isSettingsPage && <SettingsSubPanel user={user} currentMember={currentMember} />}
         <div className="desktop-main">
           <DesktopTopbar user={user} userData={userData} currentMember={currentMember} searchData={searchData} toolbar={toolbar} />
           <div className="desktop-workspace">

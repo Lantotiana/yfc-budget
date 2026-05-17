@@ -10,7 +10,7 @@ import Confetti from './Confetti'
 import Portal from '../Portal'
 import useMediaQuery from '../../hooks/useMediaQuery'
 import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
-import { Search, X } from 'lucide-react'
+import { Download, Plus, Search, X } from 'lucide-react'
 import {
   TASK_COLUMNS,
   canCreateTasks,
@@ -37,6 +37,7 @@ export default function TaskBoard({
   updateTaskStatus,
   archiveTask,
   deleteTask,
+  onExport,
 }) {
   const { t } = useTranslation()
   const { setToolbar } = useDesktopToolbar()
@@ -182,7 +183,20 @@ export default function TaskBoard({
           <h1>{t('tasks.title')}</h1>
           <p>{counters.total} {t('tasks.title').toLowerCase()}</p>
         </div>
-        {canCreate && <button type="button" onClick={() => setCreating(true)}>{t('tasks.newTask')}</button>}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {onExport && (
+            <button type="button" onClick={onExport} title="Exporter en Excel"
+              style={{ width: 36, height: 36, borderRadius: 12, border: '1px solid var(--border-light)', background: 'var(--card-bg)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'inherit' }}>
+              <Download size={16} />
+            </button>
+          )}
+          {canCreate && (
+            <button type="button" onClick={() => setCreating(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 12, border: 'none', background: 'var(--teal)', color: '#fff', cursor: 'pointer', fontSize: 'var(--font-sm)', fontWeight: 600, fontFamily: 'inherit' }}>
+              <Plus size={14} /> {t('tasks.newTask')}
+            </button>
+          )}
+        </div>
       </div>
 
       <TaskFilters filters={filters} setFilters={setFilters} membersWithTasks={membersWithTasks} />

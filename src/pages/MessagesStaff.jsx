@@ -900,10 +900,10 @@ export default function MessagesStaff({ user, userData, embedded = false }) {
 
     function renderPresencePeople(people) {
       return people.map(person => (
-        <span key={person.id || person.displayName} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginRight: 10, marginBottom: 4 }}>
+        <span key={person.id || person.displayName} className="staff-presence-report-person">
           <span>{person.displayName}</span>
           {(person.last5 || []).length > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span className="staff-presence-report-history">
               {(person.last5 || []).map(renderPresenceDot)}
             </span>
           )}

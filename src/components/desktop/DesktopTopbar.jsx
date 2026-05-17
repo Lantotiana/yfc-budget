@@ -177,6 +177,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
       <div className="desktop-topbar-primary">
         <div className="desktop-topbar-title">
           <strong>{toolbar?.title || pageTitle}</strong>
+          {toolbar?.subtitle && <div className="desktop-topbar-subtitle">{toolbar.subtitle}</div>}
         </div>
 
         {toolbar?.search && <div className="desktop-page-search">{toolbar.search}</div>}

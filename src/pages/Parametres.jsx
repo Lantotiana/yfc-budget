@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import useMediaQuery from '../hooks/useMediaQuery'
+import Admin from '../components/Admin'
+import ProfilePhotoCropper from '../components/ProfilePhotoCropper'
+import { useDesktopToolbar } from '../context/DesktopToolbarContext'
+import { SETTINGS_SECTIONS } from '../components/desktop/SettingsSubPanel'
 import { Eye, EyeOff, Trash2, Share2, Check, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { auth } from '../auth'
@@ -59,11 +64,25 @@ export default function Parametres({ user, userData, setUserData }) {
   const { dark, toggle, C } = useTheme()
   const { t } = useTranslation()
   const fileRef = useRef()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const [searchParams] = useSearchParams()
+  const activeSection = isDesktop ? (searchParams.get('section') || 'profil') : null
+  const show = key => !activeSection || activeSection === key
+  const { setToolbar } = useDesktopToolbar()
+
+  useEffect(() => {
+    if (!isDesktop) return
+    const label = SETTINGS_SECTIONS.find(s => s.key === (activeSection || 'profil'))?.label || 'Paramètres'
+    setToolbar(prev => ({ ...prev, title: label }))
+    return () => setToolbar(prev => ({ ...prev, title: null }))
+  }, [isDesktop, activeSection, setToolbar])
 
   const [nom, setNom] = useState(userData?.nom || '')
   const [saving, setSaving] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoURL, setPhotoURL] = useState(userData?.photoURL || '')
+  const [cropSrc, setCropSrc] = useState(null)
+  const [showCropper, setShowCropper] = useState(false)
   const [memberRole, setMemberRole] = useState({ staff: false, staffRole: '' })
   const [msg, setMsg] = useState({ text: '', ok: true })
 
@@ -201,11 +220,25 @@ export default function Parametres({ user, userData, setUserData }) {
     setSaving(false)
   }
 
-  async function handlePhoto(e) {
+  function handlePhotoSelect(e) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) { flash(t('parametres.erreurPhoto'), false); return }
+    if (file.size > 10 * 1024 * 1024) { flash('Image trop lourde (max 10 Mo)', false); return }
+    const src = URL.createObjectURL(file)
+    setCropSrc(src)
+    setShowCropper(true)
+  }
+
+  async function handleCropConfirm(blob) {
+    setShowCropper(false)
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
     setUploadingPhoto(true)
     try {
+      const file = new File([blob], 'avatar.webp', { type: 'image/webp' })
       const fd = new FormData()
       fd.append('file', file)
       fd.append('upload_preset', CLOUDINARY_PRESET)
@@ -226,6 +259,21 @@ export default function Parametres({ user, userData, setUserData }) {
       } else { flash(t('parametres.erreurPhoto'), false) }
     } catch { flash(t('parametres.erreurPhoto'), false) }
     setUploadingPhoto(false)
+  }
+
+  function handleCropCancel() {
+    setShowCropper(false)
+    if (cropSrc && cropSrc.startsWith('blob:')) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+  }
+
+  function openCropper() {
+    if (photoURL) {
+      setCropSrc(photoURL)
+      setShowCropper(true)
+    } else {
+      fileRef.current?.click()
+    }
   }
 
   async function savePassword() {
@@ -273,9 +321,13 @@ export default function Parametres({ user, userData, setUserData }) {
   const sectionLabel = {
     fontSize: 'var(--font-xs)', fontWeight: 700, color: C.t3,
     textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 14,
+    ...(isDesktop ? { display: 'none' } : {}),
   }
 
   const roleLabel = memberRole.staffRole || (memberRole.staff ? t('parametres.staffSansRole') : t('membres.membre'))
+  const sectionStyle = key => activeSection && activeSection !== key
+    ? { ...section, display: 'none' }
+    : section
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
@@ -295,7 +347,7 @@ export default function Parametres({ user, userData, setUserData }) {
         )}
 
         {/* Apparence */}
-        <div style={section}>
+        <div style={sectionStyle('apparence')}>
           <div style={sectionLabel}>{t('parametres.apparence')}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
@@ -313,12 +365,12 @@ export default function Parametres({ user, userData, setUserData }) {
 
 
         {/* Profil */}
-        <div style={section}>
+        <div style={sectionStyle('profil')}>
           <div style={sectionLabel}>{t('parametres.profil')}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div
-              onClick={() => fileRef.current?.click()}
+              onClick={openCropper}
               style={{ width: 64, height: 64, borderRadius: '50%', background: C.surf2, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 'var(--font-md)', color: C.t1, flexShrink: 0 }}
             >
               {uploadingPhoto ? '...' : photoURL
@@ -329,13 +381,13 @@ export default function Parametres({ user, userData, setUserData }) {
             <div>
               <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: C.t1, marginBottom: 2 }}>{t('parametres.photoProfile')}</div>
               <button
-                onClick={() => fileRef.current?.click()}
+                onClick={openCropper}
                 style={{ fontSize: 'var(--font-xs)', color: C.amber, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontWeight: 600 }}
               >
                 {uploadingPhoto ? t('parametres.uploading') : t('parametres.modifierPhoto')}
               </button>
             </div>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+            <input ref={fileRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: 'none' }} />
           </div>
 
           <div style={{ marginBottom: 12 }}>
@@ -354,9 +406,10 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
 
           <button
+            className="params-action-btn"
             onClick={saveProfile}
             disabled={saving || !nom.trim()}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
+            style={{ padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (saving || !nom.trim()) ? 0.6 : 1 }}
           >
             {saving ? t('parametres.enregistrement') : t('parametres.sauvegarder')}
           </button>
@@ -364,7 +417,7 @@ export default function Parametres({ user, userData, setUserData }) {
 
         
         {/* Application */}
-        <div style={section}>
+        <div style={sectionStyle('application')}>
           <div style={sectionLabel}>{t('parametres.application')}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 12, background: C.surf2, border: `1px solid ${C.bord}` }}>
@@ -435,7 +488,7 @@ export default function Parametres({ user, userData, setUserData }) {
             </div>
           )}
         </div>
-        <div style={section}>
+        <div style={sectionStyle('notifications')}>
           {msg.text && (
             <div style={{ padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontSize: 'var(--font-sm)', fontWeight: 600, background: msg.ok ? C.tealD : C.coralD, color: msg.ok ? C.teal : C.coral }}>
               {msg.text}
@@ -458,10 +511,11 @@ export default function Parametres({ user, userData, setUserData }) {
           </div>
 
           <button
+            className="params-action-btn"
             type="button"
             onClick={handleEnablePush}
             disabled={pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: 'none', background: pushStatus.enabled ? C.tealD : C.teal, color: pushStatus.enabled ? C.teal : '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10, opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.72 : 1 }}
+            style={{ padding: '12px 14px', borderRadius: 12, border: 'none', background: pushStatus.enabled ? C.tealD : C.teal, color: pushStatus.enabled ? C.teal : '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10, opacity: (pushLoading || !pushStatus.configured || !pushStatus.supported || pushStatus.permission === 'denied' || pushStatus.enabled) ? 0.72 : 1 }}
           >
             {pushLoading ? 'Activation...' : pushStatus.enabled ? 'Autorise' : 'Activer'}
           </button>
@@ -488,20 +542,25 @@ export default function Parametres({ user, userData, setUserData }) {
 
         {/* Mot de passe */}
         {canOpenAdminTools && (
-          <div style={section}>
-            <div style={sectionLabel}>{t('parametres.administration')}</div>
-            <button
-              onClick={() => navigate('/admin')}
-              style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              {t('parametres.ouvrirAdmin')}
-            </button>
-          </div>
+          isDesktop
+            ? (activeSection === 'administration' && <Admin user={user} userData={userData} />)
+            : (
+              <div style={section}>
+                <div style={sectionLabel}>{t('parametres.administration')}</div>
+                <button
+                  className="params-action-btn"
+                  onClick={() => navigate('/admin')}
+                  style={{ padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  {t('parametres.ouvrirAdmin')}
+                </button>
+              </div>
+            )
         )}
 
         {/* Tags des membres */}
         {isAdmin && (
-          <div style={section}>
+          <div style={sectionStyle('tags')}>
             <div style={sectionLabel}>{t('parametres.tagsMembres')}</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
@@ -560,7 +619,7 @@ export default function Parametres({ user, userData, setUserData }) {
         )}
 
         {/* Mot de passe */}
-        <div style={section}>
+        <div style={sectionStyle('securite')}>
           <div style={sectionLabel}>{t('parametres.changerMdp')}</div>
 
           {[
@@ -591,27 +650,37 @@ export default function Parametres({ user, userData, setUserData }) {
           ))}
 
           <button
+            className="params-action-btn"
             onClick={savePassword}
             disabled={savingPwd || !oldPwd || !newPwd || !confirmPwd}
-            style={{ width: '100%', padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
+            style={{ padding: 13, border: 'none', borderRadius: 12, background: C.teal, color: '#fff', fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit', opacity: (savingPwd || !oldPwd || !newPwd || !confirmPwd) ? 0.6 : 1 }}
           >
             {savingPwd ? t('parametres.modification') : t('parametres.modifierMdp')}
           </button>
         </div>
 
-        {/* Déconnexion */}
-        <button
-          onClick={() => signOut(auth)}
-          style={{ width: '100%', padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          {t('parametres.deconnecter')}
-        </button>
+        {/* Déconnexion — hidden on desktop (button lives in SettingsSubPanel) */}
+        {!isDesktop && (
+          <button
+            className="params-action-btn"
+            onClick={() => signOut(auth)}
+            style={{ padding: 13, border: `1.5px solid ${C.coralD}`, borderRadius: 12, background: C.coralD, color: C.coral, fontWeight: 700, fontSize: 'var(--font-sm)', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            {t('parametres.deconnecter')}
+          </button>
+        )}
       </div>
+
+      {showCropper && cropSrc && (
+        <ProfilePhotoCropper
+          imageSrc={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }
-
-
 
 
 
