@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   Bell,
   Bot,
@@ -22,8 +22,9 @@ import { db } from '../../firebase'
 import { ADMIN_EMAIL } from '../../constants'
 import { countUnseenNotifications, getNotificationSeenAt } from '../../utils/notificationUtils'
 import { normalizeAccessText } from '../../utils/access'
-import MessagesStaff from '../../pages/MessagesStaff'
-import Fampaherezana from '../../pages/Fampaherezana'
+
+const MessagesStaff = lazy(() => import('../../pages/MessagesStaff'))
+const Fampaherezana = lazy(() => import('../../pages/Fampaherezana'))
 
 const adminRoles = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
@@ -218,7 +219,9 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
           <button type="button" className="desktop-message-close" onClick={() => setShowMessages(false)} aria-label="Fermer les messages">
             <X size={16} />
           </button>
-          <MessagesStaff user={user} userData={userData} embedded />
+          <Suspense fallback={<div className="route-loader"><div className="route-loader-dots"><span /><span /><span /></div></div>}>
+            <MessagesStaff user={user} userData={userData} embedded />
+          </Suspense>
         </div>
       ), document.body)}
       {showAssistant && createPortal((
@@ -226,7 +229,9 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
           <button type="button" className="desktop-message-close" onClick={() => setShowAssistant(false)} aria-label="Fermer l'assistant">
             <X size={16} />
           </button>
-          <Fampaherezana user={user} embedded />
+          <Suspense fallback={<div className="route-loader"><div className="route-loader-dots"><span /><span /><span /></div></div>}>
+            <Fampaherezana user={user} embedded />
+          </Suspense>
         </div>
       ), document.body)}
     </header>

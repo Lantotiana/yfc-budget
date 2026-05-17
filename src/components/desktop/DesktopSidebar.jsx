@@ -9,16 +9,11 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
-  ShieldCheck,
   Users,
   Wallet,
 } from 'lucide-react'
 import { auth } from '../../auth'
-import { ADMIN_EMAIL } from '../../constants'
-import { normalizeAccessText } from '../../utils/access'
 import logoYfc from '../../assets/logo_yfc.png'
-
-const adminRoles = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
 
 const baseItems = [
   { path: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
@@ -31,12 +26,10 @@ const baseItems = [
   { path: '/parametres', label: 'Paramètres', Icon: Settings },
 ]
 
-export default function DesktopSidebar({ user, currentMember, compact = false }) {
+export default function DesktopSidebar({ compact = false }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const role = normalizeAccessText(currentMember?.staffRole)
-  const canAdmin = user?.email === ADMIN_EMAIL || adminRoles.includes(role)
-  const items = canAdmin ? [...baseItems, { path: '/admin', label: 'Administration', Icon: ShieldCheck }] : baseItems
+  const items = baseItems
   const activeIndex = Math.max(0, items.findIndex(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)))
 
   const [visualCompact, setVisualCompact] = useState(compact)
@@ -90,6 +83,7 @@ export default function DesktopSidebar({ user, currentMember, compact = false })
             key={item.path}
             to={item.path}
             end={item.path === '/'}
+            data-label={item.label}
             className={({ isActive }) => `desktop-nav-item${isActive ? ' active' : ''}`}
           >
             <item.Icon size={18} />
@@ -98,7 +92,7 @@ export default function DesktopSidebar({ user, currentMember, compact = false })
         ))}
       </nav>
 
-      <button type="button" className="desktop-logout" onClick={logout}>
+      <button type="button" className="desktop-logout" data-label="Déconnexion" onClick={logout}>
         <LogOut size={18} />
         <span>Déconnexion</span>
       </button>

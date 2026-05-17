@@ -44,6 +44,10 @@ function AnimatedMoney({ value, suffix = true }) {
   return <>{animated.toLocaleString('fr-FR')}{suffix ? ' Ar' : ''}</>
 }
 
+function AnimatedSignedMoney({ value }) {
+  return <>{Number(value || 0) < 0 ? '−' : ''}<AnimatedMoney value={value} /></>
+}
+
 function AnimatedNumber({ value }) {
   return useAnimatedNumber(value).toLocaleString('fr-FR')
 }
@@ -228,22 +232,22 @@ export default function Dashboard({ user }) {
         <div className="dashboard-kpi-grid">
           <button type="button" className="dashboard-kpi-card primary" onClick={() => navigate('/budget')}>
             <span>Solde actuel</span>
-            <strong>{fmt(solde)}</strong>
+            <strong><AnimatedSignedMoney value={solde} /></strong>
             <small>{transactions.length} opérations enregistrées</small>
           </button>
           <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/membres')}>
             <span>Membres</span>
-            <strong>{membres.length}</strong>
+            <strong><AnimatedNumber value={membres.length} /></strong>
             <small>{staffCount} staffs actifs</small>
           </button>
           <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/evenements')}>
             <span>Événements</span>
-            <strong>{upcomingCount}</strong>
+            <strong><AnimatedNumber value={upcomingCount} /></strong>
             <small>{finishedCount} terminés</small>
           </button>
           <button type="button" className="dashboard-kpi-card" onClick={() => navigate('/tasks')}>
             <span>Tâches actives</span>
-            <strong>{taskStats.todo + taskStats.inProgress}</strong>
+            <strong><AnimatedNumber value={taskStats.todo + taskStats.inProgress} /></strong>
             <small>{taskStats.overdue} en retard</small>
           </button>
         </div>
@@ -254,8 +258,8 @@ export default function Dashboard({ user }) {
               <div><h2>Analyse budget</h2><p>Entrées et dépenses sur 7 mois</p></div>
             </div>
             <div className="dashboard-bars">
-              {budgetBars.map(item => (
-                <div className="dashboard-bar-item" key={item.key}>
+              {budgetBars.map((item, index) => (
+                <div className="dashboard-bar-item" key={item.key} style={{ '--bar-index': index }}>
                   <div className="dashboard-bar-track">
                     <span className="income" style={{ height: `${item.entreeHeight}%` }} />
                     <span className="expense" style={{ height: `${item.depenseHeight}%` }} />
@@ -265,8 +269,8 @@ export default function Dashboard({ user }) {
               ))}
             </div>
             <div className="dashboard-chart-legend">
-              <span><i className="income" /> Entrées {fmt(totalEntrees)}</span>
-              <span><i className="expense" /> Dépenses {fmt(totalDepenses)}</span>
+              <span><i className="income" /> Entrées <AnimatedMoney value={totalEntrees} /></span>
+              <span><i className="expense" /> Dépenses <AnimatedMoney value={totalDepenses} /></span>
             </div>
           </section>
 
@@ -286,7 +290,7 @@ export default function Dashboard({ user }) {
               <div><h2>Progression tâches</h2><p>{tasks.length} tâches suivies</p></div>
             </div>
             <div className="dashboard-donut" style={{ '--progress': `${taskCompletion * 3.6}deg` }}>
-              <div><strong>{taskCompletion}%</strong><span>terminé</span></div>
+              <div><strong><AnimatedNumber value={taskCompletion} />%</strong><span>terminé</span></div>
             </div>
             <div className="dashboard-chart-legend">
               <span><i className="income" /> Terminé</span>
@@ -496,7 +500,7 @@ export default function Dashboard({ user }) {
             </div>
             <div className="dashboard-donut" style={{ '--progress': `${taskCompletion * 3.6}deg`, width: 80, height: 80, margin: '2px auto' }}>
               <div style={{ width: 52, height: 52 }}>
-                <strong style={{ fontSize: '16px' }}>{taskCompletion}%</strong>
+                <strong style={{ fontSize: '16px' }}><AnimatedNumber value={taskCompletion} />%</strong>
                 <span>fait</span>
               </div>
             </div>
@@ -509,8 +513,8 @@ export default function Dashboard({ user }) {
             <div><h2>Analyse budget</h2><p>Entrées et dépenses sur 7 mois</p></div>
           </div>
           <div className="dashboard-bars">
-            {budgetBars.map(item => (
-              <div className="dashboard-bar-item" key={item.key}>
+            {budgetBars.map((item, index) => (
+              <div className="dashboard-bar-item" key={item.key} style={{ '--bar-index': index }}>
                 <div className="dashboard-bar-track">
                   <span className="income" style={{ height: `${item.entreeHeight}%` }} />
                   <span className="expense" style={{ height: `${item.depenseHeight}%` }} />

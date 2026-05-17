@@ -82,8 +82,8 @@ export default function Documents({ user, userData }) {
           )}
         </div>
       </div>
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '10px 20px 0' }}>
-        <div className="documents-materials-tabs" data-active={activeTab} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 6, borderRadius: 18, background: C.surf2, border: `1px solid ${C.bord}`, marginBottom: 16, flexShrink: 0 }}>
+      <div className="documents-materials-content" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', padding: '10px 20px 0' }}>
+        <div className="documents-materials-tabs" data-active={activeTab} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 4, borderRadius: 14, background: C.surf2, border: `1px solid ${C.bord}`, marginBottom: 14, flexShrink: 0 }}>
           <div className="documents-materials-indicator" />
           {TABS.map(tab => (
             <button
@@ -91,7 +91,7 @@ export default function Documents({ user, userData }) {
               type="button"
               className={activeTab === tab.key ? 'active' : ''}
               onClick={() => setActiveTab(tab.key)}
-              style={{ position: 'relative', zIndex: 1, border: 'none', background: 'transparent', borderRadius: 14, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: activeTab === tab.key ? '#fff' : C.t2, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ position: 'relative', zIndex: 1, border: 'none', background: 'transparent', borderRadius: 10, padding: '8px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: activeTab === tab.key ? '#fff' : C.t2, fontSize: 'var(--font-xs)', fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}
             >
               <tab.Icon size={16} />
               <span>{tab.label}</span>

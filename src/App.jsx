@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { CalendarCheck, CheckSquare, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
@@ -9,24 +9,84 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import Login from './components/Login'
 import Home from './pages/Home'
-import Budget from './pages/Budget'
-import Membres from './pages/Membres'
-import Presences from './pages/Presences'
-import PresenceDetail from './pages/PresenceDetail'
-import Parametres from './pages/Parametres'
-import Evenements from './pages/Evenements'
 import Dashboard from './pages/Dashboard'
-import Documents from './pages/Documents'
-import Notifications from './pages/Notifications'
-import Fampaherezana from './pages/Fampaherezana'
-import MessagesStaff from './pages/MessagesStaff'
-import Tasks from './pages/Tasks'
-import Admin from './components/Admin'
-import VerifyReceipt from './pages/VerifyReceipt'
 import AppLayout from './layouts/AppLayout'
 import useMediaQuery from './hooks/useMediaQuery'
-import { bindForegroundPushNotifications, syncPushNotifications } from './services/pushNotifications'
 import './App.css'
+
+const loadBudget = () => import('./pages/Budget')
+const loadMembres = () => import('./pages/Membres')
+const loadPresences = () => import('./pages/Presences')
+const loadPresenceDetail = () => import('./pages/PresenceDetail')
+const loadParametres = () => import('./pages/Parametres')
+const loadEvenements = () => import('./pages/Evenements')
+const loadDocuments = () => import('./pages/Documents')
+const loadNotifications = () => import('./pages/Notifications')
+const loadFampaherezana = () => import('./pages/Fampaherezana')
+const loadMessagesStaff = () => import('./pages/MessagesStaff')
+const loadTasks = () => import('./pages/Tasks')
+const loadAdmin = () => import('./components/Admin')
+const loadVerifyReceipt = () => import('./pages/VerifyReceipt')
+
+const Budget = lazy(loadBudget)
+const Membres = lazy(loadMembres)
+const Presences = lazy(loadPresences)
+const PresenceDetail = lazy(loadPresenceDetail)
+const Parametres = lazy(loadParametres)
+const Evenements = lazy(loadEvenements)
+const Documents = lazy(loadDocuments)
+const Notifications = lazy(loadNotifications)
+const Fampaherezana = lazy(loadFampaherezana)
+const MessagesStaff = lazy(loadMessagesStaff)
+const Tasks = lazy(loadTasks)
+const Admin = lazy(loadAdmin)
+const VerifyReceipt = lazy(loadVerifyReceipt)
+
+const desktopPreloadQueue = [
+  loadBudget,
+  loadMembres,
+  loadDocuments,
+  loadTasks,
+  loadPresences,
+  loadEvenements,
+  loadParametres,
+  loadPresenceDetail,
+  loadNotifications,
+  loadMessagesStaff,
+  loadAdmin,
+  loadFampaherezana,
+  loadVerifyReceipt,
+]
+
+const mobilePreloadQueue = [
+  loadBudget,
+  loadPresences,
+  loadMembres,
+  loadTasks,
+  loadDocuments,
+  loadEvenements,
+  loadParametres,
+  loadNotifications,
+  loadMessagesStaff,
+  loadAdmin,
+  loadFampaherezana,
+  loadPresenceDetail,
+  loadVerifyReceipt,
+]
+
+function scheduleIdleTask(task, timeout = 1200) {
+  if (typeof window === 'undefined') return null
+  if ('requestIdleCallback' in window) {
+    return window.requestIdleCallback(task, { timeout })
+  }
+  return window.setTimeout(task, timeout)
+}
+
+function cancelIdleTask(id) {
+  if (id == null || typeof window === 'undefined') return
+  if ('cancelIdleCallback' in window) window.cancelIdleCallback(id)
+  else window.clearTimeout(id)
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -216,9 +276,23 @@ function AppPage({ user, userData, children }) {
   return (
     <ProtectedRoute user={user}>
       <AppLayout user={user} userData={userData}>
-        {children}
+        <Suspense fallback={<RouteFallback />}>
+          {children}
+        </Suspense>
       </AppLayout>
     </ProtectedRoute>
+  )
+}
+
+function RouteFallback() {
+  return (
+    <div className="route-loader" aria-label="Chargement de la page">
+      <div className="route-loader-dots" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+    </div>
   )
 }
 
@@ -289,9 +363,40 @@ export default function App() {
 
   useEffect(() => {
     if (!user?.uid) return
-    syncPushNotifications().catch(() => {})
-    bindForegroundPushNotifications(() => {}).catch(() => {})
+    let active = true
+    import('./services/pushNotifications')
+      .then(({ bindForegroundPushNotifications, syncPushNotifications }) => {
+        if (!active) return
+        syncPushNotifications().catch(() => {})
+        bindForegroundPushNotifications(() => {}).catch(() => {})
+      })
+      .catch(() => {})
+    return () => { active = false }
   }, [user?.uid])
+
+  useEffect(() => {
+    if (authLoading || !user?.uid) return undefined
+
+    let cancelled = false
+    const timers = []
+    const isDesktop = window.matchMedia?.('(min-width: 1024px)').matches
+    const queue = isDesktop ? desktopPreloadQueue : mobilePreloadQueue
+
+    const idleId = scheduleIdleTask(() => {
+      queue.forEach((loadPage, index) => {
+        const timer = window.setTimeout(() => {
+          if (!cancelled) loadPage().catch(() => {})
+        }, index * 300)
+        timers.push(timer)
+      })
+    })
+
+    return () => {
+      cancelled = true
+      cancelIdleTask(idleId)
+      timers.forEach(timer => window.clearTimeout(timer))
+    }
+  }, [authLoading, user?.uid])
 
   useEffect(() => {
     if (!authLoading) return
@@ -329,7 +434,7 @@ export default function App() {
       <BackNavigationGuard user={user} />
       <BottomNav user={user} />
       <Routes>
-          <Route path="/verify/:receiptNumber" element={<VerifyReceipt />} />
+          <Route path="/verify/:receiptNumber" element={<Suspense fallback={<RouteFallback />}><VerifyReceipt /></Suspense>} />
           <Route path="/login" element={user ? <FallbackRoute /> : <Login />} />
           <Route path="/" element={<HomeRoute user={user} userData={userData} />} />
           <Route path="/budget" element={
