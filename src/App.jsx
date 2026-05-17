@@ -10,13 +10,13 @@ import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import Login from './components/Login'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
+import Presences from './pages/Presences'
 import AppLayout from './layouts/AppLayout'
 import useMediaQuery from './hooks/useMediaQuery'
 import './App.css'
 
 const loadBudget = () => import('./pages/Budget')
 const loadMembres = () => import('./pages/Membres')
-const loadPresences = () => import('./pages/Presences')
 const loadPresenceDetail = () => import('./pages/PresenceDetail')
 const loadParametres = () => import('./pages/Parametres')
 const loadEvenements = () => import('./pages/Evenements')
@@ -30,7 +30,6 @@ const loadVerifyReceipt = () => import('./pages/VerifyReceipt')
 
 const Budget = lazy(loadBudget)
 const Membres = lazy(loadMembres)
-const Presences = lazy(loadPresences)
 const PresenceDetail = lazy(loadPresenceDetail)
 const Parametres = lazy(loadParametres)
 const Evenements = lazy(loadEvenements)
@@ -47,7 +46,6 @@ const desktopPreloadQueue = [
   loadMembres,
   loadDocuments,
   loadTasks,
-  loadPresences,
   loadEvenements,
   loadParametres,
   loadPresenceDetail,
@@ -60,7 +58,6 @@ const desktopPreloadQueue = [
 
 const mobilePreloadQueue = [
   loadBudget,
-  loadPresences,
   loadMembres,
   loadTasks,
   loadDocuments,
