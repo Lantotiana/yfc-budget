@@ -31,6 +31,7 @@ const loadMessagesStaff = () => import('./pages/MessagesStaff')
 const loadTasks = () => import('./pages/Tasks')
 const loadAdmin = () => import('./components/Admin')
 const loadVerifyReceipt = () => import('./pages/VerifyReceipt')
+const loadVote = () => import('./pages/Vote')
 
 const Budget = lazy(loadBudget)
 const Membres = lazy(loadMembres)
@@ -44,6 +45,7 @@ const MessagesStaff = lazy(loadMessagesStaff)
 const Tasks = lazy(loadTasks)
 const Admin = lazy(loadAdmin)
 const VerifyReceipt = lazy(loadVerifyReceipt)
+const Vote = lazy(loadVote)
 
 const desktopPreloadQueue = [
   loadBudget,
@@ -90,7 +92,7 @@ function UserActivityTracker({ user }) {
   const location = useLocation()
 
   useEffect(() => {
-    if (!user?.uid || location.pathname === '/login' || location.pathname.startsWith('/verify')) return
+    if (!user?.uid || location.pathname === '/login' || location.pathname === '/vote' || location.pathname.startsWith('/verify')) return
     trackUserActivity(user, getActivityFromPath(location.pathname), location.pathname)
   }, [location.pathname, user?.uid])
 
@@ -184,7 +186,7 @@ function BottomNav({ user }) {
     { path: '/membres', label: t('nav.membres'), Icon: Users, color: '#f43f5e' },
     { path: '/tasks', label: t('nav.tasks'), Icon: CheckSquare, color: '#8b5cf6' },
   ]
-  const baseVisible = Boolean(user && location.pathname !== '/login' && !location.pathname.startsWith('/verify'))
+  const baseVisible = Boolean(user && location.pathname !== '/login' && location.pathname !== '/vote' && !location.pathname.startsWith('/verify'))
   const visible = baseVisible && !isDesktop
 
   useEffect(() => {
@@ -456,6 +458,7 @@ export default function App() {
       <BottomNav user={user} />
       <Routes>
           <Route path="/verify/:receiptNumber" element={<><Seo title="Vérification YFC" description="Vérification d'un reçu Young For Christ." canonical="https://young-for-christ.com/" robots="noindex, nofollow" /><Suspense fallback={<RouteFallback />}><VerifyReceipt /></Suspense></>} />
+          <Route path="/vote" element={<Suspense fallback={<RouteFallback />}><Vote /></Suspense>} />
           <Route path="/login" element={user ? <FallbackRoute /> : <><Seo title="Connexion YFC - Young For Christ" description="Connexion à l'espace Staff Young For Christ." canonical="https://young-for-christ.com/login" robots="noindex, nofollow" /><Login /></>} />
           <Route path="/" element={<HomeRoute user={user} userData={userData} />} />
           <Route path="/budget" element={

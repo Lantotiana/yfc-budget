@@ -38,6 +38,7 @@ const HEADERS = {
     'Nom complet', 'Statut de presence', 'Motif si absent', 'Groupe / role',
   ],
   LOG_SYNC: ['Date / heure', 'Type action', 'Collection Firestore', 'ID document', 'Resultat', 'Message', 'Erreur eventuelle'],
+  VOTES: ['Date / heure', 'Nom', '1ere entree', '2eme entree', 'User agent'],
 }
 
 const COLORS = {
@@ -156,6 +157,10 @@ async function valuesAppend(secrets, tab, values) {
     method: 'POST',
     body: JSON.stringify({ values }),
   })
+}
+
+async function valuesGet(secrets, range) {
+  return sheetsFetch(secrets, `/values/${encodeURIComponent(range)}`)
 }
 
 function sheetMap(spreadsheet) {
@@ -463,6 +468,48 @@ async function ensureTabs(secrets) {
   return map
 }
 
+async function ensureVoteTab(secrets) {
+  let spreadsheet = await getSpreadsheet(secrets)
+  let map = sheetMap(spreadsheet)
+
+  if (!map.has('VOTES')) {
+    await batchUpdate(secrets, [
+      { addSheet: { properties: { title: 'VOTES', gridProperties: { rowCount: 1000, columnCount: 12 } } } },
+    ])
+    spreadsheet = await getSpreadsheet(secrets)
+    map = sheetMap(spreadsheet)
+  }
+
+  const sheet = map.get('VOTES')
+  if (!sheet) throw new HttpsError('internal', 'Unable to prepare VOTES sheet')
+  SHEET_ID.VOTES = sheet.properties.sheetId
+
+  await valuesBatchUpdate(secrets, [
+    { range: 'VOTES!A1:E1', values: [HEADERS.VOTES] },
+  ])
+
+  await batchUpdate(secrets, [
+    { updateSheetProperties: { properties: { sheetId: sheet.properties.sheetId, gridProperties: { frozenRowCount: 1 } }, fields: 'gridProperties.frozenRowCount' } },
+    { repeatCell: { range: range(sheet.properties.sheetId, 0, 1, 0, 5), cell: headerStyle(COLORS.green, COLORS.dark), fields: 'userEnteredFormat(backgroundColor,horizontalAlignment,textFormat,borders)' } },
+    { autoResizeDimensions: { dimensions: { sheetId: sheet.properties.sheetId, dimension: 'COLUMNS', startIndex: 0, endIndex: 5 } } },
+  ])
+}
+
+async function appendVote(secrets, row) {
+  await ensureVoteTab(secrets)
+  await valuesAppend(secrets, 'VOTES', [row])
+}
+
+async function getVoteRows(secrets) {
+  try {
+    const data = await valuesGet(secrets, 'VOTES!A2:E')
+    return data.values || []
+  } catch (e) {
+    console.error('Unable to read VOTES sheet', e)
+    return []
+  }
+}
+
 function formatRequests(map, secrets) {
   const requests = []
   const serviceAccountEmail = envValue('GOOGLE_SERVICE_ACCOUNT_EMAIL', secrets)
@@ -728,4 +775,8 @@ module.exports = {
   prepareGoogleSheet,
   syncAllToGoogleSheets,
   runTriggeredSync,
+  appendVote,
+  getVoteRows,
+  toDateTimeString,
+  nowIso,
 }

@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore')
 const { defineSecret } = require('firebase-functions/params')
 const admin = require('firebase-admin')
-const { prepareGoogleSheet, syncAllToGoogleSheets, runTriggeredSync } = require('./googleSheetsSync')
+const { prepareGoogleSheet, syncAllToGoogleSheets, runTriggeredSync, appendVote, getVoteRows, toDateTimeString, nowIso } = require('./googleSheetsSync')
 
 admin.initializeApp()
 
@@ -101,6 +101,54 @@ async function requireSheetSyncAccess(request) {
   }
 
   throw new HttpsError('permission-denied', 'Google Sheets sync is restricted to YFC leaders')
+}
+
+function voteKey(value) {
+  const match = String(value || '').match(/([1-5])\s*$/)
+  return match ? match[1] : ''
+}
+
+function emptyVoteCounts() {
+  return { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
+}
+
+function voteWinner(counts = {}) {
+  return Object.entries({ ...emptyVoteCounts(), ...counts })
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0) || Number(a[0]) - Number(b[0]))[0]?.[0] || '1'
+}
+
+function publicVoteStats(data = {}) {
+  const first = { ...emptyVoteCounts(), ...(data.first || {}) }
+  const second = { ...emptyVoteCounts(), ...(data.second || {}) }
+  return {
+    first,
+    second,
+    firstWinner: voteWinner(first),
+    secondWinner: voteWinner(second),
+    total: Number(data.total || 0),
+    updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || null,
+  }
+}
+
+function voteStatsFromRows(rows = []) {
+  const first = emptyVoteCounts()
+  const second = emptyVoteCounts()
+
+  for (const row of rows) {
+    const firstKey = voteKey(row[2])
+    const secondKey = voteKey(row[3])
+    if (firstKey) first[firstKey] += 1
+    if (secondKey) second[secondKey] += 1
+  }
+
+  return {
+    first,
+    second,
+    firstWinner: voteWinner(first),
+    secondWinner: voteWinner(second),
+    total: rows.length,
+    updatedAt: new Date().toISOString(),
+  }
 }
 
 async function callGemini(prompt, { temperature = 0.7, maxOutputTokens = 900 } = {}) {
@@ -573,6 +621,64 @@ exports.syncPresenceDetailsToGoogleSheets = onDocumentWritten(
   { document: 'presences/{docId}', secrets: sheetSecretList, timeoutSeconds: 300, memory: '512MiB' },
   event => runTriggeredSync(sheetSecrets, event, 'presences'),
 )
+
+exports.submitVote = onCall({ secrets: sheetSecretList }, async request => {
+  const name = safeText(request.data?.name)
+  const firstChoice = safeText(request.data?.firstChoice)
+  const secondChoice = safeText(request.data?.secondChoice)
+  const userAgent = safeText(request.data?.userAgent)
+  const firstKey = voteKey(firstChoice)
+  const secondKey = voteKey(secondChoice)
+
+  if (!name) throw new HttpsError('invalid-argument', 'Le nom est obligatoire')
+  if (!firstChoice || !secondChoice) throw new HttpsError('invalid-argument', 'Les deux choix sont obligatoires')
+  if (!firstKey || !secondKey) throw new HttpsError('invalid-argument', 'Choix invalide')
+  if (name.length > 120 || firstChoice.length > 120 || secondChoice.length > 120) {
+    throw new HttpsError('invalid-argument', 'Reponse trop longue')
+  }
+
+  try {
+    const voteRef = db.collection('voteResults').doc('menu-30-mai')
+    const voteResponseRef = db.collection('voteResponses').doc()
+    const now = admin.firestore.FieldValue.serverTimestamp()
+
+    await db.runTransaction(async transaction => {
+      transaction.set(voteResponseRef, {
+        name,
+        firstChoice,
+        secondChoice,
+        userAgent: userAgent.slice(0, 240),
+        createdAt: now,
+      })
+      transaction.set(voteRef, {
+        [`first.${firstKey}`]: admin.firestore.FieldValue.increment(1),
+        [`second.${secondKey}`]: admin.firestore.FieldValue.increment(1),
+        total: admin.firestore.FieldValue.increment(1),
+        updatedAt: now,
+      }, { merge: true })
+    })
+
+    await appendVote(sheetSecrets, [
+      toDateTimeString(nowIso()),
+      name,
+      firstChoice,
+      secondChoice,
+      userAgent.slice(0, 240),
+    ])
+    return { ok: true }
+  } catch (e) {
+    console.error('submitVote failed', e)
+    throw new HttpsError('internal', e.message || 'Unable to submit vote')
+  }
+})
+
+exports.getVoteResults = onCall({ secrets: sheetSecretList }, async () => {
+  const rows = await getVoteRows(sheetSecrets)
+  if (rows.length) return voteStatsFromRows(rows)
+
+  const snap = await db.collection('voteResults').doc('menu-30-mai').get()
+  return publicVoteStats(snap.exists ? snap.data() : {})
+})
 
 exports.sendPushForNotification = onDocumentCreated(
   { document: 'notifications/{docId}', timeoutSeconds: 120, memory: '256MiB' },
