@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /budget
+Disallow: /membres
+Disallow: /presences
+Disallow: /documents
+Disallow: /parametres
+Disallow: /profil
+Disallow: /admin
+Disallow: /tasks
+Disallow: /notifications
+Disallow: /messages
+Disallow: /assistant
+Disallow: /fampaherezana
+
+Sitemap: https://young-for-christ.com/sitemap.xml
