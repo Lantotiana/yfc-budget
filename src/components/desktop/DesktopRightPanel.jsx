@@ -73,7 +73,7 @@ export default function DesktopRightPanel({ user }) {
       <div
         ref={cardRef}
         className={`desktop-right-card desktop-verse-card daily-verse-card ${isNight ? 'night' : 'day'}${expanded ? ' expanded' : ''}`}
-        onClick={() => setExpanded(true)}
+        onClick={() => setExpanded(v => !v)}
       >
         <div className="daily-sky">
           <div className="daily-stars" />
