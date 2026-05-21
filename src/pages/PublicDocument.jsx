@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
-import { Download, FileText, ShieldCheck } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 import { db } from '../firebase'
 import Seo from '../components/Seo'
 import logoYfc from '../assets/logo_yfc.png'
@@ -99,10 +99,6 @@ export default function PublicDocument() {
               <Download size={20} />
               Telecharger le PDF
             </a>
-            <div className="public-document-note">
-              <ShieldCheck size={16} />
-              <span>Ce lien fonctionne uniquement tant que le document reste marque public par YFC.</span>
-            </div>
           </div>
         )}
 

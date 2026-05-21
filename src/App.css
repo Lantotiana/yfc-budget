@@ -292,26 +292,6 @@
   box-shadow: 0 18px 36px rgba(22,181,163,0.24);
 }
 
-.public-document-note {
-  width: min(440px, 100%);
-  margin: 22px auto 0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: rgba(112,96,224,0.08);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: var(--font-xs);
-  line-height: 1.4;
-}
-
-.public-document-note svg {
-  color: var(--violet);
-  flex-shrink: 0;
-}
-
 /* ====== PUBLIC VOTE ====== */
 .vote-page {
   --vote-page-bg: #fbf7ff;
