@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
-import { Download, FileText } from 'lucide-react'
+import { httpsCallable } from 'firebase/functions'
+import { FileText, Send } from 'lucide-react'
 import { db } from '../firebase'
+import { cloudFunctions } from '../firebaseFunctions'
 import Seo from '../components/Seo'
 import logoYfc from '../assets/logo_yfc.png'
 
@@ -22,6 +24,10 @@ export default function PublicDocument() {
   const { id } = useParams()
   const [documentData, setDocumentData] = useState(null)
   const [status, setStatus] = useState('loading')
+  const [form, setForm] = useState({ prenom: '', email: '' })
+  const [sending, setSending] = useState(false)
+  const [requestStatus, setRequestStatus] = useState('')
+  const [requestError, setRequestError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -53,6 +59,31 @@ export default function PublicDocument() {
 
   const pageUrl = useMemo(() => `https://young-for-christ.com/public/document/${id}`, [id])
   const title = documentData?.nom ? `${documentData.nom} - YFC` : 'Document public YFC'
+  const canSubmit = form.prenom.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+
+  async function handleRequestCopy(e) {
+    e.preventDefault()
+    if (!canSubmit || sending) return
+    setSending(true)
+    setRequestError('')
+    setRequestStatus('')
+
+    try {
+      const requestCopy = httpsCallable(cloudFunctions, 'requestPublicDocumentCopy')
+      await requestCopy({
+        documentId: id,
+        prenom: form.prenom.trim(),
+        email: form.email.trim(),
+        userAgent: navigator.userAgent,
+      })
+      setRequestStatus('Demande envoyee. Verifiez votre boite mail.')
+      setForm({ prenom: '', email: '' })
+    } catch {
+      setRequestError("Impossible d'envoyer le document pour le moment.")
+    } finally {
+      setSending(false)
+    }
+  }
 
   return (
     <main className="public-document-page">
@@ -89,16 +120,31 @@ export default function PublicDocument() {
             <p className="public-document-meta">
               {[fmtSize(documentData.taille), formatDate(documentData.uploadedAt)].filter(Boolean).join(' · ')}
             </p>
-            <a
-              className="public-document-download"
-              href={documentData.url}
-              download={documentData.nom}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Download size={20} />
-              Telecharger le PDF
-            </a>
+            <form className="public-document-form" onSubmit={handleRequestCopy}>
+              <p className="public-document-form-title">Recevoir une copie par email</p>
+              <div className="public-document-fields">
+                <input
+                  type="text"
+                  value={form.prenom}
+                  onChange={e => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                  placeholder="Votre prenom"
+                  autoComplete="given-name"
+                />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Votre email"
+                  autoComplete="email"
+                />
+              </div>
+              {requestError && <div className="public-document-form-msg error">{requestError}</div>}
+              {requestStatus && <div className="public-document-form-msg success">{requestStatus}</div>}
+              <button className="public-document-download" type="submit" disabled={!canSubmit || sending}>
+                <Send size={19} />
+                {sending ? 'Envoi...' : 'Recevoir le PDF'}
+              </button>
+            </form>
           </div>
         )}
 

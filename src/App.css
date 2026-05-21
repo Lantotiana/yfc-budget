@@ -275,10 +275,66 @@
   font-weight: 700;
 }
 
+.public-document-form {
+  width: min(380px, 100%);
+  margin: 26px auto 0;
+}
+
+.public-document-form-title {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: 800;
+}
+
+.public-document-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.public-document-fields input {
+  min-width: 0;
+  height: 46px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(26,28,46,0.10);
+  background: #f4f5fb;
+  color: var(--text-primary);
+  padding: 0 13px;
+  font-family: inherit;
+  font-size: var(--font-sm);
+  outline: none;
+}
+
+.public-document-fields input:focus {
+  border-color: rgba(22,181,163,0.48);
+  background: #fff;
+}
+
+.public-document-form-msg {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: var(--font-xs);
+  font-weight: 800;
+}
+
+.public-document-form-msg.success {
+  background: rgba(22,181,163,0.10);
+  color: var(--teal);
+}
+
+.public-document-form-msg.error {
+  background: rgba(224,85,85,0.10);
+  color: var(--coral);
+}
+
 .public-document-download {
   min-height: 56px;
-  margin-top: 26px;
+  margin-top: 0;
   padding: 0 24px;
+  border: none;
   border-radius: 16px;
   background: var(--teal);
   color: #fff;
@@ -290,6 +346,20 @@
   font-weight: 900;
   text-decoration: none;
   box-shadow: 0 18px 36px rgba(22,181,163,0.24);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.public-document-download:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .public-document-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ====== PUBLIC VOTE ====== */

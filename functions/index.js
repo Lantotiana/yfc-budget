@@ -26,6 +26,51 @@ function safeText(value, fallback = '') {
   return String(value || fallback).trim()
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim())
+}
+
+async function getBrevoApiKey() {
+  const snap = await db.collection('config').doc('secrets').get()
+  const key = snap.exists ? safeText(snap.data().brevoApiKey) : ''
+  if (!key) throw new HttpsError('failed-precondition', 'Brevo API key is not configured')
+  return key
+}
+
+async function sendBrevoEmail({ to, subject, htmlContent }) {
+  const apiKey = await getBrevoApiKey()
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: 'Young For Christ Itaosy', email: 'contact@young-for-christ.com' },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message || `Brevo error ${res.status}`)
+  }
+
+  return res.json()
+}
+
 function buildPushBody(notification) {
   return safeText(notification.detail, 'Ouvre l’application pour voir les détails.')
 }
@@ -678,6 +723,67 @@ exports.getVoteResults = onCall({ secrets: sheetSecretList }, async () => {
 
   const snap = await db.collection('voteResults').doc('menu-30-mai').get()
   return publicVoteStats(snap.exists ? snap.data() : {})
+})
+
+exports.requestPublicDocumentCopy = onCall(async request => {
+  const prenom = safeText(request.data?.prenom)
+  const email = safeText(request.data?.email).toLowerCase()
+  const documentId = safeText(request.data?.documentId)
+  const userAgent = safeText(request.data?.userAgent)
+
+  if (!documentId) throw new HttpsError('invalid-argument', 'Document required')
+  if (!prenom || prenom.length > 80) throw new HttpsError('invalid-argument', 'Prenom required')
+  if (!isValidEmail(email) || email.length > 160) throw new HttpsError('invalid-argument', 'Email invalid')
+
+  const docSnap = await db.collection('documents').doc(documentId).get()
+  if (!docSnap.exists || docSnap.data().isPublic !== true) {
+    throw new HttpsError('not-found', 'Document unavailable')
+  }
+
+  const documentData = docSnap.data()
+  const documentName = safeText(documentData.nom, 'Document YFC')
+  const documentUrl = safeText(documentData.url)
+  if (!documentUrl) throw new HttpsError('failed-precondition', 'Document URL missing')
+
+  const now = admin.firestore.FieldValue.serverTimestamp()
+  await db.collection('publicDocumentRequests').add({
+    documentId,
+    documentName,
+    prenom,
+    email,
+    userAgent: userAgent.slice(0, 240),
+    createdAt: now,
+  })
+
+  const safePrenom = escapeHtml(prenom)
+  const safeDocumentName = escapeHtml(documentName)
+  const safeDocumentUrl = escapeHtml(documentUrl)
+
+  await sendBrevoEmail({
+    to: email,
+    subject: `Votre document YFC - ${documentName}`,
+    htmlContent: `
+      <div style="font-family:Arial,sans-serif;background:#f4f5fb;padding:28px;color:#1A1C2E">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:18px;padding:26px;border:1px solid rgba(0,0,0,0.06)">
+          <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#16B5A3;text-transform:uppercase;letter-spacing:.08em">Young For Christ</p>
+          <h1 style="margin:0 0 14px;font-size:24px;line-height:1.25;color:#1A1C2E">Bonjour ${safePrenom},</h1>
+          <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#6B6F8A">
+            Voici le lien pour telecharger le document demande :
+          </p>
+          <p style="margin:0 0 22px;font-size:16px;font-weight:700;color:#1A1C2E">${safeDocumentName}</p>
+          <a href="${safeDocumentUrl}" style="display:inline-block;background:#16B5A3;color:#ffffff;text-decoration:none;font-weight:800;padding:14px 18px;border-radius:12px">
+            Telecharger le PDF
+          </a>
+          <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#A0A4BE">
+            Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+            <span style="word-break:break-all">${safeDocumentUrl}</span>
+          </p>
+        </div>
+      </div>
+    `,
+  })
+
+  return { ok: true }
 })
 
 exports.sendPushForNotification = onDocumentCreated(
