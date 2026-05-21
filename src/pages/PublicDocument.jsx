@@ -20,6 +20,26 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function getRequestErrorMessage(err) {
+  const code = err?.code || ''
+  const message = err?.message || ''
+
+  if (code.includes('not-found')) {
+    return "Le service d'envoi n'est pas encore deploye, ou ce document n'est plus disponible."
+  }
+  if (code.includes('failed-precondition')) {
+    return 'Le service email n est pas encore configure.'
+  }
+  if (code.includes('invalid-argument')) {
+    return 'Verifiez votre prenom et votre email.'
+  }
+  if (code.includes('internal') && message) {
+    return message
+  }
+  if (message) return message
+  return "Impossible d'envoyer le document pour le moment."
+}
+
 export default function PublicDocument() {
   const { id } = useParams()
   const [documentData, setDocumentData] = useState(null)
@@ -78,8 +98,9 @@ export default function PublicDocument() {
       })
       setRequestStatus('Demande envoyee. Verifiez votre boite mail.')
       setForm({ prenom: '', email: '' })
-    } catch {
-      setRequestError("Impossible d'envoyer le document pour le moment.")
+    } catch (err) {
+      console.error('Public document request failed', err)
+      setRequestError(getRequestErrorMessage(err))
     } finally {
       setSending(false)
     }
