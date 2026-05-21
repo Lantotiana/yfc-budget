@@ -11,6 +11,7 @@ import Login from './components/Login'
 import LoadingState from './components/LoadingState'
 import Seo, { PrivateSeo } from './components/Seo'
 import PublicLanding from './pages/PublicLanding'
+import PublicDocument from './pages/PublicDocument'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Presences from './pages/Presences'
@@ -458,6 +459,7 @@ export default function App() {
       <BottomNav user={user} />
       <Routes>
           <Route path="/verify/:receiptNumber" element={<><Seo title="Vérification YFC" description="Vérification d'un reçu Young For Christ." canonical="https://young-for-christ.com/" robots="noindex, nofollow" /><Suspense fallback={<RouteFallback />}><VerifyReceipt /></Suspense></>} />
+          <Route path="/public/document/:id" element={<PublicDocument />} />
           <Route path="/vote" element={<Suspense fallback={<RouteFallback />}><Vote /></Suspense>} />
           <Route path="/login" element={user ? <FallbackRoute /> : <><Seo title="Connexion YFC - Young For Christ" description="Connexion à l'espace Staff Young For Christ." canonical="https://young-for-christ.com/login" robots="noindex, nofollow" /><Login /></>} />
           <Route path="/" element={<HomeRoute user={user} userData={userData} />} />

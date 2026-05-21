@@ -1,14 +1,16 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { collection, addDoc, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
-import { Upload, Download, Trash2, FileText, File, Search, X, Link2, Copy, ExternalLink } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { Upload, Download, Trash2, FileText, File, Search, X, Link2, Copy, ExternalLink, QrCode } from 'lucide-react'
 import { db } from '../../firebase'
 import { storage } from '../../firebaseStorage'
 import { createNotification } from '../../notifications'
 import { useTheme } from '../../context/ThemeContext'
 import { useDesktopToolbar } from '../../context/DesktopToolbarContext'
 import { trackUserActivity } from '../../utils/userActivity'
+import Portal from '../Portal'
 
 const MAX_SIZE_MB = 20
 
@@ -25,6 +27,11 @@ function canPreview(type) {
 function FileIcon({ type }) {
   const Icon = canPreview(type) ? FileText : File
   return <Icon size={20} />
+}
+
+function getPublicDocumentUrl(id) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://young-for-christ.com'
+  return `${origin}/public/document/${id}`
 }
 
 export default function DocumentsPanel({
@@ -59,6 +66,9 @@ export default function DocumentsPanel({
   const [deleting, setDeleting] = useState(false)
   const [addingLink, setAddingLink] = useState(false)
   const [deletingLink, setDeletingLink] = useState(false)
+  const [togglingPublicId, setTogglingPublicId] = useState('')
+  const [confirmPublicDoc, setConfirmPublicDoc] = useState(null)
+  const [qrDoc, setQrDoc] = useState(null)
 
   useEffect(() => {
     const id = highlightDocId || highlightLienId
@@ -171,6 +181,7 @@ export default function DocumentsPanel({
         storagePath: snapshot.ref.fullPath,
         taille: file.size,
         type: file.type,
+        isPublic: false,
         uploadedAt: new Date().toISOString(),
         uploadedBy: userData?.nom || user.email,
       })
@@ -249,6 +260,24 @@ export default function DocumentsPanel({
     setConfirmDelLink(null)
   }
 
+  async function handleTogglePublic(item, nextPublic = !item?.isPublic) {
+    if (!item?.id || togglingPublicId) return
+    setTogglingPublicId(item.id)
+    try {
+      await updateDoc(doc(db, 'documents', item.id), {
+        isPublic: nextPublic,
+        publicUpdatedAt: new Date().toISOString(),
+        publicUpdatedBy: userData?.nom || user.email,
+      })
+      trackUserActivity(user, nextPublic ? 'Rend un document public' : 'Repasse un document en prive', '/documents')
+    } catch (err) {
+      setError(err.message || 'Impossible de modifier la visibilite publique.')
+      setTimeout(() => setError(''), 5000)
+    } finally {
+      setTogglingPublicId('')
+    }
+  }
+
   function formatDate(iso) {
     if (!iso) return ''
     return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -313,6 +342,10 @@ export default function DocumentsPanel({
             setConfirmDel={setConfirmDel}
             formatDate={formatDate}
             highlightedId={highlightedId}
+            onTogglePublic={handleTogglePublic}
+            onRequestPublicConfirm={setConfirmPublicDoc}
+            onShowQr={setQrDoc}
+            togglingPublicId={togglingPublicId}
           />
         </div>
         <DocumentsOverlay
@@ -326,6 +359,12 @@ export default function DocumentsPanel({
           setConfirmDelLink={setConfirmDelLink}
           handleDeleteLink={handleDeleteLink}
           deletingLink={deletingLink}
+          confirmPublicDoc={confirmPublicDoc}
+          setConfirmPublicDoc={setConfirmPublicDoc}
+          handleTogglePublic={handleTogglePublic}
+          togglingPublicId={togglingPublicId}
+          qrDoc={qrDoc}
+          setQrDoc={setQrDoc}
           t={t}
           C={C}
         />
@@ -379,6 +418,10 @@ export default function DocumentsPanel({
         setConfirmDel={setConfirmDel}
         formatDate={formatDate}
         highlightedId={highlightedId}
+        onTogglePublic={handleTogglePublic}
+        onRequestPublicConfirm={setConfirmPublicDoc}
+        onShowQr={setQrDoc}
+        togglingPublicId={togglingPublicId}
       />
       <DocumentsOverlay
         preview={preview}
@@ -391,6 +434,12 @@ export default function DocumentsPanel({
         setConfirmDelLink={setConfirmDelLink}
         handleDeleteLink={handleDeleteLink}
         deletingLink={deletingLink}
+        confirmPublicDoc={confirmPublicDoc}
+        setConfirmPublicDoc={setConfirmPublicDoc}
+        handleTogglePublic={handleTogglePublic}
+        togglingPublicId={togglingPublicId}
+        qrDoc={qrDoc}
+        setQrDoc={setQrDoc}
         t={t}
         C={C}
       />
@@ -411,6 +460,7 @@ export default function DocumentsPanel({
 function DocumentsPanelContent({
   C, t, documents, links, expandedLink, setExpandedLink, setConfirmDelLink,
   uploading, uploadProgress, error, setPreview, setConfirmDel, formatDate, highlightedId,
+  onTogglePublic, onRequestPublicConfirm, onShowQr, togglingPublicId,
 }) {
   const isEmpty = documents.length === 0 && links.length === 0 && !uploading
 
@@ -454,7 +504,7 @@ function DocumentsPanelContent({
                 <div
                   key={item.id}
                   data-item-id={item.id}
-                  className={highlightedId === item.id ? 'item-highlighted' : undefined}
+                  className={highlightedId === item.id ? 'item-highlighted document-row' : 'document-row'}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '13px 16px',
@@ -478,6 +528,14 @@ function DocumentsPanelContent({
                       {fmtSize(item.taille)} · {formatDate(item.uploadedAt)}
                     </div>
                   </div>
+                  <PublicDocumentControls
+                    item={item}
+                    C={C}
+                    onTogglePublic={onTogglePublic}
+                    onRequestPublicConfirm={onRequestPublicConfirm}
+                    onShowQr={onShowQr}
+                    isToggling={togglingPublicId === item.id}
+                  />
                   <a
                     href={item.url}
                     download={item.nom}
@@ -500,6 +558,70 @@ function DocumentsPanelContent({
         </>
       )}
     </>
+  )
+}
+
+function PublicDocumentControls({ item, C, onTogglePublic, onRequestPublicConfirm, onShowQr, isToggling }) {
+  const isPublic = item.isPublic === true
+
+  function handleToggle() {
+    if (isToggling) return
+    if (!isPublic) {
+      onRequestPublicConfirm(item)
+      return
+    }
+    onTogglePublic(item, false)
+  }
+
+  return (
+    <div className="document-public-controls" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <span style={{ fontSize: 'var(--font-xs)', color: isPublic ? C.teal : C.t3, fontWeight: 800 }}>
+        Public
+      </span>
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={isToggling}
+        aria-pressed={isPublic}
+        title={isPublic ? 'Document public' : 'Rendre ce fichier public'}
+        style={{
+          width: 36,
+          height: 20,
+          borderRadius: 999,
+          border: `1px solid ${isPublic ? 'rgba(22,181,163,0.46)' : C.bord}`,
+          background: isPublic ? C.teal : C.surf2,
+          padding: 2,
+          cursor: isToggling ? 'wait' : 'pointer',
+          transition: 'background .18s, border-color .18s',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isPublic ? 'flex-end' : 'flex-start',
+        }}
+      >
+        <span
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: '50%',
+            background: '#fff',
+            boxShadow: '0 1px 4px rgba(15,23,42,0.2)',
+            transition: 'transform .18s',
+          }}
+        />
+      </button>
+
+      {isPublic && (
+        <button
+          type="button"
+          onClick={() => onShowQr(item)}
+          title="Afficher le QR code"
+          style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 10, border: `1px solid ${C.bord2}`, background: C.surf, color: C.t2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <QrCode size={15} />
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -642,8 +764,12 @@ function DocumentsOverlay({
   preview, setPreview,
   confirmDel, setConfirmDel, handleDelete, deleting,
   confirmDelLink, setConfirmDelLink, handleDeleteLink, deletingLink,
+  confirmPublicDoc, setConfirmPublicDoc, handleTogglePublic, togglingPublicId,
+  qrDoc, setQrDoc,
   t, C,
 }) {
+  const publicUrl = qrDoc ? getPublicDocumentUrl(qrDoc.id) : ''
+
   return (
     <>
       {preview && (
@@ -705,6 +831,56 @@ function DocumentsOverlay({
             </div>
           </div>
         </div>
+      )}
+      {confirmPublicDoc && (
+        <div className="modal-overlay" onClick={() => setConfirmPublicDoc(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title" style={{ marginBottom: 8 }}>Rendre ce document public ?</h3>
+            <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2, lineHeight: 1.5 }}>
+              « {confirmPublicDoc.nom} » sera accessible via une page publique et un QR code.
+            </p>
+            <div className="dialog-footer">
+              <button onClick={() => setConfirmPublicDoc(null)} className="btn-secondary materiel-footer-btn">
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={async () => {
+                  await handleTogglePublic(confirmPublicDoc, true)
+                  setConfirmPublicDoc(null)
+                }}
+                disabled={togglingPublicId === confirmPublicDoc.id}
+                className="materiel-primary-btn"
+                style={{ background: C.teal, color: '#fff', opacity: togglingPublicId === confirmPublicDoc.id ? 0.6 : 1 }}
+              >
+                {togglingPublicId === confirmPublicDoc.id ? <span className="btn-spinner" /> : 'Rendre public'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {qrDoc && (
+        <Portal>
+          <div className="modal-overlay qr-modal-overlay" onClick={() => setQrDoc(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 280, textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: C.t1, marginBottom: 16 }}>Scanner pour telecharger</div>
+              <div style={{ display: 'inline-block', padding: 12, borderRadius: 16, background: '#fff' }}>
+                <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="document-qr-theme-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={C.teal} />
+                      <stop offset="38%" stopColor={C.violet} />
+                      <stop offset="68%" stopColor={C.amber} />
+                      <stop offset="100%" stopColor={C.coral} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <QRCodeSVG value={publicUrl} size={180} fgColor="url(#document-qr-theme-gradient)" bgColor="#ffffff" />
+              </div>
+              <div style={{ marginTop: 12, fontSize: 'var(--font-xs)', color: C.t3, overflowWrap: 'anywhere' }}>{publicUrl}</div>
+              <button onClick={() => setQrDoc(null)} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 12, border: `1.5px solid ${C.bord2}`, background: 'transparent', color: C.t2, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('common.close')}</button>
+            </div>
+          </div>
+        </Portal>
       )}
     </>
   )

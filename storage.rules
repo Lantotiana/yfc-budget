@@ -14,6 +14,15 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
 
+    // Documents: authenticated staff can upload/read shared files.
+    match /documents/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource != null
+        && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if isSignedIn();
+    }
+
     // Keep default locked-down for any other path not explicitly allowed above.
     match /{allPaths=**} {
       allow read, write: if false;
