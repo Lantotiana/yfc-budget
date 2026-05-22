@@ -12,6 +12,11 @@ import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
+import { sameEmail } from '../utils/access'
+
+function getMemberTags(member) {
+  return Array.isArray(member.tags) && member.tags.length > 0 ? member.tags : ['Membre']
+}
 
 export default function PresenceDetail({ user, userData }) {
   const { t } = useTranslation()
@@ -22,6 +27,7 @@ export default function PresenceDetail({ user, userData }) {
   const [event, setEvent] = useState(null)
   const [allEvents, setAllEvents] = useState([])
   const [membres, setMembres] = useState([])
+  const [approvedUsers, setApprovedUsers] = useState([])
   const [presences, setPresences] = useState({})
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
@@ -55,6 +61,12 @@ export default function PresenceDetail({ user, userData }) {
   }, [])
 
   useEffect(() => {
+    return onSnapshot(collection(db, 'users'), snap => {
+      setApprovedUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.approuve === true))
+    })
+  }, [])
+
+  useEffect(() => {
     return onSnapshot(collection(db, 'presences'), snap => {
       const currentMap = {}
       const fullMap = {}
@@ -77,9 +89,28 @@ export default function PresenceDetail({ user, userData }) {
   }, [])
 
   const eventTags = event?.tags || []
+  const presenceMembers = useMemo(() => {
+    const byId = new Map(membres.map(m => [m.id, m]))
+    approvedUsers.forEach(u => {
+      if (!u.email || membres.some(m => sameEmail(m.email, u.email))) return
+      byId.set(u.id, {
+        id: u.id,
+        nom: u.nom || u.email,
+        prenoms: '',
+        nomPrefere: '',
+        email: u.email,
+        staff: true,
+        staffRole: u.staffRole || '',
+        tags: ['Membre'],
+        dateAjout: u.dateInscription || '',
+      })
+    })
+    return Array.from(byId.values())
+  }, [membres, approvedUsers])
+
   const tagFilteredMembres = eventTags.length === 0
-    ? membres
-    : membres.filter(m => Array.isArray(m.tags) && m.tags.some(t => eventTags.includes(t)))
+    ? presenceMembers
+    : presenceMembers.filter(m => getMemberTags(m).some(t => eventTags.includes(t)))
 
   function normSearch(s) {
     return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -576,7 +607,7 @@ export default function PresenceDetail({ user, userData }) {
 
       {/* Member list */}
       <div className="presence-list-scroll" style={{ flex: 1, overflowY: 'auto', padding: '14px 20px', paddingBottom: '2rem' }}>
-        {membres.length === 0 ? (
+        {presenceMembers.length === 0 ? (
           <div style={{ textAlign: 'center', color: C.t2, padding: '3rem 1rem', fontSize: 'var(--font-sm)' }}>
             {t('membres.aucunMembre')}
           </div>
@@ -717,7 +748,7 @@ export default function PresenceDetail({ user, userData }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {availableTags.map(tag => {
                     const selected = editForm.tags.includes(tag)
-                    const count = membres.filter(m => Array.isArray(m.tags) && m.tags.includes(tag)).length
+                    const count = presenceMembers.filter(m => getMemberTags(m).includes(tag)).length
                     return (
                       <button
                         key={tag}
@@ -740,7 +771,7 @@ export default function PresenceDetail({ user, userData }) {
                 {editForm.tags.length > 0 && (
                   <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', fontSize: 'var(--font-xs)', color: '#6366f1', fontWeight: 600 }}>
                     {(() => {
-                      const n = membres.filter(m => Array.isArray(m.tags) && m.tags.some(t => editForm.tags.includes(t))).length
+                      const n = presenceMembers.filter(m => getMemberTags(m).some(t => editForm.tags.includes(t))).length
                       return `${n} membre${n !== 1 ? 's' : ''} correspondent`
                     })()}
                   </div>

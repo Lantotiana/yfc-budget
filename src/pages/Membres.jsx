@@ -116,6 +116,10 @@ export default function Membres({ user, userData }) {
   }
   function closeSheet() { setSheet(null); setForm(EMPTY) }
 
+  function closeOnBackdropMouseDown(e, close) {
+    if (e.target === e.currentTarget) close()
+  }
+
   function getStaffRoleToSave(isStaff) {
     if (!isStaff) return ''
     if (isAdmin) return form.staffRole || ''
@@ -129,6 +133,7 @@ export default function Membres({ user, userData }) {
     try {
       const isStaff = form.staff === true || isApprovedUserEmail(form.email)
       const staffRole = getStaffRoleToSave(isStaff)
+      const tagsToSave = form.tags.length > 0 ? form.tags : ['Membre']
       if (sheet === 'add') {
         const ref = await addDoc(collection(db, 'membres'), {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
@@ -136,7 +141,7 @@ export default function Membres({ user, userData }) {
           tailleTshirt: form.tailleTshirt,
           staff: isStaff,
           staffRole,
-          tags: form.tags,
+          tags: tagsToSave,
           dateAjout: new Date().toISOString().slice(0, 10),
         })
         await createNotification({
@@ -154,7 +159,7 @@ export default function Membres({ user, userData }) {
           tailleTshirt: form.tailleTshirt,
           staff: isStaff,
           staffRole,
-          tags: form.tags,
+          tags: tagsToSave,
         })
         if (isAdmin && form.email.trim()) {
           const userSnap = await getDocs(query(collection(db, 'users'), where('email', '==', form.email.trim())))
@@ -417,8 +422,8 @@ export default function Membres({ user, userData }) {
       {/* Bottom sheet */}
       {sheet !== null && (
         <Portal>
-        <div className="bottom-sheet-overlay" onClick={closeSheet}>
-          <div className="bottom-sheet materiel-form-sheet member-form-sheet" onClick={e => e.stopPropagation()}>
+        <div className="bottom-sheet-overlay" onMouseDown={e => closeOnBackdropMouseDown(e, closeSheet)}>
+          <div className="bottom-sheet materiel-form-sheet member-form-sheet" onMouseDown={e => e.stopPropagation()}>
             <div className="bottom-sheet-handle" />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 className="dialog-title" style={{ margin: 0 }}>{isEditing ? t('common.edit') + ' ' + t('membres.membre') : t('membres.nouveauMembre')}</h2>
@@ -532,8 +537,8 @@ export default function Membres({ user, userData }) {
       {/* Tag settings modal */}
       {showTagSettings && (
         <Portal>
-        <div className="modal-overlay" onClick={() => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
+        <div className="modal-overlay" onMouseDown={e => closeOnBackdropMouseDown(e, () => { setShowTagSettings(false); setConfirmDeleteTag(null); setNewTagInput('') })}>
+          <div className="modal" onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 360 }}>
             <h3 className="dialog-title" style={{ marginBottom: '1rem' }}>Paramètres des tags</h3>
 
             {confirmDeleteTag ? (
@@ -604,8 +609,8 @@ export default function Membres({ user, userData }) {
       {/* Confirmation suppression */}
       {confirmDel && (
         <Portal>
-        <div className="modal-overlay" onClick={() => setConfirmDel(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay" onMouseDown={e => closeOnBackdropMouseDown(e, () => setConfirmDel(null))}>
+          <div className="modal" onMouseDown={e => e.stopPropagation()}>
             <h3 className="dialog-title" style={{ marginBottom: 8 }}>{t('membres.supprimerMembre')}</h3>
             <p style={{ margin: '0 0 1.5rem', fontSize: 'var(--font-sm)', color: C.t2 }}>{confirmDel.nom} {confirmDel.prenoms} sera définitivement supprimé.</p>
             <div className="dialog-footer">

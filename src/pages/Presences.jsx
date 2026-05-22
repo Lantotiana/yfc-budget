@@ -12,6 +12,11 @@ import LoadingState from '../components/LoadingState'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
+import { sameEmail } from '../utils/access'
+
+function getMemberTags(member) {
+  return Array.isArray(member.tags) && member.tags.length > 0 ? member.tags : ['Membre']
+}
 
 export default function Presences({ user, userData }) {
   const { t } = useTranslation()
@@ -22,6 +27,7 @@ export default function Presences({ user, userData }) {
   const [highlightedId, setHighlightedId] = useState('')
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
+  const [approvedUsers, setApprovedUsers] = useState([])
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [loadingEvents, setLoadingEvents] = useState(true)
@@ -56,6 +62,12 @@ export default function Presences({ user, userData }) {
       setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       setLoadingMembers(false)
     }, () => setLoadingMembers(false))
+  }, [])
+
+  useEffect(() => {
+    return onSnapshot(collection(db, 'users'), snap => {
+      setApprovedUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.approuve === true))
+    })
   }, [])
 
   useEffect(() => {
@@ -95,8 +107,8 @@ export default function Presences({ user, userData }) {
   function getEventStats(event) {
     const eventTags = event.tags || []
     const relevant = eventTags.length === 0
-      ? membres
-      : membres.filter(m => Array.isArray(m.tags) && m.tags.some(t => eventTags.includes(t)))
+      ? presenceMembers
+      : presenceMembers.filter(m => getMemberTags(m).some(t => eventTags.includes(t)))
     const presentCount = relevant.filter(m => allPresences[`${event.id}_${m.id}`] === true).length
     return { total: relevant.length, presentCount }
   }
@@ -138,6 +150,25 @@ export default function Presences({ user, userData }) {
     const [y, m, d] = dateStr.split('-').map(Number)
     return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
   }
+
+  const presenceMembers = useMemo(() => {
+    const byId = new Map(membres.map(m => [m.id, m]))
+    approvedUsers.forEach(u => {
+      if (!u.email || membres.some(m => sameEmail(m.email, u.email))) return
+      byId.set(u.id, {
+        id: u.id,
+        nom: u.nom || u.email,
+        prenoms: '',
+        nomPrefere: '',
+        email: u.email,
+        staff: true,
+        staffRole: u.staffRole || '',
+        tags: ['Membre'],
+        dateAjout: u.dateInscription || '',
+      })
+    })
+    return Array.from(byId.values())
+  }, [membres, approvedUsers])
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>
@@ -245,7 +276,7 @@ export default function Presences({ user, userData }) {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {availableTags.map(tag => {
                     const selected = newEventForm.tags.includes(tag)
-                    const count = membres.filter(m => Array.isArray(m.tags) && m.tags.includes(tag)).length
+                    const count = presenceMembers.filter(m => getMemberTags(m).includes(tag)).length
                     return (
                       <button
                         key={tag}
@@ -268,7 +299,7 @@ export default function Presences({ user, userData }) {
                 {newEventForm.tags.length > 0 && (
                   <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', fontSize: 'var(--font-xs)', color: '#6366f1', fontWeight: 600 }}>
                     {(() => {
-                      const n = membres.filter(m => Array.isArray(m.tags) && m.tags.some(t => newEventForm.tags.includes(t))).length
+                      const n = presenceMembers.filter(m => getMemberTags(m).some(t => newEventForm.tags.includes(t))).length
                       return `${n} membre${n !== 1 ? 's' : ''} correspondent`
                     })()}
                   </div>
