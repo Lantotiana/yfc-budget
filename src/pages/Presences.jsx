@@ -12,7 +12,6 @@ import LoadingState from '../components/LoadingState'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
-import { sameEmail } from '../utils/access'
 
 function getMemberTags(member) {
   return Array.isArray(member.tags) && member.tags.length > 0 ? member.tags : ['Membre']
@@ -27,7 +26,6 @@ export default function Presences({ user, userData }) {
   const [highlightedId, setHighlightedId] = useState('')
   const [evenements, setEvenements] = useState([])
   const [membres, setMembres] = useState([])
-  const [approvedUsers, setApprovedUsers] = useState([])
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
   const [loadingEvents, setLoadingEvents] = useState(true)
@@ -62,12 +60,6 @@ export default function Presences({ user, userData }) {
       setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() })))
       setLoadingMembers(false)
     }, () => setLoadingMembers(false))
-  }, [])
-
-  useEffect(() => {
-    return onSnapshot(collection(db, 'users'), snap => {
-      setApprovedUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.approuve === true))
-    })
   }, [])
 
   useEffect(() => {
@@ -151,24 +143,8 @@ export default function Presences({ user, userData }) {
     return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
   }
 
-  const presenceMembers = useMemo(() => {
-    const byId = new Map(membres.map(m => [m.id, m]))
-    approvedUsers.forEach(u => {
-      if (!u.email || membres.some(m => sameEmail(m.email, u.email))) return
-      byId.set(u.id, {
-        id: u.id,
-        nom: u.nom || u.email,
-        prenoms: '',
-        nomPrefere: '',
-        email: u.email,
-        staff: true,
-        staffRole: u.staffRole || '',
-        tags: ['Membre'],
-        dateAjout: u.dateInscription || '',
-      })
-    })
-    return Array.from(byId.values())
-  }, [membres, approvedUsers])
+  const presenceMembers = membres
+
 
   return (
     <div className="page-container-locked sin" style={{ background: C.bg }}>

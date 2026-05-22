@@ -12,7 +12,6 @@ import Portal from '../components/Portal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
-import { sameEmail } from '../utils/access'
 
 function getMemberTags(member) {
   return Array.isArray(member.tags) && member.tags.length > 0 ? member.tags : ['Membre']
@@ -27,7 +26,6 @@ export default function PresenceDetail({ user, userData }) {
   const [event, setEvent] = useState(null)
   const [allEvents, setAllEvents] = useState([])
   const [membres, setMembres] = useState([])
-  const [approvedUsers, setApprovedUsers] = useState([])
   const [presences, setPresences] = useState({})
   const [allPresences, setAllPresences] = useState({})
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
@@ -61,12 +59,6 @@ export default function PresenceDetail({ user, userData }) {
   }, [])
 
   useEffect(() => {
-    return onSnapshot(collection(db, 'users'), snap => {
-      setApprovedUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.approuve === true))
-    })
-  }, [])
-
-  useEffect(() => {
     return onSnapshot(collection(db, 'presences'), snap => {
       const currentMap = {}
       const fullMap = {}
@@ -89,24 +81,7 @@ export default function PresenceDetail({ user, userData }) {
   }, [])
 
   const eventTags = event?.tags || []
-  const presenceMembers = useMemo(() => {
-    const byId = new Map(membres.map(m => [m.id, m]))
-    approvedUsers.forEach(u => {
-      if (!u.email || membres.some(m => sameEmail(m.email, u.email))) return
-      byId.set(u.id, {
-        id: u.id,
-        nom: u.nom || u.email,
-        prenoms: '',
-        nomPrefere: '',
-        email: u.email,
-        staff: true,
-        staffRole: u.staffRole || '',
-        tags: ['Membre'],
-        dateAjout: u.dateInscription || '',
-      })
-    })
-    return Array.from(byId.values())
-  }, [membres, approvedUsers])
+  const presenceMembers = membres
 
   const tagFilteredMembres = eventTags.length === 0
     ? presenceMembers
