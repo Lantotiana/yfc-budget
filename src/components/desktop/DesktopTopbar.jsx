@@ -92,10 +92,14 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
     if (!user?.uid) return
     const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'), limit(150))
     return onSnapshot(q, snap => {
+      if (location.pathname.startsWith('/notifications')) {
+        setNotifCount(0)
+        return
+      }
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       setNotifCount(countUnseenNotifications(items, user, getNotificationSeenAt(user.uid)))
     }, () => setNotifCount(0))
-  }, [user?.uid, user?.email])
+  }, [user?.uid, user?.email, location.pathname])
 
   useEffect(() => {
     if (location.pathname.startsWith('/notifications')) {

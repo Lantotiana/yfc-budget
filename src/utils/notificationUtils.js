@@ -28,11 +28,24 @@ export function isNotificationVisibleForUser(notification, user) {
   return true
 }
 
+function notificationTimeValue(value) {
+  if (!value) return 0
+  if (typeof value === 'string') {
+    const time = Date.parse(value)
+    return Number.isNaN(time) ? 0 : time
+  }
+  if (typeof value.toMillis === 'function') return value.toMillis()
+  if (typeof value.seconds === 'number') return value.seconds * 1000
+  return 0
+}
+
 export function countUnseenNotifications(notifications, user, seenAt = '') {
   if (!user?.uid) return 0
+  const seenTime = notificationTimeValue(seenAt)
   return notifications.filter(notification => {
     if (!isNotificationVisibleForUser(notification, user)) return false
-    if (!seenAt) return true
-    return String(notification.createdAt || '') > seenAt
+    if ((notification.readBy || []).includes(user.uid)) return false
+    if (!seenTime) return true
+    return notificationTimeValue(notification.createdAt) > seenTime
   }).length
 }
