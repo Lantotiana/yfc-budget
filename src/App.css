@@ -276,31 +276,52 @@
 }
 
 .public-document-form {
-  width: min(380px, 100%);
+  width: min(420px, 100%);
   margin: 26px auto 0;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 18px 42px rgba(15,23,42,0.10);
 }
 
 .public-document-form-title {
   margin: 0 0 12px;
-  color: var(--text-secondary);
+  color: #0f172a;
   font-size: var(--font-sm);
-  font-weight: 800;
+  font-weight: 900;
+  text-align: left;
 }
 
 .public-document-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.public-document-fields label {
+  min-width: 0;
+  display: block;
+  text-align: left;
+}
+
+.public-document-fields span {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: var(--font-xs);
+  font-weight: 700;
 }
 
 .public-document-fields input {
   min-width: 0;
-  height: 46px;
+  width: 100%;
+  height: 44px;
   border-radius: 12px;
-  border: 1.5px solid rgba(26,28,46,0.10);
-  background: #f4f5fb;
-  color: var(--text-primary);
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #0f172a;
   padding: 0 13px;
   font-family: inherit;
   font-size: var(--font-sm);
@@ -308,8 +329,13 @@
 }
 
 .public-document-fields input:focus {
-  border-color: rgba(22,181,163,0.48);
+  border-color: var(--teal);
   background: #fff;
+  box-shadow: 0 0 0 3px var(--teal-d);
+}
+
+.public-document-fields input::placeholder {
+  color: #94a3b8;
 }
 
 .public-document-form-msg {
@@ -331,21 +357,21 @@
 }
 
 .public-document-download {
-  min-height: 56px;
+  width: 100%;
+  min-height: 48px;
   margin-top: 0;
-  padding: 0 24px;
+  padding: 0 18px;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--teal);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: var(--font-base);
-  font-weight: 900;
+  font-size: var(--font-sm);
+  font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 18px 36px rgba(22,181,163,0.24);
   cursor: pointer;
   font-family: inherit;
 }
@@ -359,6 +385,16 @@
 @media (max-width: 520px) {
   .public-document-fields {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .public-document-card {
+    padding: 36px 42px;
+  }
+
+  .public-document-form {
+    margin-top: 28px;
   }
 }
 

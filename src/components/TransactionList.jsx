@@ -9,13 +9,10 @@ import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import ReceiptModal from './ReceiptModal'
 import { useDesktopToolbar } from '../context/DesktopToolbarContext'
-
-const DEFAULT_MOTIFS = {
-  entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
-  depense: ['Sortie prédication', 'Transport', 'Matériel', 'Impression', 'Restauration', 'Autre']
-}
+import useBudgetMotifs from '../hooks/useBudgetMotifs'
 
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
+const CUSTOM_MOTIF = 'Autre'
 const PAGE_SIZE = 10
 
 function fmt(n) {
@@ -61,9 +58,14 @@ export default function TransactionList({
   const setSearch = onSearchChange ?? setSearchInternal
   const [page, setPage] = useState(1)
   const [shareFeedback, setShareFeedback] = useState('')
+  const motifs = useBudgetMotifs()
 
   const currentMonth = new Date().toISOString().slice(0, 7)
   const [hasInit, setHasInit] = useState(false)
+  const motifNamesByType = useMemo(() => ({
+    entree: motifs.filter(m => m.type === 'entree').map(m => m.name),
+    depense: motifs.filter(m => m.type === 'depense').map(m => m.name)
+  }), [motifs])
 
   useEffect(() => {
     if (!hasInit && months.length > 0) {
@@ -123,11 +125,11 @@ export default function TransactionList({
     setEditDate(tx.date)
     setEditMontant(String(tx.montant))
     setEditNote(tx.note || '')
-    if (DEFAULT_MOTIFS[tx.type].includes(tx.motif)) {
+    if (motifNamesByType[tx.type]?.includes(tx.motif)) {
       setEditMotif(tx.motif)
       setEditMotifCustom('')
     } else {
-      setEditMotif('Autre')
+      setEditMotif(CUSTOM_MOTIF)
       setEditMotifCustom(tx.motif)
     }
   }
@@ -140,18 +142,18 @@ export default function TransactionList({
   function handleChangeType(t) {
     if (!canManageBudget) return
     setEditType(t)
-    setEditMotif(DEFAULT_MOTIFS[t][0])
+    setEditMotif(motifNamesByType[t]?.[0] || CUSTOM_MOTIF)
     setEditMotifCustom('')
   }
 
   async function handleSave() {
     if (!canManageBudget) return
-    const motifFinal = editMotif === 'Autre' ? editMotifCustom.trim() : editMotif
+    const motifFinal = editMotif === CUSTOM_MOTIF ? editMotifCustom.trim() : editMotif
     if (!editDate || !editMontant || isNaN(editMontant) || Number(editMontant) <= 0) {
       alert('Veuillez remplir la date et le montant.')
       return
     }
-    if (editMotif === 'Autre' && !motifFinal) {
+    if (editMotif === CUSTOM_MOTIF && !motifFinal) {
       alert('Veuillez préciser le motif.')
       return
     }
@@ -587,12 +589,13 @@ export default function TransactionList({
 
             <div className="mb-10">
               <label className="form-label">{t('budget.motif')}</label>
-              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
-                {DEFAULT_MOTIFS[editType].map(m => <option key={m}>{m}</option>)}
+              <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== CUSTOM_MOTIF) setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
+                {motifNamesByType[editType].map(m => <option key={m} value={m}>{m}</option>)}
+                <option value={CUSTOM_MOTIF}>{t('budget.motifAutre')}</option>
               </select>
             </div>
 
-            {editMotif === 'Autre' && (
+            {editMotif === CUSTOM_MOTIF && (
               <div className="mb-10">
                 <label className="form-label">{t('budget.motifPrecise')}</label>
                 <input

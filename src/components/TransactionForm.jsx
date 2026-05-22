@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { collection, addDoc, deleteDoc, doc, onSnapshot, getDoc } from 'firebase/firestore'
+import { collection, addDoc, deleteDoc, doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { auth } from '../auth'
 import { X } from 'lucide-react'
 import { createNotification } from '../notifications'
 import { trackUserActivity } from '../utils/userActivity'
+import useBudgetMotifs from '../hooks/useBudgetMotifs'
 
 export default function TransactionForm({ onAdd, canManageBudget = true }) {
   const { t } = useTranslation()
@@ -15,16 +16,9 @@ export default function TransactionForm({ onAdd, canManageBudget = true }) {
   const [motif, setMotif] = useState('')
   const [motifCustom, setMotifCustom] = useState('')
   const [note, setNote] = useState('')
-  const [motifs, setMotifs] = useState([])
+  const motifs = useBudgetMotifs()
   const [showModal, setShowModal] = useState(false)
   const [newMotif, setNewMotif] = useState('')
-
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'motifs'), snap => {
-      setMotifs(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
-  }, [])
 
   const filteredMotifs = motifs.filter(m => m.type === type)
 

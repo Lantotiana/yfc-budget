@@ -5,13 +5,11 @@ import { db } from '../firebase'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import { X } from 'lucide-react'
 import { createNotification } from '../notifications'
+import useBudgetMotifs from '../hooks/useBudgetMotifs'
 
 const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
 
-const DEFAULT_MOTIFS = {
-  entree: ['Don membres', 'Quête vendredi', 'Don extérieur', 'Cotisation', 'Dons', 'Autre'],
-  depense: ['Sortie prédication', 'Transport', 'Matériel', 'Impression', 'Restauration', 'Autre']
-}
+const CUSTOM_MOTIF = 'Autre'
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' Ar'
@@ -32,6 +30,11 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
   const [editMotifCustom, setEditMotifCustom] = useState('')
   const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const motifs = useBudgetMotifs()
+  const motifNamesByType = {
+    entree: motifs.filter(m => m.type === 'entree').map(m => m.name),
+    depense: motifs.filter(m => m.type === 'depense').map(m => m.name)
+  }
 
   function openEdit(tx) {
     setSelected(tx)
@@ -39,11 +42,11 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
     setEditDate(tx.date)
     setEditMontant(String(tx.montant))
     setEditNote(tx.note || '')
-    if (DEFAULT_MOTIFS[tx.type].includes(tx.motif)) {
+    if (motifNamesByType[tx.type]?.includes(tx.motif)) {
       setEditMotif(tx.motif)
       setEditMotifCustom('')
     } else {
-      setEditMotif('Autre')
+      setEditMotif(CUSTOM_MOTIF)
       setEditMotifCustom(tx.motif)
     }
   }
@@ -56,18 +59,18 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
   function handleChangeType(t) {
     if (!canManageBudget) return
     setEditType(t)
-    setEditMotif(DEFAULT_MOTIFS[t][0])
+    setEditMotif(motifNamesByType[t]?.[0] || CUSTOM_MOTIF)
     setEditMotifCustom('')
   }
 
   async function handleSave() {
     if (!canManageBudget) return
-    const motifFinal = editMotif === 'Autre' ? editMotifCustom.trim() : editMotif
+    const motifFinal = editMotif === CUSTOM_MOTIF ? editMotifCustom.trim() : editMotif
     if (!editDate || !editMontant || isNaN(editMontant) || Number(editMontant) <= 0) {
       alert('Veuillez remplir la date et le montant.')
       return
     }
-    if (editMotif === 'Autre' && !motifFinal) {
+    if (editMotif === CUSTOM_MOTIF && !motifFinal) {
       alert('Veuillez préciser le motif.')
       return
     }
@@ -359,12 +362,13 @@ export default function DetailTransactions({ type, transactions, onBack, canMana
 
           <div className="mb-10">
             <label className="form-label">Motif</label>
-            <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== 'Autre') setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
-              {DEFAULT_MOTIFS[editType].map(m => <option key={m}>{m}</option>)}
+            <select value={editMotif} onChange={e => { setEditMotif(e.target.value); if (e.target.value !== CUSTOM_MOTIF) setEditMotifCustom('') }} className="form-input" disabled={!canManageBudget}>
+              {motifNamesByType[editType].map(m => <option key={m} value={m}>{m}</option>)}
+              <option value={CUSTOM_MOTIF}>Autre</option>
             </select>
           </div>
 
-          {editMotif === 'Autre' && (
+          {editMotif === CUSTOM_MOTIF && (
             <div className="mb-10">
               <label className="form-label">Précisez le motif</label>
               <input type="text" value={editMotifCustom} onChange={e => setEditMotifCustom(e.target.value)} placeholder="Ex: Achat matériel..." className="form-input" autoFocus disabled={!canManageBudget} />

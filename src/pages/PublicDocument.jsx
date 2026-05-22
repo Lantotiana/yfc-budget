@@ -144,20 +144,26 @@ export default function PublicDocument() {
             <form className="public-document-form" onSubmit={handleRequestCopy}>
               <p className="public-document-form-title">Recevoir une copie par email</p>
               <div className="public-document-fields">
-                <input
-                  type="text"
-                  value={form.prenom}
-                  onChange={e => setForm(prev => ({ ...prev, prenom: e.target.value }))}
-                  placeholder="Votre prenom"
-                  autoComplete="given-name"
-                />
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="Votre email"
-                  autoComplete="email"
-                />
+                <label>
+                  <span>Prenom</span>
+                  <input
+                    type="text"
+                    value={form.prenom}
+                    onChange={e => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                    placeholder="Votre prenom"
+                    autoComplete="given-name"
+                  />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="votre@email.com"
+                    autoComplete="email"
+                  />
+                </label>
               </div>
               {requestError && <div className="public-document-form-msg error">{requestError}</div>}
               {requestStatus && <div className="public-document-form-msg success">{requestStatus}</div>}
