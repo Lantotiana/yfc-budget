@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.email == 'lterazaf@gmail.com';
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function isApprovedUser() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc(request.auth.uid).data.approuve == true;
+    }
+
+    function isSelfProfileUpdate(uid) {
+      return isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nom',
+          'photoURL',
+          'email',
+          'lastSeen',
+          'online',
+          'currentActivity',
+          'currentPath',
+          'currentActivityUpdatedAt'
+        ])
+        && request.resource.data.approuve == resource.data.approuve
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.staffRole == resource.data.staffRole;
+    }
+
+    match /users/{uid} {
+      allow create: if isSelf(uid)
+        && request.resource.data.approuve == false
+        && request.resource.data.email == request.auth.token.email;
+
+      allow get: if isAdmin() || isSelf(uid) || isApprovedUser();
+      allow list: if isAdmin() || isApprovedUser();
+      allow update: if isAdmin() || isSelfProfileUpdate(uid);
+      allow delete: if isAdmin();
+
+      match /pushTokens/{tokenId} {
+        allow read, write: if isAdmin() || isSelf(uid);
+      }
+    }
+
+    match /documents/{documentId} {
+      allow get: if resource.data.isPublic == true || isApprovedUser() || isAdmin();
+      allow list, create, update, delete: if isApprovedUser() || isAdmin();
+    }
+
+    match /donReceipts/{receiptId} {
+      allow read: if true;
+      allow write: if isApprovedUser() || isAdmin();
+    }
+
+    match /receipts_meta/{document=**} {
+      allow read, write: if isApprovedUser() || isAdmin();
+    }
+
+    match /config/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Checklist publique interne — lecture : tous les utilisateurs approuvés
+    // Écriture : rôles autorisés (présidents, vp, responsables, admin).
+    // La restriction par rôle est aussi appliquée côté UI.
+    match /publicChecklistItems/{itemId} {
+      allow read: if isApprovedUser() || isAdmin();
+      allow write: if isApprovedUser() || isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if isApprovedUser() || isAdmin();
+    }
+  }
+}

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, where, setDoc } from 'firebase/firestore'
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore'
 import { Plus, Search, Trash2, Download, Settings, X } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
@@ -22,6 +22,10 @@ const TAG_PALETTE = {
   'Mpitarika YFC': { bg: 'rgba(99,102,241,0.1)',  color: '#6366f1' },
   'Logistique':    { bg: 'rgba(16,185,129,0.12)', color: '#10b981' },
   'Autre':         { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+}
+
+function createEmptyForm() {
+  return { ...EMPTY, tags: ['Membre'] }
 }
 const DEFAULT_TAG_STYLE = { bg: 'rgba(99,102,241,0.1)', color: '#6366f1' }
 function tagStyle(tag) { return TAG_PALETTE[tag] || DEFAULT_TAG_STYLE }
@@ -51,7 +55,7 @@ export default function Membres({ user, userData }) {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [sheet, setSheet] = useState(null)
-  const [form, setForm] = useState(EMPTY)
+  const [form, setForm] = useState(() => createEmptyForm())
   const [saving, setSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
   const [availableTags, setAvailableTags] = useState(DEFAULT_MEMBRE_TAGS)
@@ -92,7 +96,7 @@ export default function Membres({ user, userData }) {
         .filter(u => u.approuve === true && u.email)
         .map(u => normalizeEmail(u.email))
       setStaffEmails(new Set(emails))
-    })
+    }, () => setStaffEmails(new Set()))
     return () => unsub()
   }, [])
 
@@ -109,12 +113,12 @@ export default function Membres({ user, userData }) {
   }, [])
 
 
-  function openAdd()  { setForm(EMPTY); setSheet('add') }
+  function openAdd()  { setForm(createEmptyForm()); setSheet('add') }
   function openEdit(m) {
     setForm({ nom: m.nom || '', prenoms: m.prenoms || '', nomPrefere: m.nomPrefere || '', adresse: m.adresse || '', telephone: m.telephone || '', email: m.email || '', tailleTshirt: m.tailleTshirt || '', staff: m.staff === true || isApprovedUserEmail(m.email), staffRole: m.staffRole || '', tags: Array.isArray(m.tags) ? m.tags : [] })
     setSheet(m)
   }
-  function closeSheet() { setSheet(null); setForm(EMPTY) }
+  function closeSheet() { setSheet(null); setForm(createEmptyForm()) }
 
   function closeOnBackdropMouseDown(e, close) {
     if (e.target === e.currentTarget) close()
@@ -133,7 +137,7 @@ export default function Membres({ user, userData }) {
     try {
       const isStaff = form.staff === true || isApprovedUserEmail(form.email)
       const staffRole = getStaffRoleToSave(isStaff)
-      const tagsToSave = form.tags.length > 0 ? form.tags : ['Membre']
+      const tagsToSave = Array.isArray(form.tags) ? form.tags : ['Membre']
       if (sheet === 'add') {
         const ref = await addDoc(collection(db, 'membres'), {
           nom: form.nom.trim(), prenoms: form.prenoms.trim(), nomPrefere: form.nomPrefere.trim(),
@@ -161,10 +165,6 @@ export default function Membres({ user, userData }) {
           staffRole,
           tags: tagsToSave,
         })
-        if (isAdmin && form.email.trim()) {
-          const userSnap = await getDocs(query(collection(db, 'users'), where('email', '==', form.email.trim())))
-          if (!userSnap.empty) await updateDoc(userSnap.docs[0].ref, { staffRole })
-        }
         await createNotification({
           type: 'membre',
           titre: 'Membre modifié',
@@ -312,7 +312,7 @@ export default function Membres({ user, userData }) {
   function toggleTag(tag) {
     setForm(f => ({
       ...f,
-      tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
+      tags: (f.tags || []).includes(tag) ? f.tags.filter(t => t !== tag) : [...(f.tags || []), tag],
     }))
   }
 
@@ -443,13 +443,17 @@ export default function Membres({ user, userData }) {
                 <input
                   type="checkbox"
                   checked={isFormStaff}
-                  onChange={e => setForm(prev => ({ ...prev, staff: e.target.checked }))}
-                  disabled={isFormApprovedUser}
-                  style={{ width: 18, height: 18, accentColor: C.teal }}
+                  onChange={e => {
+                    if (!isAdmin) return
+                    setForm(prev => ({ ...prev, staff: e.target.checked }))
+                  }}
+                  disabled={!isAdmin || isFormApprovedUser}
+                  style={{ width: 18, height: 18, accentColor: C.teal, cursor: (!isAdmin || isFormApprovedUser) ? 'not-allowed' : 'pointer' }}
                 />
                 <span style={{ color: C.t1, fontSize: 'var(--font-sm)', fontWeight: 400 }}>
                   {t('membres.estStaff')}
                   {isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (Utilisateur approuvé)</span>}
+                  {!isAdmin && !isFormApprovedUser && <span style={{ color: C.t2, fontSize: 'var(--font-xs)', fontWeight: 400 }}> (Admin uniquement)</span>}
                 </span>
               </label>
               {isFormStaff && (

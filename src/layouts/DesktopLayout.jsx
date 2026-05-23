@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '../firebase'
-import { sameEmail } from '../utils/access'
 import DesktopSidebar from '../components/desktop/DesktopSidebar'
 import DesktopTopbar from '../components/desktop/DesktopTopbar'
 import DesktopRightPanel from '../components/desktop/DesktopRightPanel'
@@ -24,27 +23,30 @@ export default function DesktopLayout({ user, userData, children }) {
   })
 
   useEffect(() => {
+    const failSoft = label => error => {
+      console.warn(`Chargement desktop ignore (${label})`, error?.code || error?.message || error)
+    }
     const unsubs = [
       onSnapshot(collection(db, 'membres'), snap => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         setMembres(data)
         setSearchData(prev => ({ ...prev, membres: data }))
-      }),
+      }, failSoft('membres')),
       onSnapshot(query(collection(db, 'transactions'), orderBy('date', 'desc'), limit(80)), snap => {
         setSearchData(prev => ({ ...prev, transactions: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))
-      }),
+      }, failSoft('transactions')),
       onSnapshot(query(collection(db, 'evenements'), orderBy('date', 'desc'), limit(60)), snap => {
         setSearchData(prev => ({ ...prev, presenceEvents: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))
-      }),
+      }, failSoft('evenements')),
       onSnapshot(query(collection(db, 'evenements_agenda'), orderBy('dateDebut'), limit(60)), snap => {
         setSearchData(prev => ({ ...prev, agendaEvents: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))
-      }),
+      }, failSoft('evenements_agenda')),
       onSnapshot(query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'), limit(60)), snap => {
         setSearchData(prev => ({ ...prev, documents: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))
-      }),
+      }, failSoft('documents')),
       onSnapshot(query(collection(db, 'staffMessages'), orderBy('createdAt', 'desc'), limit(80)), snap => {
         setSearchData(prev => ({ ...prev, messages: snap.docs.map(d => ({ id: d.id, ...d.data() })) }))
-      }),
+      }, failSoft('staffMessages')),
     ]
 
     return () => {
@@ -82,8 +84,6 @@ export default function DesktopLayout({ user, userData, children }) {
     return () => observer.disconnect()
   }, [])
 
-  const currentMember = useMemo(() => membres.find(m => sameEmail(m.email, user?.email)), [membres, user?.email])
-
   useEffect(() => {
     document.body.setAttribute('data-desktop-layout', 'true')
     return () => document.body.removeAttribute('data-desktop-layout')
@@ -92,10 +92,10 @@ export default function DesktopLayout({ user, userData, children }) {
   return (
     <DesktopToolbarContext.Provider value={{ toolbar, setToolbar }}>
       <div className={`desktop-shell${isSettingsPage ? ' settings-mode' : ''}`}>
-        <DesktopSidebar user={user} currentMember={currentMember} compact={isSettingsPage} />
-        {isSettingsPage && <SettingsSubPanel user={user} currentMember={currentMember} />}
+        <DesktopSidebar user={user} compact={isSettingsPage} />
+        {isSettingsPage && <SettingsSubPanel user={user} userData={userData} />}
         <div className="desktop-main">
-          <DesktopTopbar user={user} userData={userData} currentMember={currentMember} searchData={searchData} toolbar={toolbar} />
+          <DesktopTopbar user={user} userData={userData} searchData={searchData} toolbar={toolbar} />
           <div className="desktop-workspace">
             <main className="desktop-content">
               {children}

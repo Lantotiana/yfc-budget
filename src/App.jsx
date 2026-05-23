@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react'
+import { Component, lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { CalendarCheck, CheckSquare, Home as HomeIcon, LayoutDashboard, Users, Wallet } from 'lucide-react'
@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { auth } from './auth'
 import { db } from './firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { ADMIN_EMAIL, ADMIN_FALLBACK_PROFILE } from './constants'
 import Login from './components/Login'
 import LoadingState from './components/LoadingState'
 import Seo, { PrivateSeo } from './components/Seo'
@@ -33,6 +34,7 @@ const loadTasks = () => import('./pages/Tasks')
 const loadAdmin = () => import('./components/Admin')
 const loadVerifyReceipt = () => import('./pages/VerifyReceipt')
 const loadVote = () => import('./pages/Vote')
+const loadGeneralChecklist = () => import('./pages/GeneralChecklist')
 
 const Budget = lazy(loadBudget)
 const Membres = lazy(loadMembres)
@@ -47,6 +49,7 @@ const Tasks = lazy(loadTasks)
 const Admin = lazy(loadAdmin)
 const VerifyReceipt = lazy(loadVerifyReceipt)
 const Vote = lazy(loadVote)
+const GeneralChecklist = lazy(loadGeneralChecklist)
 
 const desktopPreloadQueue = [
   loadBudget,
@@ -187,7 +190,7 @@ function BottomNav({ user }) {
     { path: '/membres', label: t('nav.membres'), Icon: Users, color: '#f43f5e' },
     { path: '/tasks', label: t('nav.tasks'), Icon: CheckSquare, color: '#8b5cf6' },
   ]
-  const baseVisible = Boolean(user && location.pathname !== '/login' && location.pathname !== '/vote' && !location.pathname.startsWith('/verify'))
+  const baseVisible = Boolean(user && location.pathname !== '/login' && location.pathname !== '/vote' && location.pathname !== '/checklist' && !location.pathname.startsWith('/verify'))
   const visible = baseVisible && !isDesktop
 
   useEffect(() => {
@@ -274,13 +277,17 @@ function BottomNav({ user }) {
 }
 
 function AppPage({ user, userData, children }) {
+  const location = useLocation()
+
   return (
     <ProtectedRoute user={user}>
       <PrivateSeo />
       <AppLayout user={user} userData={userData}>
-        <Suspense fallback={<RouteFallback />}>
-          {children}
-        </Suspense>
+        <RouteErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={<RouteFallback />}>
+            {children}
+          </Suspense>
+        </RouteErrorBoundary>
       </AppLayout>
     </ProtectedRoute>
   )
@@ -336,6 +343,77 @@ const LOADER_MESSAGES = [
   'On range les fichiers YFC...',
 ]
 
+class RouteErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('Erreur page:', error, info)
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false })
+    }
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children
+    return (
+      <div className="route-loader" style={{ minHeight: 260, textAlign: 'center', padding: 24 }}>
+        <strong>Impossible d'afficher cette page.</strong>
+        <div style={{ marginTop: 8, opacity: 0.75 }}>Rafraichis la page ou reviens au tableau de bord.</div>
+        <button type="button" className="btn-primary" style={{ marginTop: 16 }} onClick={() => window.location.assign('/dashboard')}>
+          Tableau de bord
+        </button>
+      </div>
+    )
+  }
+}
+
+function buildUserProfile(authUser, userDoc = null) {
+  const email = userDoc?.email || authUser.email || ''
+  return {
+    ...(userDoc || {}),
+    approuve: true,
+    email,
+    nom: userDoc?.nom || userDoc?.displayName || authUser.displayName || email,
+    photoURL: userDoc?.photoURL || authUser.photoURL || '',
+  }
+}
+
+async function getApprovedUserData(authUser) {
+  const email = authUser.email || ''
+  let userDoc = null
+
+  try {
+    const snap = await getDoc(doc(db, 'users', authUser.uid))
+    if (snap.exists()) userDoc = snap.data()
+  } catch (e) {
+    console.error('Erreur verification utilisateur:', e.code, e.message)
+  }
+
+  if (userDoc?.approuve === true) {
+    return buildUserProfile(authUser, userDoc)
+  }
+
+  if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    return buildUserProfile(authUser, {
+      ...ADMIN_FALLBACK_PROFILE,
+      ...(userDoc || {}),
+      email,
+    })
+  }
+
+  return null
+}
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [userData, setUserData] = useState(null)
@@ -346,10 +424,10 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, async u => {
       try {
         if (u) {
-          const snap = await getDoc(doc(db, 'users', u.uid))
-          if (snap.exists() && snap.data().approuve === true) {
+          const approvedData = await getApprovedUserData(u)
+          if (approvedData) {
             setUser(u)
-            setUserData(snap.data())
+            setUserData(approvedData)
           } else {
             // Ne pas signOut ici — évite la race condition avec l'inscription
             // Login.jsx gère sa propre déconnexion après inscription/login refusé
@@ -366,6 +444,14 @@ export default function App() {
     })
     return () => unsub()
   }, [])
+
+  async function handleLoginSuccess(loginUser) {
+    const approvedData = await getApprovedUserData(loginUser)
+    if (approvedData) {
+      setUser(loginUser)
+      setUserData(approvedData)
+    }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -461,7 +547,7 @@ export default function App() {
           <Route path="/verify/:receiptNumber" element={<><Seo title="Vérification YFC" description="Vérification d'un reçu Young For Christ." canonical="https://young-for-christ.com/" robots="noindex, nofollow" /><Suspense fallback={<RouteFallback />}><VerifyReceipt /></Suspense></>} />
           <Route path="/public/document/:id" element={<PublicDocument />} />
           <Route path="/vote" element={<Suspense fallback={<RouteFallback />}><Vote /></Suspense>} />
-          <Route path="/login" element={user ? <FallbackRoute /> : <><Seo title="Connexion YFC - Young For Christ" description="Connexion à l'espace Staff Young For Christ." canonical="https://young-for-christ.com/login" robots="noindex, nofollow" /><Login /></>} />
+          <Route path="/login" element={user ? <FallbackRoute /> : <><Seo title="Connexion YFC - Young For Christ" description="Connexion à l'espace Staff Young For Christ." canonical="https://young-for-christ.com/login" robots="noindex, nofollow" /><Login onLoginSuccess={handleLoginSuccess} /></>} />
           <Route path="/" element={<HomeRoute user={user} userData={userData} />} />
           <Route path="/budget" element={
             <AppPage user={user} userData={userData}>
@@ -541,6 +627,11 @@ export default function App() {
             <ResponsiveModuleRoute user={user} userData={userData} module="assistant">
               <Fampaherezana user={user} userData={userData} />
             </ResponsiveModuleRoute>
+          } />
+          <Route path="/checklist" element={
+            <AppPage user={user} userData={userData}>
+              <GeneralChecklist user={user} userData={userData} />
+            </AppPage>
           } />
           <Route path="*" element={<FallbackRoute />} />
       </Routes>

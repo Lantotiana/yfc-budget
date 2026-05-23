@@ -771,9 +771,9 @@ function DocumentsOverlay({
   const publicUrl = qrDoc ? getPublicDocumentUrl(qrDoc.id) : ''
 
   return (
-    <>
+    <Portal>
       {preview && (
-        <div onClick={() => setPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+        <div onClick={() => setPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 6000, display: 'flex', flexDirection: 'column' }}>
           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(0,0,0,0.6)', flexShrink: 0 }}>
             <div style={{ flex: 1, fontSize: 'var(--font-sm)', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {preview.nom}
@@ -882,6 +882,6 @@ function DocumentsOverlay({
           </div>
         </Portal>
       )}
-    </>
+    </Portal>
   )
 }

@@ -16,7 +16,7 @@ import logoYfc from '../assets/logo_yfc.png'
 
 const hero = '/hero.webp'
 
-export default function Login() {
+export default function Login({ onLoginSuccess }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
@@ -39,14 +39,26 @@ export default function Login() {
   }
 
   async function verifyApprovedUser(currentUser) {
-    const snap = await getDoc(doc(db, 'users', currentUser.uid))
+    if ((currentUser.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      return true
+    }
+
+    let snap
+    try {
+      snap = await getDoc(doc(db, 'users', currentUser.uid))
+    } catch (e) {
+      console.error('Erreur verification utilisateur:', e.code, e.message)
+      await signOut(auth).catch(() => {})
+      showMsg(`Connexion réussie, mais impossible de vérifier l'approbation du compte (${e.code || 'erreur inconnue'}). Réessayez ou contactez l'administrateur.`)
+      return false
+    }
     if (!snap.exists()) {
-      await signOut(auth)
+      await signOut(auth).catch(() => {})
       showMsg(t('login.errorAccountNotFound'))
       return false
     }
     if (snap.data().approuve !== true) {
-      await signOut(auth)
+      await signOut(auth).catch(() => {})
       showMsg(t('login.errorPendingApproval'))
       return false
     }
@@ -54,13 +66,26 @@ export default function Login() {
   }
 
   async function handleLogin() {
+    const emailValue = email.trim()
+    if (!emailValue || !password) {
+      showMsg(t('login.errorInvalidCredentials'))
+      return
+    }
     setLoading(true)
     setMessage('')
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password)
-      await verifyApprovedUser(cred.user)
-    } catch {
-      showMsg(t('login.errorInvalidCredentials'))
+      const cred = await signInWithEmailAndPassword(auth, emailValue, password)
+      const approved = await verifyApprovedUser(cred.user)
+      if (approved) await onLoginSuccess?.(cred.user)
+    } catch (e) {
+      console.error('Erreur login:', e.code, e.message)
+      if (e.code === 'auth/too-many-requests') {
+        showMsg('Trop de tentatives. Réessayez dans quelques minutes ou utilisez “mot de passe oublié”.')
+      } else if (e.code === 'auth/network-request-failed') {
+        showMsg('Connexion réseau impossible. Vérifiez Internet puis réessayez.')
+      } else {
+        showMsg(t('login.errorInvalidCredentials'))
+      }
     }
     setLoading(false)
   }

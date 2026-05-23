@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { collection, deleteDoc, doc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { sendBrevoEmail } from '../services/brevoService'
 import { ArrowLeft, Check, ExternalLink, FileSpreadsheet, RefreshCw, ShieldCheck, X } from 'lucide-react'
@@ -9,35 +9,12 @@ import { db } from '../firebase'
 import { cloudFunctions } from '../firebaseFunctions'
 import { ADMIN_EMAIL, STAFF_ROLES } from '../constants'
 import { useTheme } from '../context/ThemeContext'
-import { normalizeAccessText, sameEmail } from '../utils/access'
+import { normalizeAccessText } from '../utils/access'
 
 const APP_URL = 'https://young-for-christ.com'
 const LOGO_URL = 'https://young-for-christ.com/logo_yfc.png'
 const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1bmvdcxi8NS4_RTPPT4cXusAVMgORMqB08RtxvNBOqz8/edit?gid=0#gid=0'
 const SHEET_SYNC_ROLES = ['president', 'vice president', 'vice-president', 'responsable financier', 'tresorier', 'admin']
-
-async function syncApprovedUserToMember(u, patch = {}) {
-  if (!u?.email) return
-
-  const existingSnap = await getDocs(collection(db, 'membres'))
-  const existing = existingSnap.docs.find(memberDoc => sameEmail(memberDoc.data().email, u.email))
-  const memberData = existing?.data() || {}
-  const memberRef = existing?.ref || doc(db, 'membres', u.id)
-
-  await setDoc(memberRef, {
-    nom: memberData.nom || patch.nom || u.nom || '',
-    prenoms: memberData.prenoms || '',
-    nomPrefere: memberData.nomPrefere || '',
-    adresse: memberData.adresse || '',
-    telephone: memberData.telephone || '',
-    email: memberData.email || u.email,
-    tailleTshirt: memberData.tailleTshirt || '',
-    staff: memberData.staff ?? true,
-    staffRole: patch.staffRole ?? memberData.staffRole ?? u.staffRole ?? '',
-    tags: Array.isArray(memberData.tags) && memberData.tags.length > 0 ? memberData.tags : ['Membre'],
-    dateAjout: memberData.dateAjout || u.dateInscription || new Date().toISOString().slice(0, 10),
-  }, { merge: true })
-}
 
 function buildApprovalHtml(nom) {
   return `<!DOCTYPE html>
@@ -186,16 +163,6 @@ function UserSheet({ u, onClose, onSave, C }) {
         staffRole: form.staffRole,
         approuve: form.approuve,
       })
-      if (form.approuve) {
-        await syncApprovedUserToMember(u, {
-          nom: form.nom.trim(),
-          staffRole: form.staffRole,
-        })
-      }
-      const memSnap = await getDocs(query(collection(db, 'membres'), where('email', '==', u.email)))
-      if (!memSnap.empty) {
-        await updateDoc(memSnap.docs[0].ref, { staffRole: form.staffRole })
-      }
       onSave()
     } catch (e) {
       console.error(e)
@@ -381,7 +348,6 @@ export default function Admin({ user, userData }) {
   const navigate = useNavigate()
   const { dark, C } = useTheme()
   const [users, setUsers] = useState([])
-  const [membres, setMembres] = useState([])
   const [sending, setSending] = useState(null)
   const [selectedUser, setSelectedUser] = useState(null)
 
@@ -392,18 +358,10 @@ export default function Admin({ user, userData }) {
     return () => unsub()
   }, [])
 
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'membres'), snap => {
-      setMembres(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return () => unsub()
-  }, [])
-
   async function approuver(u) {
     setSending(u.id)
     try {
       await updateDoc(doc(db, 'users', u.id), { approuve: true })
-      await syncApprovedUserToMember(u)
       await sendBrevoEmail({
         to: u.email,
         subject: '✅ Ton compte Young For Christ a été approuvé',
@@ -422,8 +380,7 @@ export default function Admin({ user, userData }) {
 
   const enAttente = users.filter(u => u.approuve !== true)
   const approuves = users.filter(u => u.approuve === true)
-  const currentMember = membres.find(m => sameEmail(m.email, user?.email))
-  const canSyncSheets = user?.email === ADMIN_EMAIL || canUseSheetSync(userData?.staffRole || userData?.role || currentMember?.staffRole)
+  const canSyncSheets = user?.email === ADMIN_EMAIL || canUseSheetSync(userData?.staffRole || userData?.role)
 
   const pendingItemBg = dark ? 'rgba(180,83,9,0.12)' : '#fef9ec'
   const pendingAvatarBg = dark ? 'rgba(180,83,9,0.2)' : '#fef3c7'

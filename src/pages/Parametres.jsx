@@ -12,14 +12,15 @@ import { auth } from '../auth'
 import { db } from '../firebase'
 import {
   updatePassword,
+  updateProfile,
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth'
-import { collection, doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore'
+import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import { useTheme } from '../context/ThemeContext'
 import { createNotification } from '../notifications'
-import { normalizeAccessText, sameEmail } from '../utils/access'
+import { normalizeAccessText } from '../utils/access'
 import { ADMIN_EMAIL, DEFAULT_MEMBRE_TAGS } from '../constants'
 import { disablePushNotifications, enablePushNotifications, getPushAvailability, syncPushNotifications } from '../services/pushNotifications'
 import { useTranslation } from 'react-i18next'
@@ -89,7 +90,6 @@ export default function Parametres({ user, userData, setUserData }) {
   const [photoURL, setPhotoURL] = useState(userData?.photoURL || '')
   const [cropSrc, setCropSrc] = useState(null)
   const [showCropper, setShowCropper] = useState(false)
-  const [memberRole, setMemberRole] = useState({ staff: false, staffRole: '' })
   const [msg, setMsg] = useState({ text: '', ok: true })
 
   const [oldPwd, setOldPwd] = useState('')
@@ -108,28 +108,29 @@ export default function Parametres({ user, userData, setUserData }) {
   const appUrl = 'https://young-for-christ.com/'
 
   const isAdmin = user?.email === ADMIN_EMAIL
-  const canOpenAdminTools = isAdmin || SHEET_SYNC_ROLES.includes(normalizeAccessText(memberRole.staffRole))
+  const userRole = userData?.staffRole || userData?.role || ''
+  const canOpenAdminTools = isAdmin || SHEET_SYNC_ROLES.includes(normalizeAccessText(userRole))
+
+  useEffect(() => {
+    if (saving || uploadingPhoto) return
+    const nextName = userData?.nom || user?.displayName || ''
+    const nextPhotoURL = userData?.photoURL || user?.photoURL || ''
+    if (nextName) setNom(nextName)
+    if (nextPhotoURL) setPhotoURL(nextPhotoURL)
+  }, [userData?.nom, userData?.photoURL, user?.displayName, user?.email, user?.photoURL, saving, uploadingPhoto])
+
   function flash(text, ok = true) {
     setMsg({ text, ok })
     setTimeout(() => setMsg({ text: '', ok: true }), 3000)
   }
 
   useEffect(() => {
-    if (!user?.email) return
-    const unsub = onSnapshot(collection(db, 'membres'), snap => {
-      const member = snap.docs.map(d => d.data()).find(m => sameEmail(m.email, user.email))
-      setMemberRole({
-        staff: member?.staff === true,
-        staffRole: member?.staffRole || '',
-      })
-    })
-    return () => unsub()
-  }, [user?.email])
-
-  useEffect(() => {
     const unsub = onSnapshot(doc(db, 'appSettings', 'membreTags'), snap => {
       const raw = snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : []
       setAvailableTags(['Membre', ...raw.filter(t => t !== 'Membre')])
+    }, e => {
+      console.warn('Tags membres indisponibles:', e.code || e.message)
+      setAvailableTags(DEFAULT_MEMBRE_TAGS)
     })
     return () => unsub()
   }, [])
@@ -212,12 +213,23 @@ export default function Parametres({ user, userData, setUserData }) {
     trackUserActivity(user, 'Modifie son profil', '/parametres')
     setSaving(true)
     try {
-      await updateDoc(doc(db, 'users', user.uid), { nom: nom.trim(), photoURL })
-      setUserData(prev => ({ ...prev, nom: nom.trim(), photoURL }))
+      const cleanName = nom.trim()
+      const cleanPhotoURL = photoURL || userData?.photoURL || user?.photoURL || ''
+      await updateProfile(user, {
+        displayName: cleanName,
+        ...(cleanPhotoURL ? { photoURL: cleanPhotoURL } : {}),
+      })
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { nom: cleanName, ...(cleanPhotoURL ? { photoURL: cleanPhotoURL } : {}) })
+      } catch (e) {
+        if (!isAdmin) throw e
+        console.warn('Profil admin sauvegarde dans Auth, Firestore users non modifiable', e)
+      }
+      setUserData(prev => ({ ...(prev || {}), nom: cleanName, ...(cleanPhotoURL ? { photoURL: cleanPhotoURL } : {}) }))
       await createNotification({
         type: 'profil',
         titre: t('parametres.notifProfilMaj'),
-        detail: nom.trim(),
+        detail: cleanName,
         cible: user.uid,
         route: '/parametres',
       })
@@ -253,7 +265,13 @@ export default function Parametres({ user, userData, setUserData }) {
       const data = await res.json()
       if (data.secure_url) {
         setPhotoURL(data.secure_url)
-        await updateDoc(doc(db, 'users', user.uid), { photoURL: data.secure_url })
+        await updateProfile(user, { photoURL: data.secure_url })
+        try {
+          await updateDoc(doc(db, 'users', user.uid), { photoURL: data.secure_url })
+        } catch (e) {
+          if (!isAdmin) throw e
+          console.warn('Photo admin sauvegardee dans Auth, Firestore users non modifiable', e)
+        }
         setUserData(prev => ({ ...prev, photoURL: data.secure_url }))
         await createNotification({
           type: 'profil',
@@ -332,7 +350,7 @@ export default function Parametres({ user, userData, setUserData }) {
     ...(isDesktop ? { display: 'none' } : {}),
   }
 
-  const roleLabel = memberRole.staffRole || (memberRole.staff ? t('parametres.staffSansRole') : t('membres.membre'))
+  const roleLabel = userRole || (isAdmin ? 'Admin' : t('parametres.staffSansRole'))
   const sectionStyle = key => activeSection && activeSection !== key
     ? { ...section, display: 'none' }
     : section

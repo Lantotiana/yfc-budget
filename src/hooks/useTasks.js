@@ -20,7 +20,7 @@ import {
   TASK_COLUMNS,
   validateTaskPayload,
 } from '../utils/taskUtils'
-import { normalizeAccessText, sameEmail } from '../utils/access'
+import { archiveChecklistItemByTaskId, syncTaskToChecklist } from '../services/checklistService'
 
 function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase()
@@ -110,24 +110,21 @@ export default function useTasks({ user, userData } = {}) {
 
   useEffect(() => {
     let users = []
-    let membres = []
     let usersReady = false
-    let membresReady = false
 
     function buildAssignable() {
-      if (!usersReady || !membresReady) return
+      if (!usersReady) return
       const next = users
         .filter(u => u.approuve === true)
         .map(u => {
           const email = normalizeEmail(u.email)
-          const member = membres.find(m => sameEmail(m.email, email)) || {}
           return {
             uid: u.id,
             email,
-            role: member.staffRole || u.staffRole || u.role || '',
-            isStaff: member.staff === true || Boolean(member.staffRole) || normalizeAccessText(u.role || u.staffRole),
-            name: getDisplayMemberName(u, member),
-            photoURL: member.photoURL || u.photoURL || '',
+            role: u.staffRole || u.role || '',
+            isStaff: true,
+            name: getDisplayMemberName(u),
+            photoURL: u.photoURL || '',
           }
         })
         .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
@@ -146,19 +143,8 @@ export default function useTasks({ user, userData } = {}) {
       setMembersLoading(false)
     })
 
-    const unsubMembres = onSnapshot(collection(db, 'membres'), snap => {
-      membres = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      membresReady = true
-      buildAssignable()
-    }, err => {
-      console.error(err)
-      setMembersError("Impossible de charger les membres.")
-      setMembersLoading(false)
-    })
-
     return () => {
       unsubUsers()
-      unsubMembres()
     }
   }, [])
 
@@ -210,6 +196,8 @@ export default function useTasks({ user, userData } = {}) {
       assignableMembers,
     })
 
+    syncTaskToChecklist({ id: ref.id, ...normalized, deadline: Timestamp.fromDate(normalized.deadline), archived: false }, assignableMembers).catch(() => {})
+
     return ref.id
   }, [assignableMembers, user, userData])
 
@@ -229,6 +217,7 @@ export default function useTasks({ user, userData } = {}) {
     }
 
     await updateDoc(doc(db, 'tasks', taskId), next)
+    syncTaskToChecklist({ id: taskId, ...next }, assignableMembers).catch(() => {})
     const previousAssigned = new Set(previousTask?.assignedTo || [])
     const newlyAssigned = normalized.assignedTo.filter(uid => !previousAssigned.has(uid))
 
@@ -263,6 +252,7 @@ export default function useTasks({ user, userData } = {}) {
       updatedAt: serverTimestamp(),
       completedAt: status === 'done' ? serverTimestamp() : null,
     })
+    syncTaskToChecklist({ ...task, status }, assignableMembers).catch(() => {})
     if (status === 'done') {
       await createNotification({
         type: 'task',
@@ -274,7 +264,7 @@ export default function useTasks({ user, userData } = {}) {
         metadata: { taskId: task.id },
       })
     }
-  }, [user])
+  }, [user, assignableMembers])
 
   const archiveTask = useCallback(async task => {
     trackUserActivity(user, 'Archive une tâche', '/tasks')
@@ -282,11 +272,13 @@ export default function useTasks({ user, userData } = {}) {
       archived: true,
       updatedAt: serverTimestamp(),
     })
+    archiveChecklistItemByTaskId(task.id).catch(() => {})
   }, [user])
 
   const deleteTask = useCallback(async task => {
     trackUserActivity(user, 'Supprime une tâche', '/tasks')
     await deleteDoc(doc(db, 'tasks', task.id))
+    archiveChecklistItemByTaskId(task.id).catch(() => {})
   }, [user])
 
   return {

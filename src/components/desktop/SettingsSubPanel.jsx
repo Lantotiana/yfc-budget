@@ -16,11 +16,11 @@ export const SETTINGS_SECTIONS = [
   { key: 'tags',            label: 'Tags membres',     Icon: Tag,         superAdminOnly: true },
 ]
 
-export default function SettingsSubPanel({ user, currentMember }) {
+export default function SettingsSubPanel({ user, userData }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeSection = searchParams.get('section') || 'profil'
 
-  const role = normalizeAccessText(currentMember?.staffRole)
+  const role = normalizeAccessText(userData?.staffRole || userData?.role)
   const isAdmin = user?.email === ADMIN_EMAIL
   const canAdmin = isAdmin || adminRoles.includes(role) || SHEET_SYNC_ROLES.includes(role)
 

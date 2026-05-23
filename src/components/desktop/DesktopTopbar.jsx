@@ -60,7 +60,7 @@ function dateLabel(value) {
   }
 }
 
-export default function DesktopTopbar({ user, userData, currentMember, searchData, toolbar }) {
+export default function DesktopTopbar({ user, userData, searchData, toolbar }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [search, setSearch] = useState('')
@@ -71,7 +71,7 @@ export default function DesktopTopbar({ user, userData, currentMember, searchDat
 
   const displayName = userData?.nom || user?.displayName || user?.email || 'Staff'
   const initials = displayName.split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase()
-  const canAdmin = user?.email === ADMIN_EMAIL || adminRoles.includes(normalizeAccessText(currentMember?.staffRole || userData?.staffRole || userData?.role))
+  const canAdmin = user?.email === ADMIN_EMAIL || adminRoles.includes(normalizeAccessText(userData?.staffRole || userData?.role))
   const pageTitle = useMemo(() => {
     const path = location.pathname
     if (path.startsWith('/membres')) return 'Membres'
