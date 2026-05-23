@@ -78,7 +78,7 @@ service cloud.firestore {
     // Écriture : rôles autorisés (présidents, vp, responsables, admin).
     // La restriction par rôle est aussi appliquée côté UI.
     match /publicChecklistItems/{itemId} {
-      allow read: if isApprovedUser() || isAdmin();
+      allow read: if true;
       allow write: if isApprovedUser() || isAdmin();
     }
 

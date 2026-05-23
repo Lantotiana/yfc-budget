@@ -629,9 +629,7 @@ export default function App() {
             </ResponsiveModuleRoute>
           } />
           <Route path="/checklist" element={
-            <AppPage user={user} userData={userData}>
-              <GeneralChecklist user={user} userData={userData} />
-            </AppPage>
+            <GeneralChecklist user={user} userData={userData} />
           } />
           <Route path="*" element={<FallbackRoute />} />
       </Routes>
