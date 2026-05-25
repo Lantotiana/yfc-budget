@@ -219,7 +219,7 @@ export default function Vote() {
           }}
         >
           <Trophy size={18} />
-          Afficher resultat
+          Afficher résultat
         </button>
 
         {status === 'success' ? (
@@ -295,12 +295,12 @@ export default function Vote() {
             </button>
             <div className="vote-result-modal-head">
               <Trophy size={26} />
-              <span>Resultats gagnants</span>
-              <h2>Entrees selectionnees</h2>
+              <span>Résultats gagnants</span>
+              <h2>Entrées sélectionnées</h2>
             </div>
             <div className="vote-winner-grid">
-              <WinnerCard label="1ere entree" entry={firstWinnerEntry} count={results.first?.[firstWinnerEntry.value]} />
-              <WinnerCard label="2eme entree" entry={secondWinnerEntry} count={results.second?.[secondWinnerEntry.value]} />
+              <WinnerCard label="1ère entrée" entry={firstWinnerEntry} count={results.first?.[firstWinnerEntry.value]} />
+              <WinnerCard label="2ème entrée" entry={secondWinnerEntry} count={results.second?.[secondWinnerEntry.value]} />
             </div>
           </div>
         </div>
