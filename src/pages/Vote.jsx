@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Send, Trophy, UserRound, Utensils } from 'lucide-react'
+import { CheckCircle2, Send, Trophy, UserRound, Utensils, X } from 'lucide-react'
 import { httpsCallable } from 'firebase/functions'
 import Seo from '../components/Seo'
 import { cloudFunctions } from '../firebaseFunctions'
@@ -88,12 +88,26 @@ function VoteOption({ option, selected, onSelect, groupLabel }) {
   )
 }
 
+function WinnerCard({ label, entry, count }) {
+  return (
+    <article className="vote-winner-card" style={{ '--vote-accent': entry.accent }}>
+      <img src={entry.image} alt={`${label} - ${entry.title}`} />
+      <div>
+        <span>{label}</span>
+        <strong>{entry.title}</strong>
+        <em>{Number(count || 0)} vote{Number(count || 0) > 1 ? 's' : ''}</em>
+      </div>
+    </article>
+  )
+}
+
 export default function Vote() {
   const [name, setName] = useState('')
   const [firstChoice, setFirstChoice] = useState('')
   const [secondChoice, setSecondChoice] = useState('')
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
+  const [showResultsPopup, setShowResultsPopup] = useState(false)
   const [results, setResults] = useState({
     first: emptyCounts(),
     second: emptyCounts(),
@@ -106,6 +120,8 @@ export default function Vote() {
     () => name.trim() && firstChoice && secondChoice && status !== 'submitting',
     [name, firstChoice, secondChoice, status],
   )
+  const firstWinnerEntry = firstEntries.find(entry => entry.value === results.firstWinner) || firstEntries[0]
+  const secondWinnerEntry = secondEntries.find(entry => entry.value === results.secondWinner) || secondEntries[0]
 
   async function refreshResults() {
     try {
@@ -194,6 +210,18 @@ export default function Vote() {
           />
         </div>
 
+        <button
+          type="button"
+          className="vote-show-results"
+          onClick={() => {
+            refreshResults()
+            setShowResultsPopup(true)
+          }}
+        >
+          <Trophy size={18} />
+          Afficher resultat
+        </button>
+
         {status === 'success' ? (
           <div className="vote-success">
             <CheckCircle2 size={42} />
@@ -258,6 +286,25 @@ export default function Vote() {
           </form>
         )}
       </section>
+
+      {showResultsPopup && (
+        <div className="vote-result-modal-overlay" onClick={() => setShowResultsPopup(false)}>
+          <div className="vote-result-modal" onClick={e => e.stopPropagation()}>
+            <button type="button" className="vote-result-modal-close" onClick={() => setShowResultsPopup(false)} aria-label="Fermer">
+              <X size={20} />
+            </button>
+            <div className="vote-result-modal-head">
+              <Trophy size={26} />
+              <span>Resultats gagnants</span>
+              <h2>Entrees selectionnees</h2>
+            </div>
+            <div className="vote-winner-grid">
+              <WinnerCard label="1ere entree" entry={firstWinnerEntry} count={results.first?.[firstWinnerEntry.value]} />
+              <WinnerCard label="2eme entree" entry={secondWinnerEntry} count={results.second?.[secondWinnerEntry.value]} />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
