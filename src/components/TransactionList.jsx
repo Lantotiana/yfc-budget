@@ -4,9 +4,9 @@ import { createPortal } from 'react-dom'
 import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
 import { storage } from '../firebaseStorage'
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { Loader2, Paperclip, Search, Upload, X, Download, Share2, FileText } from 'lucide-react'
+import { doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { Loader2, Pencil, Receipt, Search, Trash2, Upload, X, Download, Share2, FileText } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import ReceiptModal from './ReceiptModal'
@@ -56,8 +56,20 @@ export default function TransactionList({
   const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingId, setUploadingId] = useState(null)
-  const [pendingUploadTx, setPendingUploadTx] = useState(null)
+  const pendingUploadTxRef = useRef(null)
+  const [previewTx, setPreviewTx] = useState(null)
+  const [deletingReceipt, setDeletingReceipt] = useState(false)
+  const [confirmDeleteReceipt, setConfirmDeleteReceipt] = useState(false)
+  // Local override map so the icon/modal updates immediately without waiting for onSnapshot
+  const [localReceipts, setLocalReceipts] = useState({})
   const fileInputRef = useRef(null)
+
+  // Merge Firestore data with local overrides
+  function withReceipt(tx) {
+    return localReceipts[tx.id] !== undefined
+      ? { ...tx, ...localReceipts[tx.id] }
+      : tx
+  }
   const [searchInternal, setSearchInternal] = useState('')
   const search = searchProp !== undefined ? searchProp : searchInternal
   const setSearch = onSearchChange ?? setSearchInternal
@@ -196,36 +208,56 @@ export default function TransactionList({
     }
   }
 
-  function handleReceiptUploadClick(e, tx) {
-    e.stopPropagation()
-    if (tx.receiptUrl) {
-      window.open(tx.receiptUrl, '_blank', 'noopener')
-      return
-    }
-    setPendingUploadTx(tx)
-    fileInputRef.current.value = ''
-    fileInputRef.current.click()
-  }
-
   async function handleReceiptFileChange(e) {
     const file = e.target.files?.[0]
-    if (!file || !pendingUploadTx) return
-    const tx = pendingUploadTx
-    setPendingUploadTx(null)
+    const tx = pendingUploadTxRef.current
+    if (!file || !tx) return
+    pendingUploadTxRef.current = null
     setUploadingId(tx.id)
+    setPreviewTx(null)
     try {
+      const oldPath = withReceipt(tx).receiptPath
+      if (oldPath) await deleteObject(storageRef(storage, oldPath)).catch(() => {})
       const path = `receipts/${tx.id}/${Date.now()}_${file.name}`
       const snap = await uploadBytes(storageRef(storage, path), file)
       const url = await getDownloadURL(snap.ref)
-      await updateDoc(doc(db, 'transactions', tx.id), {
-        receiptUrl: url,
-        receiptName: file.name,
-        receiptPath: snap.ref.fullPath,
-      })
+      const receipt = { receiptUrl: url, receiptName: file.name, receiptPath: snap.ref.fullPath }
+      await updateDoc(doc(db, 'transactions', tx.id), receipt)
+      setLocalReceipts(prev => ({ ...prev, [tx.id]: receipt }))
     } catch (err) {
       console.error('[upload receipt]', err)
     }
     setUploadingId(null)
+  }
+
+  function handleReplaceReceipt() {
+    if (!previewTx) return
+    pendingUploadTxRef.current = previewTx
+    fileInputRef.current.value = ''
+    fileInputRef.current.click()
+  }
+
+  async function handleDeleteReceipt() {
+    if (!previewTx) return
+    setDeletingReceipt(true)
+    const effective = withReceipt(previewTx)
+    try {
+      if (effective.receiptPath) {
+        await deleteObject(storageRef(storage, effective.receiptPath)).catch(() => {})
+      }
+      await updateDoc(doc(db, 'transactions', previewTx.id), {
+        receiptUrl: deleteField(),
+        receiptName: deleteField(),
+        receiptPath: deleteField(),
+      })
+      // Remove locally immediately
+      setLocalReceipts(prev => ({ ...prev, [previewTx.id]: { receiptUrl: null, receiptName: null, receiptPath: null } }))
+      setPreviewTx(null)
+      setConfirmDeleteReceipt(false)
+    } catch (err) {
+      console.error('[delete receipt]', err)
+    }
+    setDeletingReceipt(false)
   }
 
   async function exportToExcel() {
@@ -524,22 +556,26 @@ export default function TransactionList({
                 <FileText size={13} />
               </button>
             )}
-            {tx.type === 'depense' && (
-              <button
-                className="tx-receipt-btn"
-                title={tx.receiptUrl ? 'Voir la facture jointe' : 'Joindre une facture'}
-                onClick={e => handleReceiptUploadClick(e, tx)}
-                disabled={uploadingId === tx.id}
-                style={tx.receiptUrl ? { color: C.teal, borderColor: C.teal, background: C.tealD } : undefined}
-              >
-                {uploadingId === tx.id
-                  ? <Loader2 size={13} className="spin" />
-                  : tx.receiptUrl
-                    ? <Paperclip size={13} />
-                    : <Upload size={13} />
-                }
-              </button>
-            )}
+            {tx.type === 'depense' && (() => {
+              const etx = withReceipt(tx)
+              const hasReceipt = Boolean(etx.receiptUrl)
+              return (
+                <button
+                  className="tx-receipt-btn"
+                  title={hasReceipt ? 'Voir la facture jointe' : 'Joindre une facture'}
+                  onClick={e => { e.stopPropagation(); if (hasReceipt) { setPreviewTx(etx) } else { pendingUploadTxRef.current = tx; fileInputRef.current.value = ''; fileInputRef.current.click() } }}
+                  disabled={uploadingId === tx.id}
+                  style={hasReceipt ? { color: C.teal, borderColor: C.teal, background: C.tealD } : undefined}
+                >
+                  {uploadingId === tx.id
+                    ? <Loader2 size={13} className="spin" />
+                    : hasReceipt
+                      ? <Receipt size={13} />
+                      : <Upload size={13} />
+                  }
+                </button>
+              )
+            })()}
           </div>
         ))}
 
@@ -687,6 +723,139 @@ export default function TransactionList({
           </div>
         </div>
       , document.body)}
+
+      {previewTx && createPortal((() => {
+        const etx = withReceipt(previewTx)
+        return (
+        <div
+          className="modal-overlay"
+          onClick={() => { setPreviewTx(null); setConfirmDeleteReceipt(false) }}
+          style={{ zIndex: 1100 }}
+        >
+          <div
+            className="modal"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: 640, width: '94vw', padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${C.bord}` }}>
+              <Receipt size={15} color={C.teal} style={{ flexShrink: 0 }} />
+              <span style={{ flex: 1, fontWeight: 700, fontSize: 'var(--font-sm)', color: C.t1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {etx.receiptName || 'Facture'}
+              </span>
+              <a
+                href={etx.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                title="Ouvrir dans un nouvel onglet"
+                style={{ color: C.t3, display: 'flex', alignItems: 'center', padding: 4 }}
+              >
+                <Download size={15} />
+              </a>
+              <button
+                type="button"
+                onClick={() => { setPreviewTx(null); setConfirmDeleteReceipt(false) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.t3, padding: 4, display: 'flex', alignItems: 'center' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Preview */}
+            <div style={{ flex: 1, overflow: 'auto', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+              {etx.receiptName?.match(/\.(jpg|jpeg|png|gif|webp|heic)$/i) || etx.receiptUrl?.includes('image')
+                ? (
+                  <img
+                    src={etx.receiptUrl}
+                    alt="Facture"
+                    style={{ maxWidth: '100%', maxHeight: '68vh', objectFit: 'contain', display: 'block' }}
+                  />
+                ) : (
+                  <iframe
+                    src={etx.receiptUrl}
+                    title="Facture"
+                    style={{ width: '100%', height: '65vh', border: 'none', display: 'block' }}
+                  />
+                )
+              }
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.bord}`, display: 'flex', gap: 8 }}>
+              {!confirmDeleteReceipt ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleReplaceReceipt}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: 10,
+                      border: `1.5px solid ${C.bord2}`, background: 'transparent',
+                      color: C.t2, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'inherit', fontSize: 'var(--font-sm)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <Pencil size={14} /> Modifier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteReceipt(true)}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: 10,
+                      border: `1.5px solid ${C.coralD}`, background: C.coralD,
+                      color: C.coral, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'inherit', fontSize: 'var(--font-sm)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <Trash2 size={14} /> Supprimer
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 8px', fontSize: 'var(--font-sm)', color: C.t1, fontWeight: 600, textAlign: 'center' }}>
+                      Supprimer cette facture ?
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteReceipt(false)}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: 10,
+                          border: `1.5px solid ${C.bord2}`, background: 'transparent',
+                          color: C.t2, fontWeight: 600, cursor: 'pointer',
+                          fontFamily: 'inherit', fontSize: 'var(--font-sm)',
+                        }}
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteReceipt}
+                        disabled={deletingReceipt}
+                        style={{
+                          flex: 1, padding: '10px', borderRadius: 10,
+                          border: 'none', background: C.coral,
+                          color: '#fff', fontWeight: 700, cursor: deletingReceipt ? 'default' : 'pointer',
+                          fontFamily: 'inherit', fontSize: 'var(--font-sm)',
+                          opacity: deletingReceipt ? 0.6 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                      >
+                        {deletingReceipt ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                        Confirmer
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        )
+      })(), document.body)}
     </>
   )
 }
