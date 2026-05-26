@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../context/ThemeContext'
 import { db } from '../firebase'
+import { storage } from '../firebaseStorage'
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore'
-import { Search, X, Download, Share2, FileText } from 'lucide-react'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { Loader2, Paperclip, Search, Upload, X, Download, Share2, FileText } from 'lucide-react'
 import { toDisplayDate } from '../utils'
 import { createNotification } from '../notifications'
 import ReceiptModal from './ReceiptModal'
@@ -53,6 +55,9 @@ export default function TransactionList({
   const [editMotifCustom, setEditMotifCustom] = useState('')
   const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingId, setUploadingId] = useState(null)
+  const [pendingUploadTx, setPendingUploadTx] = useState(null)
+  const fileInputRef = useRef(null)
   const [searchInternal, setSearchInternal] = useState('')
   const search = searchProp !== undefined ? searchProp : searchInternal
   const setSearch = onSearchChange ?? setSearchInternal
@@ -189,6 +194,38 @@ export default function TransactionList({
       })
       closeEdit()
     }
+  }
+
+  function handleReceiptUploadClick(e, tx) {
+    e.stopPropagation()
+    if (tx.receiptUrl) {
+      window.open(tx.receiptUrl, '_blank', 'noopener')
+      return
+    }
+    setPendingUploadTx(tx)
+    fileInputRef.current.value = ''
+    fileInputRef.current.click()
+  }
+
+  async function handleReceiptFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file || !pendingUploadTx) return
+    const tx = pendingUploadTx
+    setPendingUploadTx(null)
+    setUploadingId(tx.id)
+    try {
+      const path = `receipts/${tx.id}/${Date.now()}_${file.name}`
+      const snap = await uploadBytes(storageRef(storage, path), file)
+      const url = await getDownloadURL(snap.ref)
+      await updateDoc(doc(db, 'transactions', tx.id), {
+        receiptUrl: url,
+        receiptName: file.name,
+        receiptPath: snap.ref.fullPath,
+      })
+    } catch (err) {
+      console.error('[upload receipt]', err)
+    }
+    setUploadingId(null)
   }
 
   async function exportToExcel() {
@@ -487,6 +524,22 @@ export default function TransactionList({
                 <FileText size={13} />
               </button>
             )}
+            {tx.type === 'depense' && (
+              <button
+                className="tx-receipt-btn"
+                title={tx.receiptUrl ? 'Voir la facture jointe' : 'Joindre une facture'}
+                onClick={e => handleReceiptUploadClick(e, tx)}
+                disabled={uploadingId === tx.id}
+                style={tx.receiptUrl ? { color: C.teal, borderColor: C.teal, background: C.tealD } : undefined}
+              >
+                {uploadingId === tx.id
+                  ? <Loader2 size={13} className="spin" />
+                  : tx.receiptUrl
+                    ? <Paperclip size={13} />
+                    : <Upload size={13} />
+                }
+              </button>
+            )}
           </div>
         ))}
 
@@ -514,6 +567,15 @@ export default function TransactionList({
           </div>
         )}
       </div>
+
+      {/* Hidden file input for receipt upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        style={{ display: 'none' }}
+        onChange={handleReceiptFileChange}
+      />
 
       {receiptTx && (
         <ReceiptModal
