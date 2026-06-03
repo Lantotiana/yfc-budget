@@ -15,12 +15,6 @@ function getPrenom(fullName) {
   return fullName.trim().split(' ')[0]
 }
 
-function getLocalDayKey(date = new Date()) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 function getFallbackVerseIndex(dayKey) {
   const [year, month, day] = dayKey.split('-').map(Number)
@@ -94,7 +88,7 @@ export default function Home({ user, userData }) {
   const [aiVerse, setAiVerse] = useState(null)
   const [heartLoading, setHeartLoading] = useState(false)
   const [now, setNow] = useState(() => new Date())
-  const dayKey = getLocalDayKey(now)
+  const dayKey = getDateKey(now)
 
   useEffect(() => {
     // Show cached verse immediately, subscribe for live hearts updates

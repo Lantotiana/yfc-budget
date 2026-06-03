@@ -13,7 +13,10 @@ import { db } from '../firebase'
 const CACHE_PREFIX = 'yfc_verse_'
 
 export function getDateKey(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  // Verse day runs 06:00 → 05:59 next day. Before 6am = still previous day's verse.
+  const d = new Date(date)
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function cacheKey(dateKey) {

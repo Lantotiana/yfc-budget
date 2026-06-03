@@ -47,10 +47,12 @@ export async function createNotification({ type, titre, detail = '', cible = '',
       createdAt: new Date().toISOString(),
       readBy: [],
     })
-    await cleanupOldNotifications()
   } catch (err) {
     console.error('Notification non enregistree', err)
+    return
   }
+  // Cleanup is best-effort — must not affect creation success
+  cleanupOldNotifications().catch(() => {})
 }
 
 async function cleanupOldNotifications() {

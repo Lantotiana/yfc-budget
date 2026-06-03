@@ -32,7 +32,7 @@ export default function DesktopRightPanel({ user, userData }) {
   const [users, setUsers] = useState([])
   const [heartLoading, setHeartLoading] = useState(false)
   const cardRef = useRef(null)
-  const dateKey = getDateKey()
+  const dateKey = getDateKey(now)
 
   // Subscribe to shared verse (real-time hearts + verse updates)
   useEffect(() => {
