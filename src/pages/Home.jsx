@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Heart, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
-import { generateNewVerse, getVerseOfDay } from '../services/verseOfDay'
+import { generateNewVerse, getDateKey, getOrCreateSharedVerse, subscribeToSharedVerse, toggleHeart } from '../services/verseOfDay'
 import { countUnseenNotifications, getNotificationSeenAt } from '../utils/notificationUtils'
 import { useTranslation } from 'react-i18next'
 
@@ -92,14 +92,16 @@ export default function Home({ user, userData }) {
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
   const [generatingVerse, setGeneratingVerse] = useState(false)
+  const [heartLoading, setHeartLoading] = useState(false)
   const [fallbackOffset, setFallbackOffset] = useState(0)
   const [now, setNow] = useState(() => new Date())
   const dayKey = getLocalDayKey(now)
 
   useEffect(() => {
     setFallbackOffset(0)
-    // Le verset IA utilise Cloud Functions: import différé pour ne pas bloquer le premier rendu Home.
-    getVerseOfDay().then(v => { if (v) setAiVerse(v) })
+    // Show cached verse immediately, subscribe for live hearts updates
+    getOrCreateSharedVerse(dayKey).then(v => { if (v) setAiVerse(v) }).catch(() => {})
+    return subscribeToSharedVerse(dayKey, v => { if (v) setAiVerse(v) }, () => {})
   }, [dayKey])
 
   useEffect(() => {
@@ -169,6 +171,8 @@ export default function Home({ user, userData }) {
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
   const dailyVerse = aiVerse ?? dailyVerses[(getFallbackVerseIndex(dayKey) + fallbackOffset) % dailyVerses.length]
+  const isLiked = Boolean(aiVerse?.hearts?.includes(user?.uid))
+  const heartCount = aiVerse?.hearts?.length ?? 0
   const currentHour = now.getHours()
   const isNight = currentHour >= 18 || currentHour < 6
 
@@ -176,13 +180,34 @@ export default function Home({ user, userData }) {
     e.stopPropagation()
     if (generatingVerse) return
     setGeneratingVerse(true)
-    const verse = await generateNewVerse()
-    if (verse) setAiVerse(verse)
-    else {
-      setAiVerse(null)
-      setFallbackOffset(prev => prev + 1)
-    }
+    const verse = await generateNewVerse(dayKey)
+    if (!verse) setFallbackOffset(prev => prev + 1)
     setGeneratingVerse(false)
+  }
+
+  async function handleHeart(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!user?.uid || heartLoading || !aiVerse) return
+    const isLiked = aiVerse.hearts?.includes(user.uid) ?? false
+    const userInfo = {
+      photoURL: userData?.photoURL || user?.photoURL || '',
+      name: userData?.nom || user?.displayName || '',
+    }
+
+    // Optimistic update — UI responds instantly
+    setAiVerse(v => {
+      if (!v) return v
+      const hearts = isLiked ? (v.hearts || []).filter(h => h !== user.uid) : [...(v.hearts || []), user.uid]
+      const heartsInfo = { ...(v.heartsInfo || {}) }
+      if (isLiked) delete heartsInfo[user.uid]
+      else heartsInfo[user.uid] = userInfo
+      return { ...v, hearts, heartsInfo }
+    })
+
+    setHeartLoading(true)
+    await toggleHeart(dayKey, user.uid, isLiked, userInfo).catch(() => {})
+    setHeartLoading(false)
   }
 
   function openVerse() {
@@ -298,6 +323,57 @@ export default function Home({ user, userData }) {
             <div className="daily-verse-text">"{dailyVerse.text}"</div>
             <div className="daily-verse-ref">{dailyVerse.ref}</div>
           </div>
+          {/* Heart — always visible at bottom-right of card */}
+          {aiVerse && (
+            <button
+              type="button"
+              onClick={handleHeart}
+              disabled={heartLoading}
+              aria-label={isLiked ? 'Retirer mon cœur' : 'Réagir avec un cœur'}
+              style={{
+                position: 'absolute', bottom: 12, right: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'none', border: 'none', padding: '4px',
+                cursor: heartLoading ? 'default' : 'pointer',
+                color: isLiked ? '#f43f5e' : 'rgba(255,255,255,0.85)',
+                fontSize: 12, fontWeight: 700, fontFamily: 'inherit',
+                transition: 'all 0.15s', opacity: heartLoading ? 0.6 : 1,
+                zIndex: 50, pointerEvents: 'all',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {aiVerse.heartsInfo && Object.keys(aiVerse.heartsInfo).length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {Object.entries(aiVerse.heartsInfo).slice(0, 3).map(([uid, info], i) => (
+                    <div key={uid} style={{
+                      width: 16, height: 16, borderRadius: '50%', overflow: 'hidden',
+                      marginLeft: i === 0 ? 0 : -5, flexShrink: 0,
+                      border: '1.5px solid rgba(255,255,255,0.3)',
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      position: 'relative',
+                    }}>
+                      {info.photoURL && (
+                        <img src={info.photoURL} alt="" onError={e => { e.currentTarget.style.display = 'none' }}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                      <span style={{ fontSize: 7, fontWeight: 800, color: '#fff' }}>
+                        {(info.name?.charAt(0) || '?').toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Heart
+                size={13}
+                fill={isLiked ? '#f43f5e' : 'none'}
+                color={isLiked ? '#f43f5e' : 'rgba(255,255,255,0.85)'}
+                strokeWidth={2.5}
+                style={{ flexShrink: 0 }}
+              />
+              {heartCount > 0 && <span>{heartCount}</span>}
+            </button>
+          )}
           <button
             type="button"
             className={`verse-modal-generate${generatingVerse ? ' loading' : ''}`}
@@ -458,6 +534,37 @@ export default function Home({ user, userData }) {
               <div className="verse-modal-sep" />
               <p className="verse-modal-expl">{dailyVerse.explanation}</p>
             </div>
+            {/* Heart reaction */}
+            {aiVerse && (
+              <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 16 }}>
+                <button
+                  type="button"
+                  onClick={handleHeart}
+                  disabled={heartLoading}
+                  aria-label={isLiked ? 'Retirer mon cœur' : 'Réagir avec un cœur'}
+                  tabIndex={verseOpen ? 0 : -1}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    background: 'none',
+                    border: 'none',
+                    padding: '6px',
+                    cursor: heartLoading ? 'default' : 'pointer',
+                    color: isLiked ? '#f43f5e' : 'rgba(255,255,255,0.85)',
+                    fontSize: 15, fontWeight: 700, fontFamily: 'inherit',
+                    transition: 'all 0.15s',
+                    opacity: heartLoading ? 0.6 : 1,
+                  }}
+                >
+                  <Heart
+                    size={18}
+                    fill={isLiked ? '#f43f5e' : 'none'}
+                    strokeWidth={2.5}
+                    style={{ flexShrink: 0 }}
+                  />
+                  {heartCount > 0 && heartCount}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
