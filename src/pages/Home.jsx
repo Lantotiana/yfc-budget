@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Heart, Headset, LayoutDashboard, MessageCircle, RefreshCw, Settings, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Heart, Headset, LayoutDashboard, MessageCircle, Settings, Users, Wallet } from 'lucide-react'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
-import { generateNewVerse, getDateKey, getOrCreateSharedVerse, subscribeToSharedVerse, toggleHeart } from '../services/verseOfDay'
+import { getDateKey, getOrCreateSharedVerse, subscribeToSharedVerse, toggleHeart } from '../services/verseOfDay'
+import { createNotification } from '../notifications'
 import { countUnseenNotifications, getNotificationSeenAt } from '../utils/notificationUtils'
 import { useTranslation } from 'react-i18next'
 
@@ -91,14 +92,11 @@ export default function Home({ user, userData }) {
   const [notifCount, setNotifCount] = useState(0)
   const [unreadMsgCount, setUnreadMsgCount] = useState(0)
   const [aiVerse, setAiVerse] = useState(null)
-  const [generatingVerse, setGeneratingVerse] = useState(false)
   const [heartLoading, setHeartLoading] = useState(false)
-  const [fallbackOffset, setFallbackOffset] = useState(0)
   const [now, setNow] = useState(() => new Date())
   const dayKey = getLocalDayKey(now)
 
   useEffect(() => {
-    setFallbackOffset(0)
     // Show cached verse immediately, subscribe for live hearts updates
     getOrCreateSharedVerse(dayKey).then(v => { if (v) setAiVerse(v) }).catch(() => {})
     return subscribeToSharedVerse(dayKey, v => { if (v) setAiVerse(v) }, () => {})
@@ -170,20 +168,11 @@ export default function Home({ user, userData }) {
 
 
   const initials = (userData?.nom || user?.email || '?').slice(0, 2).toUpperCase()
-  const dailyVerse = aiVerse ?? dailyVerses[(getFallbackVerseIndex(dayKey) + fallbackOffset) % dailyVerses.length]
+  const dailyVerse = aiVerse ?? dailyVerses[getFallbackVerseIndex(dayKey) % dailyVerses.length]
   const isLiked = Boolean(aiVerse?.hearts?.includes(user?.uid))
   const heartCount = aiVerse?.hearts?.length ?? 0
   const currentHour = now.getHours()
   const isNight = currentHour >= 18 || currentHour < 6
-
-  async function handleGenerateVerse(e) {
-    e.stopPropagation()
-    if (generatingVerse) return
-    setGeneratingVerse(true)
-    const verse = await generateNewVerse(dayKey)
-    if (!verse) setFallbackOffset(prev => prev + 1)
-    setGeneratingVerse(false)
-  }
 
   async function handleHeart(e) {
     e.stopPropagation()
@@ -207,6 +196,14 @@ export default function Home({ user, userData }) {
 
     setHeartLoading(true)
     await toggleHeart(dayKey, user.uid, isLiked, userInfo).catch(() => {})
+    if (!isLiked) {
+      createNotification({
+        type: 'verset',
+        titre: `${userInfo.name || user?.email || 'Quelqu\'un'} a aimé le verset du jour`,
+        route: '/',
+        actorOverride: { uid: user.uid, nom: userInfo.name || user?.email || '', email: user?.email || '', photoURL: userInfo.photoURL || '' },
+      })
+    }
     setHeartLoading(false)
   }
 
@@ -346,7 +343,7 @@ export default function Home({ user, userData }) {
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {Object.entries(aiVerse.heartsInfo).slice(0, 3).map(([uid, info], i) => (
                     <div key={uid} style={{
-                      width: 16, height: 16, borderRadius: '50%', overflow: 'hidden',
+                      width: 18, height: 18, borderRadius: '50%', overflow: 'hidden',
                       marginLeft: i === 0 ? 0 : -5, flexShrink: 0,
                       border: '1.5px solid rgba(255,255,255,0.3)',
                       background: 'rgba(255,255,255,0.2)',
@@ -365,7 +362,7 @@ export default function Home({ user, userData }) {
                 </div>
               )}
               <Heart
-                size={13}
+                size={18}
                 fill={isLiked ? '#f43f5e' : 'none'}
                 color={isLiked ? '#f43f5e' : 'rgba(255,255,255,0.85)'}
                 strokeWidth={2.5}
@@ -374,15 +371,6 @@ export default function Home({ user, userData }) {
               {heartCount > 0 && <span>{heartCount}</span>}
             </button>
           )}
-          <button
-            type="button"
-            className={`verse-modal-generate${generatingVerse ? ' loading' : ''}`}
-            onClick={handleGenerateVerse}
-            aria-label="Générer un autre verset"
-            title="Générer"
-          >
-            <RefreshCw size={16} />
-          </button>
           <div className="daily-verse-open-cue" aria-hidden="true">
             <ArrowRight size={15} />
           </div>
@@ -513,16 +501,6 @@ export default function Home({ user, userData }) {
           <div className="verse-modal-overlay" />
           <button className="verse-modal-back" onClick={closeVerse} tabIndex={verseOpen ? 0 : -1}>
             <ArrowLeft size={20} />
-          </button>
-          <button
-            type="button"
-            className={`verse-modal-generate${generatingVerse ? ' loading' : ''}`}
-            onClick={handleGenerateVerse}
-            tabIndex={verseOpen ? 0 : -1}
-            aria-label="Générer un autre verset"
-            title="Générer"
-          >
-            <RefreshCw size={16} />
           </button>
           <div className="verse-modal-scroll">
             <div className="verse-modal-header">

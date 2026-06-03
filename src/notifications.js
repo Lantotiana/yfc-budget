@@ -31,9 +31,9 @@ async function getActor() {
   }
 }
 
-export async function createNotification({ type, titre, detail = '', cible = '', route = '', targetUserId = null, targetUserEmail = null, metadata = null }) {
+export async function createNotification({ type, titre, detail = '', cible = '', route = '', targetUserId = null, targetUserEmail = null, metadata = null, actorOverride = null }) {
   try {
-    const actor = await getActor()
+    const actor = actorOverride ?? await getActor()
     await addDoc(collection(db, 'notifications'), {
       type,
       titre,
@@ -49,7 +49,7 @@ export async function createNotification({ type, titre, detail = '', cible = '',
     })
     await cleanupOldNotifications()
   } catch (err) {
-    console.warn('Notification non enregistree', err)
+    console.error('Notification non enregistree', err)
   }
 }
 

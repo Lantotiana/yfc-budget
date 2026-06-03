@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Heart, RefreshCw, Sparkles } from 'lucide-react'
+import { Heart, Sparkles } from 'lucide-react'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../firebase'
+import { createNotification } from '../../notifications'
 import {
-  generateNewVerse,
   getDateKey,
   getOrCreateSharedVerse,
   subscribeToSharedVerse,
@@ -27,7 +27,6 @@ function activityLabel(user) {
 
 export default function DesktopRightPanel({ user, userData }) {
   const [verse, setVerse] = useState(null)
-  const [loading, setLoading] = useState(false)
   const [now, setNow] = useState(() => new Date())
   const [expanded, setExpanded] = useState(false)
   const [users, setUsers] = useState([])
@@ -63,13 +62,6 @@ export default function DesktopRightPanel({ user, userData }) {
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [expanded])
 
-  async function refreshVerse() {
-    if (loading) return
-    setLoading(true)
-    await generateNewVerse(dateKey)
-    setLoading(false)
-  }
-
   async function handleHeart(e) {
     e.stopPropagation()
     e.preventDefault()
@@ -89,9 +81,16 @@ export default function DesktopRightPanel({ user, userData }) {
 
     setHeartLoading(true)
     await toggleHeart(dateKey, user.uid, isLiked, userInfo).catch(() => {
-      // Revert on error — onSnapshot will also revert
       setVerse(v => v)
     })
+    if (!isLiked) {
+      createNotification({
+        type: 'verset',
+        titre: `${userInfo.name || user?.email || 'Quelqu\'un'} a aimé le verset du jour`,
+        route: '/',
+        actorOverride: { uid: user.uid, nom: userInfo.name || user?.email || '', email: user?.email || '', photoURL: userInfo.photoURL || '' },
+      })
+    }
     setHeartLoading(false)
   }
 
@@ -120,17 +119,6 @@ export default function DesktopRightPanel({ user, userData }) {
           <div className="daily-hill daily-hill-back" />
           <div className="daily-hill daily-hill-front" />
         </div>
-
-        <button
-          type="button"
-          className={`desktop-verse-refresh${loading ? ' loading' : ''}`}
-          onClick={e => { e.stopPropagation(); refreshVerse() }}
-          disabled={loading}
-          aria-label="Renouveler le verset"
-          title="Générer"
-        >
-          <RefreshCw size={16} />
-        </button>
 
         {verse ? (
           <div className="daily-verse-content desktop-verse-content">
@@ -171,7 +159,7 @@ export default function DesktopRightPanel({ user, userData }) {
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 {Object.entries(verse.heartsInfo).slice(0, 3).map(([uid, info], i) => (
                   <div key={uid} style={{
-                    width: 16, height: 16, borderRadius: '50%', overflow: 'hidden',
+                    width: 18, height: 18, borderRadius: '50%', overflow: 'hidden',
                     marginLeft: i === 0 ? 0 : -5, flexShrink: 0,
                     border: '1.5px solid rgba(255,255,255,0.3)',
                     background: 'rgba(255,255,255,0.2)',
@@ -190,7 +178,7 @@ export default function DesktopRightPanel({ user, userData }) {
               </div>
             )}
             <Heart
-              size={13}
+              size={18}
               fill={isLiked ? '#f43f5e' : 'none'}
               color={isLiked ? '#f43f5e' : 'rgba(255,255,255,0.85)'}
               strokeWidth={2.5}

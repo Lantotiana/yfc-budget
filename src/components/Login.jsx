@@ -8,7 +8,8 @@ import {
 } from 'firebase/auth'
 import { db } from '../firebase'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { Eye, EyeOff, CheckCircle, Clock, Mail } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import PendingScreen from './PendingScreen'
 import { createNotification } from '../notifications'
 import { ADMIN_EMAIL } from '../constants'
 import { useTranslation } from 'react-i18next'
@@ -210,60 +211,10 @@ export default function Login({ onLoginSuccess }) {
 }
 
   if (inscriptionReussie) return (
-    <div className="login-page login-centered">
-      <div className="login-container">
-        <div className="mb-16">
-          <div className="success-icon">
-            <img src="/Yfc_icone.png" alt="YFC" className="w-h-full object-cover" />
-          </div>
-          <div className="login-eyebrow mb-12">
-            {t('login.successTitle')}
-          </div>
-          <h1 className="text-26 font-700 text-white mb-12" style={{lineHeight:1.3}}>
-            {t('login.successGreeting', { name: nomInscrit })}<br/>
-            <span style={{color:'#5eead4'}}>{t('login.successSubtitle')}</span>
-          </h1>
-        </div>
-
-        <div className="success-message">
-          <div className="success-message-item">
-            <div className="icon-circle-32 bg-teal-15"><CheckCircle size={16} color="#5eead4" /></div>
-            <div>
-              <div className="login-msg-title">{t('login.successCreated')}</div>
-              <div className="login-msg-desc">{t('login.successCreatedDesc')}</div>
-            </div>
-          </div>
-          <div className="success-message-item">
-            <div className="icon-circle-32 bg-teal-15"><Clock size={16} color="#5eead4" /></div>
-            <div>
-              <div className="login-msg-title">{t('login.successPending')}</div>
-              <div className="login-msg-desc">{t('login.successPendingDesc')}</div>
-            </div>
-          </div>
-          <div className="flex-start gap-14">
-            <div className="icon-circle-32 bg-teal-15"><Mail size={16} color="#5eead4" /></div>
-            <div>
-              <div className="login-msg-title">{t('login.successEmail')}</div>
-              <div className="login-msg-desc">{t('login.successEmailDesc')}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="login-blessing">
-          <p className="text-13" style={{color:'rgba(255,255,255,0.6)', margin:0, lineHeight:1.6}}>
-            <span className="font-600" style={{color:'#5eead4'}}>{t('login.blessing')}</span><br/>
-            {t('login.blessingTeam')}
-          </p>
-        </div>
-
-        <button
-          onClick={() => { setInscriptionReussie(false); setMode('login'); setEmail(''); setPassword(''); setNom('') }}
-          className="login-btn-secondary"
-        >
-          {t('login.backToLogin')}
-        </button>
-      </div>
-    </div>
+    <PendingScreen
+      nom={nomInscrit}
+      onBack={() => { setInscriptionReussie(false); setMode('login'); setEmail(''); setPassword(''); setNom('') }}
+    />
   )
 
   if (showForgot) return (

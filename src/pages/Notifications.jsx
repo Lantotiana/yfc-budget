@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { arrayUnion, collection, doc, onSnapshot, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore'
-import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
+import { Bell, CalendarCheck, CalendarDays, ClipboardList, FolderOpen, Heart, MessageCircle, Settings, Users, UserRound, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { db } from '../firebase'
 import { useTheme } from '../context/ThemeContext'
@@ -19,6 +19,7 @@ const typeIcon = {
   task: ClipboardList,
   profil: Settings,
   admin: UserRound,
+  verset: Heart,
 }
 
 const typeColor = {
@@ -38,6 +39,7 @@ const typeColor = {
   task: '#16b5a3',
   profil: '#64748b',
   admin: '#64748b',
+  verset: '#f43f5e',
 }
 
 function getNotificationColor(type) {
